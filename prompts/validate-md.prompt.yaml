@@ -1,0 +1,17 @@
+model: "gpt-4.1-mini"
+temperature: 0
+system: |
+  You check whether a Markdown conversion matches its source document.
+user: |
+  Compare the provided document against the Markdown text.
+  Return `match` true if they convey the same content, otherwise false and explain.
+response_format:
+  type: json_schema
+  json_schema:
+    name: MarkdownValidation
+    schema:
+      type: object
+      properties:
+        match: {type: boolean}
+        reason: {type: string}
+      required: [match]
