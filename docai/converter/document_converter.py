@@ -1,0 +1,90 @@
+"""Unified document conversion helpers.
+
+Provides a thin wrapper around the current conversion backend (Docling)
+so callers can request various output formats without depending on the
+underlying library.  The interface is intentionally small to allow
+future backends to be swapped in without touching calling code.
+"""
+
+from __future__ import annotations
+
+from enum import Enum
+from pathlib import Path
+from typing import Dict, Union
+
+from docling.document_converter import DocumentConverter as _DoclingConverter
+
+# Supported high level output formats.
+class OutputFormat(str, Enum):
+    """Canonical output formats supported by the converter."""
+
+    MARKDOWN = "markdown"
+    HTML = "html"
+    JSON = "json"
+    TEXT = "text"
+    DOCTAGS = "doctags"
+
+
+# Map output formats to the method on the Docling Document object
+# that renders that representation.
+_METHOD_MAP: Dict[OutputFormat, str] = {
+    OutputFormat.MARKDOWN: "as_markdown",
+    OutputFormat.HTML: "as_html",
+    OutputFormat.JSON: "as_json",
+    OutputFormat.TEXT: "as_text",
+    OutputFormat.DOCTAGS: "as_doctags",
+}
+
+# File extension for each format so callers can write outputs with a
+# predictable suffix.
+_SUFFIX_MAP: Dict[OutputFormat, str] = {
+    OutputFormat.MARKDOWN: ".md",
+    OutputFormat.HTML: ".html",
+    OutputFormat.JSON: ".json",
+    OutputFormat.TEXT: ".txt",
+    OutputFormat.DOCTAGS: ".doctags",
+}
+
+
+def convert_files(
+    input_path: Path, outputs: Dict[OutputFormat, Path]
+) -> Dict[OutputFormat, Path]:
+    """Convert ``input_path`` to multiple formats.
+
+    ``outputs`` maps each desired ``OutputFormat`` to the file path where the
+    rendered content should be written.  The source document is converted only
+    once, and the requested representations are emitted to their respective
+    destinations.  The mapping of formats to the paths that were written is
+    returned for convenience.
+    """
+
+    converter = _DoclingConverter()
+    document = converter.convert(input_path)
+
+    written: Dict[OutputFormat, Path] = {}
+    for fmt, out_path in outputs.items():
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        render_method = getattr(document, _METHOD_MAP[fmt])
+        content: Union[str, bytes] = render_method()
+        if isinstance(content, bytes):
+            out_path.write_bytes(content)
+        else:
+            out_path.write_text(content, encoding="utf-8")
+        written[fmt] = out_path
+
+    return written
+
+
+def convert_file(input_path: Path, output_path: Path, fmt: OutputFormat) -> Path:
+    """Convert ``input_path`` to a single ``fmt`` and return the written path."""
+
+    return convert_files(input_path, {fmt: output_path})[fmt]
+
+
+def suffix_for_format(fmt: OutputFormat) -> str:
+    """Return the default file suffix for ``fmt``."""
+
+    return _SUFFIX_MAP[fmt]
+
+
+__all__ = ["OutputFormat", "convert_files", "convert_file", "suffix_for_format"]
