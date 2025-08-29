@@ -1,0 +1,32 @@
+name: Analysis
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "data/**/*.md"
+      - "data/**/*.prompt.yaml"
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_PROMPT_ANALYSIS_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: openai pyyaml
+      - name: Run analysis
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/run-analysis
+      - uses: actions/upload-artifact@v4
+        if: steps.env.outputs.skip != 'true'
+        with:
+          name: prompt-results
+          path: data/**/*.json

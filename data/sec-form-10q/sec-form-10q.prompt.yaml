@@ -1,0 +1,98 @@
+name: SEC Form 10-Q — Investor Extractor
+description: Extract high-value, investor-actionable facts and metrics from any SEC Form 10-Q filing text.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You are an expert SEC-filings analyst. Given raw text from a Form 10-Q, produce a STRICT JSON object with the fields listed by the user.
+      Rules:
+      - Use only information in the provided text. If a field is not present, return null (do NOT guess).
+      - Preserve reported numbers exactly where requested; when asked to compute deltas/percentages, calculate from reported numbers and show to one decimal place.
+      - Currency: default to USD unless the filing clearly uses another; include a currency_code field when amounts are not USD.
+      - Dates: use ISO 8601 (YYYY-MM-DD).
+      - For lists, return empty arrays [] if not present.
+      - Summaries must be factual and concise (no opinions, no hype).
+      - If multiple periods are reported, choose the quarter that corresponds to the current filing period; use the prior-year comparable for YoY calculations when available.
+      - If the filing includes segment or product tables with YoY columns, prefer those for change_%.
+      - Return ONLY the JSON object, with no extra text.
+  - role: user
+    content: |-
+      Extract the following fields from the text and return a single JSON object:
+
+      Top-level identifiers
+      - company_name (string)
+      - cik (string)
+      - trading_symbols (array of strings)
+      - filing_type (string)  # e.g., "10-Q"
+      - fiscal_quarter_end (string, ISO date)
+      - filing_date (string, ISO date)
+      - shares_outstanding_asof (object|null)  # { "date": "YYYY-MM-DD", "shares": number } if disclosed
+
+      High-level P&L (quarter being reported)
+      - net_sales_total (number)
+      - net_sales_yoy_change_pct (number|null)
+      - gross_margin_total (number)            # absolute gross profit
+      - gross_margin_pct (number)
+      - operating_income (number)
+      - net_income (number)
+      - eps_basic (number)
+      - eps_diluted (number)
+
+      Revenue mix (if disclosed)
+      - revenue_by_category (array)  # [{ "category": "iPhone/Services/...", "amount": number, "yoy_change_pct": number|null }]
+      - revenue_by_region (array)    # [{ "region": "Americas/Europe/...", "amount": number, "yoy_change_pct": number|null }]
+
+      Cash, liquidity & balance sheet
+      - cash_and_cash_equivalents (number)
+      - marketable_securities_current (number|null)
+      - marketable_securities_noncurrent (number|null)
+      - total_assets (number|null)
+      - total_liabilities (number|null)
+      - deferred_revenue_total (number|null)
+      - deferred_revenue_realization_timing (object|null)  # { "<1y": pct, "1-2y": pct, "2-3y": pct, ">3y": pct } if provided
+
+      Capital structure & returns
+      - term_debt_total_carrying (number|null)
+      - commercial_paper_outstanding (number|null)
+      - share_repurchases (object|null)  # { "period_shares": number|null, "period_spend": number|null, "ytd_spend": number|null, "authorization_remaining": number|null }
+      - dividend_per_share (number|null)
+
+      Cash flows & commitments
+      - operating_cash_flow_ytd (number|null)
+      - capex_payments_ytd (number|null)  # payments for PP&E
+      - manufacturing_purchase_obligations (number|null)  # and note if "<12 months" share is given via "due_within_12_months_pct"
+      - due_within_12_months_pct (number|null)
+
+      Margins & taxes
+      - products_gross_margin (object|null)  # { "gross_margin": number, "gross_margin_pct": number|null }
+      - services_gross_margin (object|null)  # { "gross_margin": number, "gross_margin_pct": number|null }
+      - effective_tax_rate_pct (number|null)
+
+      Risks, legal & regulatory
+      - risk_factors_changes (string|null)          # note if “no material changes” or summarize additions
+      - major_legal_proceedings (array)             # [{ "matter": string, "stage": string, "potential_exposure": string|null }]
+      - regulatory_actions (array)                  # e.g., EU/DOJ probes, fines, orders
+
+      Management commentary & macro
+      - macro_headwinds_tailwinds (array)           # tariffs, FX, supply chain, etc.
+      - notable_product_or_os_announcements (array) # if cited in MD&A
+      - outlook_guidance (string|null)              # if any explicit commentary given
+
+      Red flags & opportunities (analyst view, grounded strictly in text)
+      - red_flags (array)                           # short bullets drawn from disclosed facts
+      - opportunities (array)                       # short bullets drawn from disclosed facts
+
+      Provenance & confidence
+      - source_footnotes (array)                    # optional short snippets like "Item 2 MD&A: Gross margin table"
+      - confidence (number)                         # 0.0–1.0 reflecting coverage of the requested fields
+
+      Input variables:
+      - filing_text: the raw or cleaned text of the Form 10-Q to analyze.
+      - company_hint (optional): a company name string to help disambiguate if text contains multiple entities.
+
+      Please analyze this filing text:
+
+      {{filing_text}}
+      

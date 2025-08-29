@@ -1,0 +1,101 @@
+name: SEC Form 8-K — Investor Extractor
+description: Extract high-value, investor-actionable events and metrics from SEC Form 8-K filings.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You are an expert SEC-filings analyst. Given raw text from a Form 8-K (including any attached exhibit text if provided), output a STRICT JSON object with the fields requested by the user.
+      Rules:
+      - Use only the provided text. If a field is missing, return null (do not guess).
+      - Dates must be ISO 8601 (YYYY-MM-DD).
+      - Numbers must be plain numerals (strip commas). Prices are per-share unless clearly stated otherwise.
+      - If multiple items are present, capture ALL of them in the events array.
+      - If an item states the information is "furnished" (e.g., Item 2.02), set furnished_or_filed = "furnished"; if it is part of the report body and not designated as furnished, set "filed".
+      - For YoY/QoQ changes, only compute when both comparison values are present in the text; round to one decimal place.
+      - Return ONLY the JSON object, with no extra commentary.
+
+  - role: user
+    content: |-
+      Extract the following fields from the Form 8-K text and return a single JSON object:
+
+      Filing & issuer metadata
+      - accession_number (string|null)
+      - issuer_name (string|null)
+      - issuer_trading_symbol (string|null)
+      - issuer_cik (string|null)
+      - filing_type (string)                  # e.g., "8-K"
+      - report_date (string|null)             # Date of Report / earliest event date on cover
+      - filing_date (string|null)             # signature/filing date
+      - item_numbers (array)                  # e.g., ["2.02","7.01","9.01"]
+
+      Events (capture each 8-K item present)
+      - events (array) where each item is:
+        {
+          "item_number": string|null,         # e.g., "2.02"
+          "item_title": string|null,          # e.g., "Results of Operations and Financial Condition"
+          "event_type": string|null,          # normalized: earnings_release, material_agreement, leadership_change, delisting_notice, guidance, dividend, etc.
+          "event_date": string|null,          # earliest event date for this item if stated
+          "summary": string|null,             # 1-3 sentence factual summary
+          "furnished_or_filed": "furnished"|"filed"|null,
+          "material": boolean|null,           # true if the company explicitly states materiality or it is inherently material (e.g., Item 1.01). Otherwise null.
+          "exhibits_related": [string],       # e.g., ["99.1","99.2"]
+          "forward_looking_caution": boolean|null
+        }
+
+      Earnings / results details (populate when Item 2.02 or exhibits include them; else null)
+      - earnings_release (object|null) with:
+        {
+          "period_end": string|null,
+          "revenue": number|null,
+          "revenue_yoy_change_pct": number|null,
+          "eps_basic": number|null,
+          "eps_diluted": number|null,
+          "eps_yoy_change_pct": number|null,
+          "segment_highlights": [              # optional quick bullets if present, e.g., records, growth by geography/category
+            { "segment_or_region": string, "metric": string, "value": number|null, "yoy_change_pct": number|null }
+          ],
+          "dividend": {                        # if a dividend is announced in the release
+            "per_share": number|null,
+            "record_date": string|null,
+            "payable_date": string|null
+          }|null,
+          "guidance_text": string|null,        # only if explicit guidance/qualitative outlook is provided
+          "call_details": {                    # earnings call/webcast if provided
+            "webcast_url": string|null,
+            "call_datetime": string|null,
+            "replay_until": string|null
+          }|null
+        }
+
+      Other common items (fill when present; else null)
+      - leadership_changes (array|null)       # [{ "name": string, "role": string, "action": "appointment"|"departure"|"comp_change", "effective_date": string|null }]
+      - material_agreements (array|null)      # [{ "counterparty": string|null, "description": string|null, "effective_date": string|null, "termination_date": string|null }]
+      - financing_events (array|null)         # debt issuances/redemptions, credit facilities [{...}]
+      - share_capital_events (array|null)     # splits, buybacks programs, shelf registrations [{...}]
+      - legal_or_regulatory (array|null)      # investigations, orders, settlements [{ "authority": string|null, "matter": string|null, "stage": string|null }]
+
+      Exhibits
+      - exhibits (array)                      # [{ "exhibit_number": string, "description": string|null, "url": string|null }]
+
+      Signatures
+      - signed_by (string|null)
+      - signer_title (string|null)
+
+      Derived investor signals (strictly from parsed text; otherwise null/0)
+      - signals (array)                       # ["earnings","dividend","guidance","leadership_change","material_agreement","legal"]
+      - actionable_dates (array)              # e.g., ["2025-08-11 record date","2025-08-14 dividend payment","2025-07-31 earnings call"]
+      - red_flags (array)                     # short bullets grounded in the filing text
+      - opportunities (array)                 # short bullets grounded in the filing text
+
+      Provenance & confidence
+      - source_footnotes (array)              # short pointers like "Item 2.02", "Exhibit 99.1"
+      - confidence (number)                   # 0.0–1.0 reflecting coverage of fields above
+
+      Input variables:
+      - filing_text: the raw or cleaned text of the Form 8-K to analyze.
+
+      Analyze this Form 8-K text:
+
+      {{filing_text}}

@@ -1,0 +1,45 @@
+name: PR Review
+on:
+  pull_request:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model name to use
+        required: false
+        default: gpt-4.1
+jobs:
+  review:
+    if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_PR_REVIEW_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: "openai pyyaml"
+      - name: Review PR
+        if: steps.env.outputs.skip != 'true'
+        id: review
+        env:
+          MODEL: ${{ github.event.inputs.model || env.PR_REVIEW_MODEL || 'gpt-4.1' }}
+        uses: ./.github/actions/review-pr
+        with:
+          prompt: .github/prompts/pr-review.prompt.yaml
+          body: ${{ github.event.pull_request.body || github.event.issue.body }}
+          model: ${{ env.MODEL }}
+          output-file: pr-review.txt
+      - name: Comment on PR
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/comment-pr
+        with:
+          body-file: pr-review.txt
