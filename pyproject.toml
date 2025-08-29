@@ -1,0 +1,38 @@
+[project]
+name = "doc-ai-starter"
+version = "0.1.0"
+description = "Template repository for AI-powered document analysis."
+requires-python = ">=3.10"
+dependencies = [
+    "docling",
+    "openai",
+    "pydantic",
+    "pyyaml",
+    "requests",
+    "anyio",
+    "python-dotenv",
+    "typer",
+    "rich",
+]
+
+[project.scripts]
+"doc-ai" = "doc_ai.cli:app"
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest"]
+
+[tool.ruff]
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["doc_ai", "doc_ai.*"]

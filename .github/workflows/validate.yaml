@@ -1,0 +1,43 @@
+name: Validate Conversions
+on:
+  push:
+    paths:
+      - "data/**/*.md"
+      - "data/**/*.html"
+      - "data/**/*.json"
+      - "data/**/*.txt"
+      - "data/**/*.doctags"
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_VALIDATE_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: docling openai pyyaml
+      - if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/validate-outputs
+        with:
+          before: ${{ github.event.before }}
+          sha: ${{ github.sha }}
+      - name: Commit validation metadata
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/git-commit
+        with:
+          add: "find data -name '*.dc.json' -print0 | xargs -0 git add"
+          message: "chore: update validation metadata"
+      - name: Create PR if fixes
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/create-fix-pr

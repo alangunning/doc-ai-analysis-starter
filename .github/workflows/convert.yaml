@@ -1,0 +1,33 @@
+name: Convert
+on:
+  push:
+    paths:
+      - "data/**"
+permissions:
+  contents: write
+  actions: write
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_CONVERT_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: docling
+      - run: python scripts/convert.py data
+        if: steps.env.outputs.skip != 'true'
+      - name: Commit conversions
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/git-commit
+        with:
+          add: "git add data"
+          message: "docs: auto-convert documents"
