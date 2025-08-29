@@ -5,5 +5,3 @@ __pycache__/
 venv/
 outputs/*
 !outputs/.gitkeep
-vector_store/*
-!vector_store/.gitkeep
