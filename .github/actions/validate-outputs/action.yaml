@@ -1,0 +1,42 @@
+name: Validate Outputs
+description: Validate converted files against their raw sources.
+inputs:
+  before:
+    description: Previous commit SHA.
+    required: true
+  sha:
+    description: Current commit SHA.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        before="${{ inputs.before }}"
+        sha="${{ inputs.sha }}"
+        if [[ -z "$before" ]]; then
+          before=$(git rev-parse "$sha^" 2>/dev/null || git hash-object -t tree /dev/null)
+        fi
+        git diff -z --name-only "$before" "$sha" -- \
+          'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags' |
+          while IFS= read -r -d '' file; do
+            [[ "$file" != *.converted.* ]] && continue
+            raw="${file%.converted.*}"
+            if [[ ! -f "$raw" ]]; then
+              root="${raw%.*}"
+              for ext in pdf docx pptx html htm asciidoc adoc md markdown csv xlsx xml json png jpg jpeg gif tif tiff bmp \
+                webp svg wav mp3 flac m4a ogg; do
+                cand="$root.$ext"
+                if [[ -f "$cand" ]]; then
+                  raw="$cand"
+                  break
+                fi
+              done
+            fi
+            fmt=${file##*.}
+            python scripts/validate.py "$raw" "$file" --prompt .github/prompts/validate-output.prompt.yaml || (
+              git checkout -- "$file"
+              python scripts/convert.py "$raw" --format "$fmt"
+              git add "$file"
+            )
+          done
