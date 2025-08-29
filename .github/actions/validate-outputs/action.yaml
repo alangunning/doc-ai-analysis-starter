@@ -1,0 +1,23 @@
+name: Validate Outputs
+description: Validate converted files against their raw sources.
+inputs:
+  before:
+    description: Previous commit SHA.
+    required: true
+  sha:
+    description: Current commit SHA.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        for file in $(git diff --name-only "${{ inputs.before }}" "${{ inputs.sha }}" -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
+          raw=${file%.*}.pdf
+          fmt=${file##*.}
+          python scripts/validate.py "$raw" "$file" --prompt prompts/validate-output.prompt.yaml || (
+            git checkout -- "$file"
+            python scripts/convert.py "$raw" --format "$fmt"
+            git add "$file"
+          )
+        done
