@@ -1,0 +1,12 @@
+name: Validate Rendered Output
+description: Compare original documents with their rendered representation.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You verify that a converted document representation matches the original.
+  - role: user
+    content: |-
+      Compare the provided PDF and {format} content. Respond with JSON {"match": bool, "reason": string?}.

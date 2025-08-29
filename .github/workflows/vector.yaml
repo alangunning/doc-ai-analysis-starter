@@ -1,0 +1,45 @@
+name: Build Vectors
+on:
+  push:
+    branches: [main]
+    paths: ["data/**/*.md"]
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Load env
+        id: env
+        run: |
+          if [ -f .env ]; then
+            while IFS='=' read -r key value; do
+              if [[ -z "$key" || "$key" == \#* ]]; then
+                continue
+              fi
+              if [ -z "${!key}" ]; then
+                echo "$key=$value" >> $GITHUB_ENV
+                export "$key=$value"
+              fi
+            done < .env
+          fi
+          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_VECTOR_WORKFLOW}" != "true" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+      - uses: actions/checkout@v4
+        if: steps.env.outputs.skip != 'true'
+      - uses: actions/setup-python@v5
+        if: steps.env.outputs.skip != 'true'
+        with: {python-version: '3.x'}
+      - run: pip install requests python-dotenv
+        if: steps.env.outputs.skip != 'true'
+      - run: python scripts/build_vector_store.py data
+        if: steps.env.outputs.skip != 'true'
+      - name: Commit vectors
+        if: steps.env.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data
+          git commit -m "chore: update vectors" || echo "No changes"
+          git push

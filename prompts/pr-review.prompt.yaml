@@ -1,0 +1,12 @@
+name: Pull request review
+description: Provide concise review comments for pull requests.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You are a code reviewer. Provide concise review comments.
+  - role: user
+    content: |-
+      Review the following pull request description and suggest improvements.

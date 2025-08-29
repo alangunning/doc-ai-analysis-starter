@@ -1,0 +1,62 @@
+name: Validate Conversions
+on:
+  push:
+    paths:
+      - "data/**/*.md"
+      - "data/**/*.html"
+      - "data/**/*.json"
+      - "data/**/*.txt"
+      - "data/**/*.doctags"
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Load env
+        id: env
+        run: |
+          if [ -f .env ]; then
+            while IFS='=' read -r key value; do
+              if [[ -z "$key" || "$key" == \#* ]]; then
+                continue
+              fi
+              if [ -z "${!key}" ]; then
+                echo "$key=$value" >> $GITHUB_ENV
+                export "$key=$value"
+              fi
+            done < .env
+          fi
+          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_VALIDATE_WORKFLOW}" != "true" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+      - uses: actions/checkout@v4
+        if: steps.env.outputs.skip != 'true'
+      - uses: actions/setup-python@v5
+        if: steps.env.outputs.skip != 'true'
+        with: {python-version: "3.x"}
+      - run: pip install docling openai pyyaml
+        if: steps.env.outputs.skip != 'true'
+      - run: |
+          for file in $(git diff --name-only HEAD~1 -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
+            raw=${file%.*}.pdf
+            fmt=${file##*.}
+            python scripts/validate.py $raw $file --prompt prompts/validate-output.prompt.yaml || (
+              git checkout -- $file
+              python scripts/convert.py $raw --format $fmt
+              git add $file
+            )
+          done
+        if: steps.env.outputs.skip != 'true'
+      - name: Create PR if fixes
+        if: steps.env.outputs.skip != 'true'
+        run: |
+          git diff --staged --quiet && exit 0
+          branch="fix-conversion-$(date +%s)"
+          git checkout -b "$branch"
+          git commit -m "docs: fix document conversion"
+          git push origin "$branch"
+          gh pr create --fill --title "Fix document conversion" --body "Auto-corrected mismatched output."
