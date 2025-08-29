@@ -23,12 +23,12 @@ Convert raw documents (e.g., PDFs) into Markdown:
 python scripts/convert_to_markdown.py documents/raw --outdir documents
 ```
 
-### `verify_markdown.py`
+### `validate_markdown.py`
 
 Validate that a Markdown file matches the original document:
 
 ```bash
-python scripts/verify_markdown.py path/to/original.pdf path/to/document.md
+python scripts/validate_markdown.py path/to/original.pdf path/to/document.md
 ```
 
 ### `run_prompt.py`
@@ -39,10 +39,27 @@ Run a prompt definition against a Markdown document and save JSON output:
 python scripts/run_prompt.py prompts/annual-report.prompt.yaml documents/example.md --outdir outputs/annual-report
 ```
 
+### `review_pr.py`
+
+Generate AI feedback for a pull request description:
+
+```bash
+PR_BODY="$(cat pr_body.txt)"
+python scripts/review_pr.py --pr-body "$PR_BODY"
+```
+
+### `merge_pr.py`
+
+Merge a pull request if the commenter is authorized:
+
+```bash
+python scripts/merge_pr.py 123 --user some-login
+```
+
 ## GitHub Workflows
 
 - **Convert to Markdown** – auto-converts files in `documents/raw/` to Markdown and commits results.
-- **Verify Markdown** – checks converted Markdown against the source document and auto-corrects mismatches.
+- **Validate Markdown** – checks converted Markdown against the source document and auto-corrects mismatches.
 - **Prompt Analysis** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
 - **AI PR Review** – summarizes pull requests and supports `/merge` commands via comments for auto-merging.
 

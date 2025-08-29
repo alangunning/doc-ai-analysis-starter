@@ -14,17 +14,7 @@ jobs:
       - name: Summarize PR
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          python - <<'PY'
-          import json, os, sys
-          from pathlib import Path
-
-          sys.path.insert(0, "scripts")
-          from run_prompt import run_prompt
-
-          result = run_prompt(Path("prompts/pr-review.prompt.yaml"), os.environ["PR_BODY"])
-          print(json.loads(result)["summary"])
-          PY
+        run: python scripts/review_pr.py
   auto-merge:
     if: >
       github.event_name == 'issue_comment' &&
@@ -35,4 +25,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - run: gh pr merge ${{ github.event.issue.number }} --merge
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: python scripts/merge_pr.py ${{ github.event.issue.number }} --user "${{ github.event.comment.user.login }}"
