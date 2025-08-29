@@ -1,10 +1,8 @@
-name: AI PR Review
+name: PR Review
 on:
   pull_request:
-  issue_comment:
 jobs:
   review:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,6 +12,7 @@ jobs:
       - name: Summarize PR
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+<<<<<<< HEAD:.github/workflows/ai-pr-review.yml
         run: python scripts/review_pr.py
   auto-merge:
     if: >
@@ -28,3 +27,16 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.x"}
       - run: python scripts/merge_pr.py ${{ github.event.issue.number }} --user "${{ github.event.comment.user.login }}"
+=======
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+
+          sys.path.insert(0, "scripts")
+          from run_prompt import run_prompt
+
+          result = run_prompt(Path("prompts/pr-review.prompt.yaml"), os.environ["PR_BODY"])
+          print(json.loads(result)["summary"])
+          PY
+>>>>>>> efd7ea83065ea9a8cd30ce076cdb20ace3046c3d:.github/workflows/pr_review.yml
