@@ -1,0 +1,45 @@
+name: Docs
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_DOCS_WORKFLOW
+      - uses: actions/setup-node@v4
+        if: steps.env.outputs.skip != 'true'
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+      - run: npm ci
+        if: steps.env.outputs.skip != 'true'
+        working-directory: docs
+      - run: npm run build
+        if: steps.env.outputs.skip != 'true'
+        working-directory: docs
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.env.outputs.skip != 'true' && github.event.repository.has_pages
+        with:
+          path: docs/build
+      - id: deployment
+        if: steps.env.outputs.skip != 'true' && github.event.repository.has_pages
+        uses: actions/deploy-pages@v4

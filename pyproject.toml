@@ -1,0 +1,29 @@
+[project]
+name = "ai-doc-analysis-starter"
+version = "0.1.0"
+description = "Template repository for AI-powered document analysis."
+requires-python = ">=3.10"
+dependencies = [
+    "docling",
+    "openai",
+    "pydantic",
+    "pyyaml",
+    "requests",
+    "anyio",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["ruff"]
+
+[tool.ruff]
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ai_doc_analysis_starter", "ai_doc_analysis_starter.*"]
