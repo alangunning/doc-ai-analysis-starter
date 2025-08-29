@@ -1,0 +1,23 @@
+name: Lint
+on:
+  push:
+    paths: ["**/*.py", "pyproject.toml"]
+  pull_request:
+    paths: ["**/*.py", "pyproject.toml"]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_LINT_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: ruff
+      - run: ruff check .
+        if: steps.env.outputs.skip != 'true'

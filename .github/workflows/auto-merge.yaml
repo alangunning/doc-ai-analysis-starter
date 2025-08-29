@@ -1,0 +1,27 @@
+name: Auto Merge
+on:
+  issue_comment:
+jobs:
+  auto-merge:
+    if: startsWith(github.event.comment.body, '/merge')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load env
+        id: env
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_AUTO_MERGE_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+      - name: Approve PR
+        if: steps.env.outputs.skip != 'true'
+        run: gh pr review ${{ github.event.issue.number }} --approve
+      - run: python scripts/merge_pr.py ${{ github.event.issue.number }}
+        if: steps.env.outputs.skip != 'true'

@@ -1,0 +1,30 @@
+name: Create Fix PR
+description: Create a pull request for staged fixes.
+inputs:
+  branch-prefix:
+    description: Prefix for new branch name.
+    required: false
+    default: fix-conversion
+  commit-message:
+    description: Commit message for fixes.
+    required: false
+    default: docs: fix document conversion
+  title:
+    description: PR title.
+    required: false
+    default: Fix document conversion
+  body:
+    description: PR body.
+    required: false
+    default: Auto-corrected mismatched output.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        git diff --staged --quiet && exit 0
+        branch="${{ inputs.branch-prefix }}-$(date +%s)"
+        git checkout -b "$branch"
+        git commit -m "${{ inputs.commit-message }}"
+        git push origin "$branch"
+        gh pr create --fill --title "${{ inputs.title }}" --body "${{ inputs.body }}"
