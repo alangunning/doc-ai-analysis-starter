@@ -1,9 +1,9 @@
-name: Verify Markdown
+name: Validate
 on:
   push:
     paths: ["documents/**/*.md"]
 jobs:
-  verify:
+  validate:
     runs-on: ubuntu-latest
     permissions:
       contents: write

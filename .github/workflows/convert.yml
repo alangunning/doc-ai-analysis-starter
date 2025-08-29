@@ -1,4 +1,4 @@
-name: Convert to Markdown
+name: Convert
 on:
   push:
     paths: ["documents/raw/**"]

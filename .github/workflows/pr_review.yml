@@ -1,10 +1,8 @@
-name: AI PR Review
+name: PR Review
 on:
   pull_request:
-  issue_comment:
 jobs:
   review:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +23,3 @@ jobs:
           result = run_prompt(Path("prompts/pr-review.prompt.yaml"), os.environ["PR_BODY"])
           print(json.loads(result)["summary"])
           PY
-  auto-merge:
-    if: >
-      github.event_name == 'issue_comment' &&
-      startsWith(github.event.comment.body, '/merge')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      - run: gh pr merge ${{ github.event.issue.number }} --merge
