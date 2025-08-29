@@ -1,0 +1,28 @@
+model: "gpt-4.1-mini"
+temperature: 0
+system: |
+  You parse insider trading filings and output structured transactions.
+user: |
+  Extract the following fields from the text:
+  - insider_name (string)
+  - relationship (string)
+  - transaction_date (string)
+  - security (string)
+  - transaction_type (string)
+  - shares (integer)
+  - price (number)
+response_format:
+  type: json_schema
+  json_schema:
+    name: InsiderTrade
+    schema:
+      type: object
+      properties:
+        insider_name: {type: string}
+        relationship: {type: string}
+        transaction_date: {type: string}
+        security: {type: string}
+        transaction_type: {type: string}
+        shares: {type: integer}
+        price: {type: number}
+      required: [insider_name, relationship, transaction_date, security, transaction_type, shares, price]

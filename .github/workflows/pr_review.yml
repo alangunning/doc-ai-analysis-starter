@@ -1,0 +1,26 @@
+name: PR Review
+on:
+  pull_request:
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: pip install openai
+      - name: Summarize PR
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python - <<'PY'
+          from openai import OpenAI
+          import os
+          client = OpenAI()
+          summary = client.responses.create(
+              model="gpt-4.1-mini",
+              input=[{"role":"user","content":f"Summarize this PR:\n{os.environ['PR_BODY']}"}]
+          ).output[0].content[0].text
+          echo = summary
+          print(summary)
+          PY
