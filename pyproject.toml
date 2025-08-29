@@ -1,5 +1,5 @@
 [project]
-name = "airnub-ai-template"
+name = "doc-ai-analysis-starter"
 version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 requires-python = ">=3.10"

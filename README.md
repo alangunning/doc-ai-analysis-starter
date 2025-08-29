@@ -1,4 +1,4 @@
-# airnub-ai-template
+# doc-ai-analysis-starter
 
 A minimal template for automating document conversion, verification, prompt execution, and AI-assisted pull request review using GitHub Actions and GitHub Models.
 
