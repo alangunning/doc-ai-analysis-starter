@@ -1,0 +1,24 @@
+name: Build Vector Store
+on:
+  workflow_run:
+    workflows: ["Verify Markdown"]
+    branches: [main]
+    types:
+      - completed
+jobs:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: pip install openai
+      - run: python scripts/build_vector_store.py documents --outdir vector_store
+      - name: Commit vector store
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add vector_store/*
+          git commit -m "chore: update vector store" || echo "No changes"
+          git push
