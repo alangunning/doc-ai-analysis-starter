@@ -19,8 +19,7 @@ def build_vector_store(src_dir: Path) -> None:
     if not token:
         raise RuntimeError("GITHUB_TOKEN not set")
 
-    base_url = os.getenv("OPENAI_BASE_URL", "https://models.github.ai")
-    api_url = f"{base_url.rstrip('/')}/inference/embeddings"
+    api_url = "https://models.github.ai/inference/embeddings"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",

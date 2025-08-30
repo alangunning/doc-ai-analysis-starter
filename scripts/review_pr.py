@@ -18,8 +18,10 @@ def review_pr(pr_body: str, prompt_path: Path) -> str:
         if msg.get("role") == "user":
             msg["content"] = msg.get("content", "") + "\n\n" + pr_body
             break
-    base_url = os.getenv("OPENAI_BASE_URL", "https://models.github.ai")
-    client = OpenAI(api_key=os.getenv("GITHUB_TOKEN"), base_url=base_url)
+    client = OpenAI(
+        api_key=os.getenv("GITHUB_TOKEN"),
+        base_url="https://models.github.ai",
+    )
     response = client.responses.create(
         model=spec["model"],
         **spec.get("modelParameters", {}),

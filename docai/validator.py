@@ -46,8 +46,10 @@ def validate_file(
     spec, messages = _build_messages(
         raw_path.read_bytes(), rendered_path.read_text(), fmt, prompt_path
     )
-    base_url = os.getenv("OPENAI_BASE_URL", "https://models.github.ai")
-    client = OpenAI(api_key=os.getenv("GITHUB_TOKEN"), base_url=base_url)
+    client = OpenAI(
+        api_key=os.getenv("GITHUB_TOKEN"),
+        base_url="https://models.github.ai",
+    )
     result = client.responses.create(
         model=spec["model"],
         **spec.get("modelParameters", {}),

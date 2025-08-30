@@ -18,8 +18,10 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
         if msg.get("role") == "user":
             msg["content"] = msg.get("content", "") + "\n\n" + input_text
             break
-    base_url = os.getenv("OPENAI_BASE_URL", "https://models.github.ai")
-    client = OpenAI(api_key=os.getenv("GITHUB_TOKEN"), base_url=base_url)
+    client = OpenAI(
+        api_key=os.getenv("GITHUB_TOKEN"),
+        base_url="https://models.github.ai",
+    )
     response = client.responses.create(
         model=spec["model"],
         **spec.get("modelParameters", {}),
