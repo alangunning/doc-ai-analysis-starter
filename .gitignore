@@ -7,4 +7,5 @@ outputs/*
 !outputs/.gitkeep
 docs/node_modules/
 docs/.docusaurus/
-docs/build/
+docs/build/*
+!docs/build/.gitkeep
