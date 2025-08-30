@@ -1,6 +1,6 @@
 """Reusable helpers for the doc-ai-analysis-starter template."""
 
-from .dublin_core import DublinCoreDocument
+from .metadata import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
 from .github import run_prompt, review_pr, merge_pr, validate_file, build_vector_store
 

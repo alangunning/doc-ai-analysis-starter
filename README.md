@@ -9,12 +9,18 @@ A minimal template for automating document conversion, verification, prompt exec
 
 Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically.
 
-Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, or `ENABLE_AUTO_MERGE_WORKFLOW`.
+Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, `ENABLE_DOCS_WORKFLOW`, or `ENABLE_AUTO_MERGE_WORKFLOW`.
 
 Install dependencies with:
 
 ```bash
 pip install -e .
+```
+
+For the Docusaurus docs site:
+
+```bash
+npm install
 ```
 
 ## Directory layout
@@ -105,7 +111,7 @@ python scripts/merge_pr.py 123
 Reusable helpers for creating and parsing Dublin Core metadata documents:
 
 ```python
-from docai.dublin_core import DublinCoreDocument
+from docai.metadata import DublinCoreDocument
 ```
 
 ## GitHub Workflows
@@ -115,6 +121,7 @@ from docai.dublin_core import DublinCoreDocument
 - **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources.
 - **Analyze** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
 - **PR Review** – summarizes pull requests.
+- **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
 - **Auto Merge** – merges pull requests when a `/merge` comment is posted.
 
 ## Adding Prompts
