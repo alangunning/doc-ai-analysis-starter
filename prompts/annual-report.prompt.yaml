@@ -1,23 +1,16 @@
-model: "gpt-4.1-mini"
-temperature: 0
-system: |
-  You are a data-extraction assistant. Given an annual report section,
-  return key KPIs in JSON.
-user: |
-  Extract the following fields from the text:
-  - revenue (USD)
-  - operating_income (USD)
-  - net_income (USD)
-  - employees (integer)
-response_format:
-  type: json_schema
-  json_schema:
-    name: AnnualReportKPI
-    schema:
-      type: object
-      properties:
-        revenue: {type: number}
-        operating_income: {type: number}
-        net_income: {type: number}
-        employees: {type: integer}
-      required: [revenue, operating_income, net_income, employees]
+name: Annual report KPIs
+description: Extract key financial metrics from annual report sections.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You are a data-extraction assistant. Given an annual report section, return key KPIs in JSON.
+  - role: user
+    content: |-
+      Extract the following fields from the text:
+      - revenue (USD)
+      - operating_income (USD)
+      - net_income (USD)
+      - employees (integer)

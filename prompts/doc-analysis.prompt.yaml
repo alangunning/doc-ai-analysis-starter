@@ -1,8 +1,12 @@
-model: gpt-4.1-mini
-temperature: 0
-system: |
-  You analyze Markdown documents and return a short summary.
-user: |
-  Summarize the following document in three bullet points.
-response_format:
-  type: text
+name: Document summary
+description: Summarize Markdown documents into three bullet points.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You analyze Markdown documents and return a short summary.
+  - role: user
+    content: |-
+      Summarize the following document in three bullet points.

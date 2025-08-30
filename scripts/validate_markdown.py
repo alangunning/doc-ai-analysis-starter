@@ -8,22 +8,20 @@ from openai import OpenAI
 
 def call_model(raw_bytes: bytes, md_text: str, prompt_path: Path) -> str:
     spec = yaml.safe_load(prompt_path.read_text())
+    messages = [dict(m) for m in spec["messages"]]
+    for i, msg in enumerate(messages):
+        if msg.get("role") == "user":
+            messages[i]["content"] = [
+                {"type": "input_text", "text": msg.get("content", "")},
+                {"type": "document", "format": "pdf", "b64_content": base64.b64encode(raw_bytes).decode()},
+                {"type": "text", "text": md_text},
+            ]
+            break
     client = OpenAI(base_url="https://models.inference.ai.azure.com")
     result = client.responses.create(
         model=spec["model"],
-        temperature=spec.get("temperature", 0),
-        input=[
-            {"role": "system", "content": spec.get("system", "")},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": spec.get("user", "")},
-                    {"type": "document", "format": "pdf", "b64_content": base64.b64encode(raw_bytes).decode()},
-                    {"type": "text", "text": md_text},
-                ],
-            },
-        ],
-        response_format=spec.get("response_format"),
+        **spec.get("modelParameters", {}),
+        input=messages,
     )
     return result.output[0].content[0].get("text", "")
 

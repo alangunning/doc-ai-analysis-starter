@@ -1,16 +1,12 @@
-model: gpt-4.1-mini
-temperature: 0
-system: |
-  You verify that a Markdown rendering matches the original document.
-user: |
-  Compare the provided PDF and Markdown content. Respond with JSON {"match": bool, "reason": string?}.
-response_format:
-  type: json_schema
-  json_schema:
-    name: MarkdownValidation
-    schema:
-      type: object
-      properties:
-        match: {type: boolean}
-        reason: {type: string}
-      required: [match]
+name: Validate Markdown
+description: Compare original documents with their Markdown rendering.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You verify that a Markdown rendering matches the original document.
+  - role: user
+    content: |-
+      Compare the provided PDF and Markdown content. Respond with JSON {"match": bool, "reason": string?}.

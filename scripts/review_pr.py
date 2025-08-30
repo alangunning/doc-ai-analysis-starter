@@ -6,15 +6,16 @@ from openai import OpenAI
 
 def review(pr_body: str, prompt_path: Path) -> str:
     spec = yaml.safe_load(prompt_path.read_text())
+    messages = [dict(m) for m in spec["messages"]]
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            msg["content"] = msg.get("content", "") + "\n\n" + pr_body
+            break
     client = OpenAI()
     response = client.responses.create(
         model=spec["model"],
-        temperature=spec.get("temperature", 0),
-        input=[
-            {"role": "system", "content": spec.get("system", "")},
-            {"role": "user", "content": spec.get("user", "") + "\n\n" + pr_body},
-        ],
-        response_format=spec.get("response_format"),
+        **spec.get("modelParameters", {}),
+        input=messages,
     )
     return response.output[0].content[0].get("text", "")
 

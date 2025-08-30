@@ -4,17 +4,19 @@ from pathlib import Path
 import yaml
 from openai import OpenAI
 
+
 def run_prompt(prompt_file: Path, input_text: str) -> str:
     spec = yaml.safe_load(prompt_file.read_text())
+    messages = [dict(m) for m in spec["messages"]]
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            msg["content"] = msg.get("content", "") + "\n\n" + input_text
+            break
     client = OpenAI()
     response = client.responses.create(
         model=spec["model"],
-        temperature=spec.get("temperature", 0),
-        input=[
-            {"role": "system", "content": spec["system"]},
-            {"role": "user", "content": spec["user"] + "\n\n" + input_text}
-        ],
-        response_format=spec.get("response_format")
+        **spec.get("modelParameters", {}),
+        input=messages,
     )
     return response.output[0].content[0].get("text", "")
 

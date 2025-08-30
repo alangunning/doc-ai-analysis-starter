@@ -1,6 +1,6 @@
 # doc-ai-analysis-starter
 
-A minimal template for automating document conversion, verification, prompt execution, and AI-assisted pull request review using GitHub Actions and GitHub Models.
+A minimal template for automating document conversion, verification, prompt execution, and AI-assisted pull request review using GitHub Actions and GitHub Models. The repository also provides optional utilities for working with Dublin Core metadata.
 
 ## Requirements
 
@@ -63,6 +63,14 @@ Merge a pull request when authorized:
 python scripts/merge_pr.py 123
 ```
 
+### `dublin_core.py`
+
+Utilities for creating and parsing Dublin Core metadata documents:
+
+```python
+from scripts.dublin_core import DublinCoreDocument
+```
+
 ## GitHub Workflows
 
 - **Convert** – auto-converts files in `data/raw/` to Markdown and commits results.
@@ -76,7 +84,7 @@ python scripts/merge_pr.py 123
 
 To add a new prompt:
 
-1. Create a `.prompt.yaml` file in `prompts/` following the existing format.
+1. Create a `.prompt.yaml` file in `prompts/` using the GitHub Models structure (`name`, `description`, `model`, `modelParameters`, `messages`).
 2. Optionally update the `prompt-analysis.yml` matrix to include the new prompt name if you want it to run automatically in the workflow.
 No changes to the Python scripts are required.
 
