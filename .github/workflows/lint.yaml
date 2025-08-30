@@ -1,16 +1,12 @@
-name: Prompt Analysis
+name: Lint
 on:
-  workflow_dispatch:
   push:
-    paths: ["data/**/*.md"]
+    paths: ["**/*.py", "pyproject.toml"]
+  pull_request:
+    paths: ["**/*.py", "pyproject.toml"]
 jobs:
-  analyze:
+  lint:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    strategy:
-      matrix:
-        prompt: [annual-report, sec-8k, insider-trades]
     steps:
       - name: Load env
         id: env
@@ -26,7 +22,7 @@ jobs:
               fi
             done < .env
           fi
-          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_PROMPT_ANALYSIS_WORKFLOW}" != "true" ]; then
+          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_LINT_WORKFLOW}" != "true" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
           fi
       - uses: actions/checkout@v4
@@ -34,15 +30,7 @@ jobs:
       - uses: actions/setup-python@v5
         if: steps.env.outputs.skip != 'true'
         with: {python-version: "3.x"}
-      - run: pip install openai pyyaml
+      - run: pip install ruff
         if: steps.env.outputs.skip != 'true'
-      - run: |
-          for md in data/**/*.md; do
-            python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md"
-          done
+      - run: ruff check .
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/upload-artifact@v4
-        if: steps.env.outputs.skip != 'true'
-        with:
-          name: ${{ matrix.prompt }}-results
-          path: data/**/*.${{ matrix.prompt }}.json

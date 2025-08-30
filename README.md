@@ -9,7 +9,7 @@ A minimal template for automating document conversion, verification, prompt exec
 
 Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically.
 
-Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, `ENABLE_DOCS_WORKFLOW`, or `ENABLE_AUTO_MERGE_WORKFLOW`.
+Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, `ENABLE_DOCS_WORKFLOW`, `ENABLE_AUTO_MERGE_WORKFLOW`, or `ENABLE_LINT_WORKFLOW`.
 
 Install dependencies with:
 
@@ -72,11 +72,13 @@ python scripts/validate.py data/example/example.pdf data/example/example.md
 
 ### `run_prompt.py`
 
-Run a prompt definition against a Markdown document and save JSON output:
+Run a prompt definition against a Markdown document and save JSON output next to the source file:
 
 ```bash
-python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/example/example.md --outdir outputs/annual-report
+python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/example/example.md
 ```
+
+The above writes `data/example/example.annual-report.json`.
 
 ### `build_vector_store.py`
 
@@ -125,6 +127,7 @@ from docai.metadata import DublinCoreDocument
 - **PR Review** – summarizes pull requests.
 - **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
 - **Auto Merge** – merges pull requests when a `/merge` comment is posted.
+- **Lint** – runs Ruff to check Python code style.
 
 ## Adding Prompts
 
