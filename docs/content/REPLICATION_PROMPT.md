@@ -1491,13 +1491,13 @@ jobs:
       - run: npm run build
         if: steps.env.outputs.skip != 'true'
         working-directory: docs
-      - uses: actions/upload-pages-artifact@v1
+      - uses: actions/upload-pages-artifact@v4
         if: steps.env.outputs.skip != 'true'
         with:
           path: docs/build
       - id: deployment
         if: steps.env.outputs.skip != 'true'
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
 ```
 
 ### `.github/workflows/pr-review.yaml`
