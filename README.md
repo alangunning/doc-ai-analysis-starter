@@ -120,8 +120,9 @@ from docai.metadata import DublinCoreDocument
 
 Each source file may include a sibling ``*.dc.json`` metadata record. The
 metadata stores a blake2b checksum and tracks which processing steps have been
-completed. Conversion, validation, and vector generation scripts consult this
-file to skip work for unchanged documents and only rerun missing steps.
+completed. Conversion, prompt execution, validation, and vector generation
+scripts consult this file to skip work for unchanged documents and only rerun
+missing steps.
 
 ## GitHub Workflows
 
