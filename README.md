@@ -5,9 +5,9 @@ A minimal template for automating document conversion, verification, prompt exec
 ## Requirements
 
 - Python >= 3.10
-- Environment variables such as `GITHUB_TOKEN` (for GitHub Models) and optional `OPENAI_API_KEY` or `GEMINI_API_KEY` for model access and GitHub CLI operations (see `.env.example`).
+- Environment variables such as `GITHUB_TOKEN` for model access and GitHub CLI operations (see `.env.example`).
 
-Create a `.env` file based on `.env.example` and supply your API key (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` automatically.
+Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically.
 
 Set `DISABLE_AUTO_WORKFLOWS=true` in the `.env` file to skip all GitHub Actions automation without editing workflow files. Individual workflows can also be disabled with `DISABLE_CONVERT_WORKFLOW`, `DISABLE_VALIDATE_WORKFLOW`, `DISABLE_VECTOR_WORKFLOW`, `DISABLE_PROMPT_ANALYSIS_WORKFLOW`, `DISABLE_PR_REVIEW_WORKFLOW`, or `DISABLE_AUTO_MERGE_WORKFLOW`.
 
@@ -71,12 +71,12 @@ Merge a pull request when authorized:
 python scripts/merge_pr.py 123
 ```
 
-### `dublin_core.py`
+### Dublin Core utilities
 
-Utilities for creating and parsing Dublin Core metadata documents:
+Reusable helpers for creating and parsing Dublin Core metadata documents:
 
 ```python
-from scripts.dublin_core import DublinCoreDocument
+from docai.dublin_core import DublinCoreDocument
 ```
 
 ## GitHub Workflows
