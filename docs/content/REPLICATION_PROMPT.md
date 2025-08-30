@@ -18,7 +18,7 @@ Follow the steps exactly and stop on any error.
    ```
 2. Reproduce the directory tree:
    ```bash
-   mkdir -p data outputs prompts scripts docai/github docai/metadata docs/content docs/src/css .github/workflows docs/build
+   mkdir -p data outputs prompts scripts docai/converter docai/github docai/metadata docs/content docs/src/css .github/workflows docs/build
    touch data/.gitkeep outputs/.gitkeep docs/build/.gitkeep
    ```
 3. For each file path listed in the **Appendix**, create the file and paste the
@@ -125,7 +125,19 @@ __all__ = [
 ]
 ```
 
-### `docai/converter.py`
+### `docai/converter/__init__.py`
+```text
+from .document_converter import OutputFormat, convert_file, convert_files, suffix_for_format
+
+__all__ = [
+    "OutputFormat",
+    "convert_file",
+    "convert_files",
+    "suffix_for_format",
+]
+```
+
+### `docai/converter/document_converter.py`
 ```text
 """Unified document conversion helpers.
 
