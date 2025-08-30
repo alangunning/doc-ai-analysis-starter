@@ -25,7 +25,7 @@ jobs:
               fi
             done < .env
           fi
-          if [ "${DISABLE_AUTO_WORKFLOWS}" = "true" ] || [ "${DISABLE_AUTO_MERGE_WORKFLOW}" = "true" ]; then
+          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_AUTO_MERGE_WORKFLOW}" != "true" ]; then
             echo "skip=true" >> $GITHUB_OUTPUT
           fi
       - uses: actions/checkout@v4

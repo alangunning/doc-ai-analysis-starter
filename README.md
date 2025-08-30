@@ -9,7 +9,7 @@ A minimal template for automating document conversion, verification, prompt exec
 
 Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically.
 
-Set `DISABLE_AUTO_WORKFLOWS=true` in the `.env` file to skip all GitHub Actions automation without editing workflow files. Individual workflows can also be disabled with `DISABLE_CONVERT_WORKFLOW`, `DISABLE_VALIDATE_WORKFLOW`, `DISABLE_VECTOR_WORKFLOW`, `DISABLE_PROMPT_ANALYSIS_WORKFLOW`, `DISABLE_PR_REVIEW_WORKFLOW`, or `DISABLE_AUTO_MERGE_WORKFLOW`.
+Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, or `ENABLE_AUTO_MERGE_WORKFLOW`.
 
 Install dependencies with:
 
