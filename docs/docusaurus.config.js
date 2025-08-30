@@ -17,6 +17,7 @@ const config = {
       'classic',
       ({
         docs: {
+          path: 'content',
           sidebarPath: require.resolve('./sidebars.js'),
         },
         theme: {
