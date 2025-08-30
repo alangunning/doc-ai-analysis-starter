@@ -5,11 +5,11 @@ A minimal template for automating document conversion, verification, prompt exec
 ## Requirements
 
 - Python >= 3.10
-- An `OPENAI_API_KEY` environment variable for scripts and workflows that call the OpenAI API (see `.env.example`).
+- Environment variables such as `OPENAI_API_KEY`, `GEMINI_API_KEY`, and `GITHUB_TOKEN` for model access and GitHub CLI operations (see `.env.example`).
 
-Create a `.env` file based on `.env.example` and supply your API key (and optional settings).
+Create a `.env` file based on `.env.example` and supply your API key (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` automatically.
 
-Set `DISABLE_AUTO_WORKFLOWS=true` in the `.env` file to skip all GitHub Actions automation without editing workflow files.
+Set `DISABLE_AUTO_WORKFLOWS=true` in the `.env` file to skip all GitHub Actions automation without editing workflow files. Individual workflows can also be disabled with `DISABLE_CONVERT_WORKFLOW`, `DISABLE_VALIDATE_WORKFLOW`, `DISABLE_VECTOR_WORKFLOW`, `DISABLE_PROMPT_ANALYSIS_WORKFLOW`, `DISABLE_PR_REVIEW_WORKFLOW`, or `DISABLE_AUTO_MERGE_WORKFLOW`.
 
 Install dependencies with:
 
