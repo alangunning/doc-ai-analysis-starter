@@ -17,6 +17,21 @@ Install dependencies with:
 pip install -e .
 ```
 
+## Directory layout
+
+Each source document is stored under `data/<name>/<name>.pdf`. Conversions,
+embeddings, and other derived files are written alongside the source so every
+representation stays grouped together:
+
+```
+data/
+  sample/
+    sample.pdf
+    sample.md
+    sample.html
+    sample.embedding.json
+```
+
 ## Scripts
 
 ### `convert.py`
@@ -24,13 +39,14 @@ pip install -e .
 Convert raw documents (e.g., PDFs) into one or more formats:
 
 ```bash
-python scripts/convert.py data/raw --outdir data --format markdown --format html
+python scripts/convert.py data/sample/sample.pdf --format markdown --format html
 ```
 
-The command above writes Markdown to `data/markdown/` and HTML to `data/html/`. Pass
-`--format` multiple times to emit additional outputs (`json`, `text`, or `doctags`).
-Alternatively, set a comma-separated list in the `OUTPUT_FORMATS` environment variable
-so the script and the convert workflow default to those formats (e.g.,
+Outputs are written alongside the source file, so the example above produces
+`data/sample/sample.md` and `data/sample/sample.html`. Pass `--format` multiple
+times to emit additional outputs (`json`, `text`, or `doctags`). Alternatively,
+set a comma-separated list in the `OUTPUT_FORMATS` environment variable so the
+script and the convert workflow default to those formats (e.g.,
 `OUTPUT_FORMATS=markdown,html`). The underlying library is wrapped by
 `docai.converter` so you can swap engines without changing calling code.
 
@@ -39,7 +55,7 @@ so the script and the convert workflow default to those formats (e.g.,
 Validate that a converted file (Markdown, HTML, JSON, etc.) matches the original document:
 
 ```bash
-python scripts/validate.py data/raw/example.pdf data/markdown/example.md --format markdown
+python scripts/validate.py data/example/example.pdf data/example/example.md
 ```
 
 ### `run_prompt.py`
@@ -47,20 +63,22 @@ python scripts/validate.py data/raw/example.pdf data/markdown/example.md --forma
 Run a prompt definition against a Markdown document and save JSON output:
 
 ```bash
-python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/markdown/example.md --outdir outputs/annual-report
+python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/example/example.md --outdir outputs/annual-report
 ```
 
 ### `build_vector_store.py`
 
-Generate embeddings for Markdown documents and store them under `vector_store/`:
+Generate embeddings for Markdown documents and write them next to each source file:
 
 ```bash
-python scripts/build_vector_store.py data/markdown vector_store
+python scripts/build_vector_store.py data
 ```
 
-Embeddings are fetched from the GitHub Models API using `openai/text-embedding-3-small` by
-default. The script sends a POST request to `https://models.github.ai/inference/embeddings`
-with your `GITHUB_TOKEN` and writes the returned float vectors to JSON files.
+Embeddings are fetched from the GitHub Models API using
+`openai/text-embedding-3-small` by default. The script sends a POST request to
+`https://models.github.ai/inference/embeddings` with your `GITHUB_TOKEN` and
+writes the returned float vectors to `<name>.embedding.json` files in the same
+directory as each Markdown document.
 
 ### `review_pr.py`
 
@@ -88,9 +106,9 @@ from docai.dublin_core import DublinCoreDocument
 
 ## GitHub Workflows
 
-- **Convert** – auto-converts files in `data/raw/` to Markdown and commits results.
+- **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs.
 - **Validate** – checks converted outputs against the source documents and auto-corrects mismatches.
-- **Vector** – builds a vector store from Markdown documents after validation.
+- **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources.
 - **Prompt Analysis** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
 - **PR Review** – summarizes pull requests.
 - **Auto Merge** – merges pull requests when a `/merge` comment is posted.

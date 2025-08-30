@@ -2,7 +2,7 @@ name: Prompt Analysis
 on:
   workflow_dispatch:
   push:
-    paths: ["data/markdown/**/*.md"]
+    paths: ["data/**/*.md"]
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
       - run: pip install openai pyyaml
         if: steps.env.outputs.skip != 'true'
       - run: |
-          for md in data/markdown/**/*.md; do
+          for md in data/**/*.md; do
             python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md" --outdir outputs/${{ matrix.prompt }}
           done
         if: steps.env.outputs.skip != 'true'

@@ -2,11 +2,11 @@ name: Validate Conversions
 on:
   push:
     paths:
-      - "data/markdown/**/*.md"
-      - "data/html/**/*.html"
-      - "data/json/**/*.json"
-      - "data/text/**/*.txt"
-      - "data/doctags/**/*.doctags"
+      - "data/**/*.md"
+      - "data/**/*.html"
+      - "data/**/*.json"
+      - "data/**/*.txt"
+      - "data/**/*.doctags"
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -41,13 +41,12 @@ jobs:
       - run: pip install docling openai pyyaml
         if: steps.env.outputs.skip != 'true'
       - run: |
-          for file in $(git diff --name-only HEAD~1 -- 'data/markdown/**/*.md' 'data/html/**/*.html' 'data/json/**/*.json' 'data/text/**/*.txt' 'data/doctags/**/*.doctags'); do
-            fmt=$(echo "$file" | cut -d/ -f2)
-            raw=data/raw/${file#data/$fmt/}
-            raw=${raw%.*}.pdf
-            python scripts/validate.py $raw $file --format $fmt --prompt prompts/validate-output.prompt.yaml || (
+          for file in $(git diff --name-only HEAD~1 -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
+            raw=${file%.*}.pdf
+            fmt=${file##*.}
+            python scripts/validate.py $raw $file --prompt prompts/validate-output.prompt.yaml || (
               git checkout -- $file
-              python scripts/convert.py $raw --outdir data --format $fmt
+              python scripts/convert.py $raw --format $fmt
               git add $file
             )
           done

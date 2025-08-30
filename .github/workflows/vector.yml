@@ -1,8 +1,8 @@
-name: Build Vector Store
+name: Build Vectors
 on:
   push:
     branches: [main]
-    paths: ["data/markdown/**/*.md"]
+    paths: ["data/**/*.md"]
 jobs:
   vectors:
     runs-on: ubuntu-latest
@@ -33,13 +33,13 @@ jobs:
         with: {python-version: '3.x'}
       - run: pip install requests python-dotenv
         if: steps.env.outputs.skip != 'true'
-      - run: python scripts/build_vector_store.py data/markdown vector_store
+      - run: python scripts/build_vector_store.py data
         if: steps.env.outputs.skip != 'true'
       - name: Commit vectors
         if: steps.env.outputs.skip != 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add vector_store/
-          git commit -m "chore: update vector store" || echo "No changes"
+          git add data
+          git commit -m "chore: update vectors" || echo "No changes"
           git push

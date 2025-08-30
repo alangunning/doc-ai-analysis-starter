@@ -1,7 +1,7 @@
 name: Convert
 on:
   push:
-    paths: ["data/raw/**"]
+    paths: ["data/**/*.pdf"]
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -32,7 +32,11 @@ jobs:
         with: {python-version: "3.x"}
       - run: pip install docling
         if: steps.env.outputs.skip != 'true'
-      - run: python scripts/convert.py data/raw --outdir data
+      - run: |
+          files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.pdf')
+          for f in $files; do
+            python scripts/convert.py "$f"
+          done
         if: steps.env.outputs.skip != 'true'
       - name: Commit conversions
         if: steps.env.outputs.skip != 'true'
