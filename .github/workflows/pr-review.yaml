@@ -18,13 +18,11 @@ jobs:
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_PR_REVIEW_WORKFLOW
-      - uses: actions/checkout@v4
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
-        if: steps.env.outputs.skip != 'true'
-        with: {python-version: "3.x"}
-      - run: pip install openai pyyaml
-        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: openai pyyaml
       - name: Review PR
         if: steps.env.outputs.skip != 'true'
         id: review

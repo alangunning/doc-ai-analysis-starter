@@ -16,11 +16,9 @@ jobs:
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_AUTO_MERGE_WORKFLOW
-      - uses: actions/checkout@v4
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
-        if: steps.env.outputs.skip != 'true'
-        with: {python-version: '3.x'}
+        uses: ./.github/actions/setup-python
       - name: Approve PR
         if: steps.env.outputs.skip != 'true'
         run: gh pr review ${{ github.event.issue.number }} --approve

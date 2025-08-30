@@ -13,13 +13,11 @@ jobs:
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_CONVERT_WORKFLOW
-      - uses: actions/checkout@v4
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
-        if: steps.env.outputs.skip != 'true'
-        with: {python-version: "3.x"}
-      - run: pip install docling
-        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: docling
       - run: |
           files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.pdf')
           for f in $files; do

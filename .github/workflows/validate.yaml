@@ -21,13 +21,11 @@ jobs:
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_VALIDATE_WORKFLOW
-      - uses: actions/checkout@v4
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
-        if: steps.env.outputs.skip != 'true'
-        with: {python-version: "3.x"}
-      - run: pip install docling openai pyyaml
-        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: docling openai pyyaml
       - run: |
           for file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
             raw=${file%.*}.pdf

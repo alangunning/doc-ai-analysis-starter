@@ -13,12 +13,10 @@ jobs:
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_LINT_WORKFLOW
-      - uses: actions/checkout@v4
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
-        if: steps.env.outputs.skip != 'true'
-        with: {python-version: "3.x"}
-      - run: pip install ruff
-        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: ruff
       - run: ruff check .
         if: steps.env.outputs.skip != 'true'
