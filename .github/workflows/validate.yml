@@ -41,7 +41,7 @@ jobs:
             raw=${raw%.*}.pdf
             python scripts/validate_markdown.py $raw $md --prompt prompts/validate-md.prompt.yaml || (
               git checkout -- $md
-              python scripts/convert_to_markdown.py $raw --outdir data/markdown
+              python scripts/convert.py $raw --outdir data/markdown --format markdown
               git add $md
             )
           done

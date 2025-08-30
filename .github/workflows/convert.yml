@@ -32,7 +32,7 @@ jobs:
         with: {python-version: "3.x"}
       - run: pip install docling
         if: steps.env.outputs.skip != 'true'
-      - run: python scripts/convert_to_markdown.py data/raw --outdir data/markdown
+      - run: python scripts/convert.py data/raw --outdir data/markdown --format markdown
         if: steps.env.outputs.skip != 'true'
       - name: Commit conversions
         if: steps.env.outputs.skip != 'true'

@@ -19,13 +19,15 @@ pip install -e .
 
 ## Scripts
 
-### `convert_to_markdown.py`
+### `convert.py`
 
-Convert raw documents (e.g., PDFs) into Markdown:
+Convert raw documents (e.g., PDFs) into a chosen format:
 
 ```bash
-python scripts/convert_to_markdown.py data/raw --outdir data/markdown
+python scripts/convert.py data/raw --outdir data/markdown --format markdown
 ```
+
+Use `--format html`, `json`, `text`, or `doctags` to export other supported types. The underlying library is wrapped by `docai.converter` so you can swap engines without changing calling code.
 
 ### `validate_markdown.py`
 
