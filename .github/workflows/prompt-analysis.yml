@@ -1,0 +1,24 @@
+name: Prompt Analysis
+on:
+  workflow_dispatch:
+  push:
+    paths: ["data/markdown/**/*.md"]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        prompt: [annual-report, sec-8k, insider-trades]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: pip install openai pyyaml
+      - run: |
+          for md in data/markdown/**/*.md; do
+            python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md" --outdir outputs/${{ matrix.prompt }}
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.prompt }}-results
+          path: outputs/${{ matrix.prompt }}/

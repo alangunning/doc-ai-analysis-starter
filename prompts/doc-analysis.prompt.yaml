@@ -1,0 +1,8 @@
+model: gpt-4.1-mini
+temperature: 0
+system: |
+  You analyze Markdown documents and return a short summary.
+user: |
+  Summarize the following document in three bullet points.
+response_format:
+  type: text

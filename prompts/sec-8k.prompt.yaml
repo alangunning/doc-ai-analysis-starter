@@ -1,0 +1,20 @@
+model: "gpt-4.1-mini"
+temperature: 0
+system: |
+  You are a SEC filing assistant. Given an 8-K section, summarize the event.
+user: |
+  Extract the following fields from the text:
+  - event_type (string)
+  - event_date (string)
+  - summary (string)
+response_format:
+  type: json_schema
+  json_schema:
+    name: SECEightK
+    schema:
+      type: object
+      properties:
+        event_type: {type: string}
+        event_date: {type: string}
+        summary: {type: string}
+      required: [event_type, event_date, summary]

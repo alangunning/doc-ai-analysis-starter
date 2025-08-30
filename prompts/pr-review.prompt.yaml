@@ -1,0 +1,8 @@
+model: gpt-4.1-mini
+temperature: 0
+system: |
+  You are a code reviewer. Provide concise review comments.
+user: |
+  Review the following pull request description and suggest improvements.
+response_format:
+  type: text

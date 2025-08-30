@@ -1,0 +1,21 @@
+name: Build Vector Store
+on:
+  push:
+    branches: [main]
+    paths: ["data/markdown/**/*.md"]
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.x'}
+      - run: pip install openai
+      - run: python scripts/build_vector_store.py data/markdown vector_store
+      - name: Commit vectors
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add vector_store/
+          git commit -m "chore: update vector store" || echo "No changes"
+          git push

@@ -1,0 +1,33 @@
+name: Validate Markdown
+on:
+  push:
+    paths: ["data/markdown/**/*.md"]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: pip install docling openai pyyaml
+      - run: |
+          for md in $(git diff --name-only HEAD~1 -- 'data/markdown/**/*.md'); do
+            raw=data/raw/${md#data/markdown/}
+            raw=${raw%.*}.pdf
+            python scripts/validate_markdown.py $raw $md --prompt prompts/validate-md.prompt.yaml || (
+              git checkout -- $md
+              python scripts/convert_to_markdown.py $raw --outdir data/markdown
+              git add $md
+            )
+          done
+      - name: Create PR if fixes
+        run: |
+          git diff --staged --quiet && exit 0
+          branch="fix-md-$(date +%s)"
+          git checkout -b "$branch"
+          git commit -m "docs: fix Markdown conversion"
+          git push origin "$branch"
+          gh pr create --fill --title "Fix Markdown conversion" --body "Auto-corrected mismatched markdown."

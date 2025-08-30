@@ -1,0 +1,16 @@
+name: PR Review
+on:
+  pull_request:
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.x"}
+      - run: pip install openai pyyaml
+      - name: Review PR
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          python scripts/review_pr.py prompts/pr-review.prompt.yaml "$PR_BODY"
