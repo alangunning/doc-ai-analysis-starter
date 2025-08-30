@@ -7,7 +7,7 @@ A minimal template for automating document conversion, verification, prompt exec
 - Python >= 3.10
 - Environment variables such as `GITHUB_TOKEN` for model access and GitHub CLI operations (see `.env.example`).
 
-Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically.
+Create a `.env` file based on `.env.example` and supply your token (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN` automatically. Each workflow's model can be overridden by setting `PR_REVIEW_MODEL`, `VALIDATE_MODEL`, `ANALYZE_MODEL`, or `EMBED_MODEL`.
 
 Set `DISABLE_ALL_WORKFLOWS=true` in the `.env` file to skip every GitHub Action without editing workflow files. Individual workflows remain disabled unless explicitly enabled with variables like `ENABLE_CONVERT_WORKFLOW`, `ENABLE_VALIDATE_WORKFLOW`, `ENABLE_VECTOR_WORKFLOW`, `ENABLE_PROMPT_ANALYSIS_WORKFLOW`, `ENABLE_PR_REVIEW_WORKFLOW`, `ENABLE_DOCS_WORKFLOW`, `ENABLE_AUTO_MERGE_WORKFLOW`, or `ENABLE_LINT_WORKFLOW`.
 
@@ -69,6 +69,7 @@ Validate that a converted file (Markdown, HTML, JSON, etc.) matches the original
 ```bash
 python scripts/validate.py data/example/example.pdf data/example/example.md
 ```
+Override the model with `--model` or `VALIDATE_MODEL`.
 
 ### `run_prompt.py`
 
@@ -78,7 +79,7 @@ Run a prompt definition against a Markdown document and save JSON output next to
 python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/example/example.md
 ```
 
-The above writes `data/example/example.annual-report.json`.
+The above writes `data/example/example.annual-report.json`. Override the model with `--model` or `ANALYZE_MODEL`.
 
 ### `build_vector_store.py`
 
@@ -89,7 +90,8 @@ python scripts/build_vector_store.py data
 ```
 
 Embeddings are fetched from the GitHub Models API using
-`openai/text-embedding-3-small` by default. The script sends a POST request to
+`openai/text-embedding-3-small` by default. Override the model with
+`EMBED_MODEL`. The script sends a POST request to
 `https://models.github.ai/inference/embeddings` with your `GITHUB_TOKEN` and
 writes the returned float vectors to `<name>.embedding.json` files in the same
 directory as each Markdown document.
@@ -101,6 +103,7 @@ Produce AI-assisted PR feedback using a prompt file:
 ```bash
 python scripts/review_pr.py prompts/pr-review.prompt.yaml "PR body text"
 ```
+Override the model with `--model` or `PR_REVIEW_MODEL`.
 
 ### `merge_pr.py`
 

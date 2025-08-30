@@ -61,7 +61,10 @@ docs/build/*
 ```text
 # Copy to .env and fill in your credentials
 GITHUB_TOKEN=
-# Optional embeddings configuration
+# Optional model overrides
+# PR_REVIEW_MODEL=gpt-4.1
+# VALIDATE_MODEL=gpt-4.1
+# ANALYZE_MODEL=gpt-4.1
 # EMBED_MODEL=openai/text-embedding-3-small
 # EMBED_DIMENSIONS=1536
 # Formats produced by `scripts/convert.py` (comma-separated)
@@ -355,6 +358,7 @@ def validate_file(
     rendered_path: Path,
     fmt: OutputFormat,
     prompt_path: Path,
+    model: str | None = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -369,7 +373,7 @@ def validate_file(
         base_url="https://models.github.ai",
     )
     result = client.responses.create(
-        model=spec["model"],
+        model=model or spec["model"],
         **spec.get("modelParameters", {}),
         input=messages,
     )
@@ -1054,6 +1058,7 @@ if __name__ == "__main__":
 ### `scripts/review_pr.py`
 ```text
 import argparse
+import os
 from pathlib import Path
 
 from docai.github import review_pr
@@ -1063,39 +1068,86 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("prompt", type=Path, help="Path to pr-review.prompt.yaml")
     parser.add_argument("pr_body", help="Pull request description")
+    parser.add_argument(
+        "--model",
+        default=os.getenv("PR_REVIEW_MODEL"),
+        help="Model name override",
+    )
     args = parser.parse_args()
-    print(review_pr(args.pr_body, args.prompt))
+    print(review_pr(args.pr_body, args.prompt, model=args.model))
 ```
 
 ### `scripts/run_prompt.py`
 ```text
 import argparse
+import os
 from pathlib import Path
 
 from docai.github import run_prompt
+from docai.metadata import (
+    compute_hash,
+    is_step_done,
+    load_metadata,
+    mark_step,
+    save_metadata,
+)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("prompt", type=Path)
     parser.add_argument("markdown_doc", type=Path)
-    parser.add_argument("--outdir", default="outputs", type=Path)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional output file; defaults to <doc>.<prompt>.json next to the source",
+    )
+    parser.add_argument(
+        "--model",
+        default=os.getenv("ANALYZE_MODEL"),
+        help="Model name override",
+    )
     args = parser.parse_args()
 
-    result = run_prompt(args.prompt, args.markdown_doc.read_text())
-    args.outdir.mkdir(parents=True, exist_ok=True)
-    (args.outdir / (args.markdown_doc.stem + ".json")).write_text(
-        result + "\n", encoding="utf-8"
+    prompt_name = args.prompt.name.replace(".prompt.yaml", "")
+    step_name = f"prompt:{prompt_name}"
+
+    meta = load_metadata(args.markdown_doc)
+    file_hash = compute_hash(args.markdown_doc)
+    if meta.blake2b == file_hash and is_step_done(meta, step_name):
+        raise SystemExit(0)
+    if meta.blake2b != file_hash:
+        meta.blake2b = file_hash
+        meta.extra = {}
+
+    result = run_prompt(
+        args.prompt, args.markdown_doc.read_text(), model=args.model
     )
+    out_path = (
+        args.output
+        if args.output
+        else args.markdown_doc.with_suffix(f".{prompt_name}.json")
+    )
+    out_path.write_text(result + "\n", encoding="utf-8")
+    mark_step(meta, step_name)
+    save_metadata(args.markdown_doc, meta)
 ```
 
 ### `scripts/validate.py`
 ```text
 import argparse
+import os
 from pathlib import Path
 
 from docai import OutputFormat
 from docai.github import validate_file
+from docai.metadata import (
+    compute_hash,
+    is_step_done,
+    load_metadata,
+    mark_step,
+    save_metadata,
+)
 
 
 def infer_format(path: Path) -> OutputFormat:
@@ -1123,12 +1175,28 @@ if __name__ == "__main__":
         type=Path,
         default=Path("prompts/validate-output.prompt.yaml"),
     )
+    parser.add_argument(
+        "--model",
+        default=os.getenv("VALIDATE_MODEL"),
+        help="Model name override",
+    )
     args = parser.parse_args()
 
+    meta = load_metadata(args.raw)
+    file_hash = compute_hash(args.raw)
+    if meta.blake2b == file_hash and is_step_done(meta, "analysis"):
+        raise SystemExit(0)
+    if meta.blake2b != file_hash:
+        meta.blake2b = file_hash
+        meta.extra = {}
     fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
-    verdict = validate_file(args.raw, args.rendered, fmt, args.prompt)
+    verdict = validate_file(
+        args.raw, args.rendered, fmt, args.prompt, model=args.model
+    )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
+    mark_step(meta, "analysis")
+    save_metadata(args.raw, meta)
 ```
 
 ### `docs/docusaurus.config.js`
@@ -1478,7 +1546,7 @@ jobs:
         id: review
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          MODEL: ${{ github.event.inputs.model || 'gpt-4.1' }}
+          MODEL: ${{ github.event.inputs.model || env.PR_REVIEW_MODEL || 'gpt-4.1' }}
         run: |
           python scripts/review_pr.py prompts/pr-review.prompt.yaml "$PR_BODY" --model "$MODEL" | tee pr-review.txt
       - name: Comment on PR

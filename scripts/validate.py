@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 from docai import OutputFormat
@@ -37,6 +38,11 @@ if __name__ == "__main__":
         type=Path,
         default=Path("prompts/validate-output.prompt.yaml"),
     )
+    parser.add_argument(
+        "--model",
+        default=os.getenv("VALIDATE_MODEL"),
+        help="Model name override",
+    )
     args = parser.parse_args()
 
     meta = load_metadata(args.raw)
@@ -47,7 +53,9 @@ if __name__ == "__main__":
         meta.blake2b = file_hash
         meta.extra = {}
     fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
-    verdict = validate_file(args.raw, args.rendered, fmt, args.prompt)
+    verdict = validate_file(
+        args.raw, args.rendered, fmt, args.prompt, model=args.model
+    )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
     mark_step(meta, "analysis")

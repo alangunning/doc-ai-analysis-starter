@@ -37,6 +37,7 @@ def validate_file(
     rendered_path: Path,
     fmt: OutputFormat,
     prompt_path: Path,
+    model: str | None = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -51,7 +52,7 @@ def validate_file(
         base_url="https://models.github.ai",
     )
     result = client.responses.create(
-        model=spec["model"],
+        model=model or spec["model"],
         **spec.get("modelParameters", {}),
         input=messages,
     )

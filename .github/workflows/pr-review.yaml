@@ -42,7 +42,7 @@ jobs:
         id: review
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
-          MODEL: ${{ github.event.inputs.model || 'gpt-4.1' }}
+          MODEL: ${{ github.event.inputs.model || env.PR_REVIEW_MODEL || 'gpt-4.1' }}
         run: |
           python scripts/review_pr.py prompts/pr-review.prompt.yaml "$PR_BODY" --model "$MODEL" | tee pr-review.txt
       - name: Comment on PR

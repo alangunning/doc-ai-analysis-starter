@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 from docai.github import run_prompt
@@ -20,6 +21,11 @@ if __name__ == "__main__":
         type=Path,
         help="Optional output file; defaults to <doc>.<prompt>.json next to the source",
     )
+    parser.add_argument(
+        "--model",
+        default=os.getenv("ANALYZE_MODEL"),
+        help="Model name override",
+    )
     args = parser.parse_args()
 
     prompt_name = args.prompt.name.replace(".prompt.yaml", "")
@@ -33,7 +39,9 @@ if __name__ == "__main__":
         meta.blake2b = file_hash
         meta.extra = {}
 
-    result = run_prompt(args.prompt, args.markdown_doc.read_text())
+    result = run_prompt(
+        args.prompt, args.markdown_doc.read_text(), model=args.model
+    )
     out_path = (
         args.output
         if args.output
