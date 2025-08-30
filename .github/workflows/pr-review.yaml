@@ -15,21 +15,9 @@ jobs:
     steps:
       - name: Load env
         id: env
-        run: |
-          if [ -f .env ]; then
-            while IFS='=' read -r key value; do
-              if [[ -z "$key" || "$key" == \#* ]]; then
-                continue
-              fi
-              if [ -z "${!key}" ]; then
-                echo "$key=$value" >> $GITHUB_ENV
-                export "$key=$value"
-              fi
-            done < .env
-          fi
-          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_PR_REVIEW_WORKFLOW}" != "true" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_PR_REVIEW_WORKFLOW
       - uses: actions/checkout@v4
         if: steps.env.outputs.skip != 'true'
       - uses: actions/setup-python@v5
