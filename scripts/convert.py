@@ -19,10 +19,12 @@ load_dotenv()
 def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     """Convert a file or all files under a directory in-place."""
 
-    def handle_file(file: Path) -> None:
-        """Convert ``file`` if it's a PDF and hasn't already been processed."""
+    output_suffixes = {suffix_for_format(fmt) for fmt in OutputFormat}
 
-        if file.suffix.lower() != ".pdf":
+    def handle_file(file: Path) -> None:
+        """Convert ``file`` if it's not already a derived output and hasn't been processed."""
+
+        if file.suffix.lower() in output_suffixes:
             return
 
         meta = load_metadata(file)
@@ -43,8 +45,9 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     if source.is_file():
         handle_file(source)
     else:
-        for file in source.rglob("*.pdf"):
-            handle_file(file)
+        for file in source.rglob("*"):
+            if file.is_file():
+                handle_file(file)
 
 
 if __name__ == "__main__":
