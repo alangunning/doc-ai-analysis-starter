@@ -118,6 +118,11 @@ Reusable helpers for creating and parsing Dublin Core metadata documents:
 from docai.metadata import DublinCoreDocument
 ```
 
+Each source file may include a sibling ``*.dc.json`` metadata record. The
+metadata stores a blake2b checksum and tracks which processing steps have been
+completed. Conversion, validation, and vector generation scripts consult this
+file to skip work for unchanged documents and only rerun missing steps.
+
 ## GitHub Workflows
 
 - **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs.

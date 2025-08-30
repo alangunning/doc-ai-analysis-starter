@@ -9,6 +9,14 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from ..metadata import (
+    compute_hash,
+    is_step_done,
+    load_metadata,
+    mark_step,
+    save_metadata,
+)
+
 load_dotenv()
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
@@ -30,6 +38,13 @@ def build_vector_store(src_dir: Path) -> None:
     }
 
     for md_file in src_dir.rglob("*.md"):
+        meta = load_metadata(md_file)
+        file_hash = compute_hash(md_file)
+        if meta.blake2b == file_hash and is_step_done(meta, "vector"):
+            continue
+        if meta.blake2b != file_hash:
+            meta.blake2b = file_hash
+            meta.extra = {}
         text = md_file.read_text(encoding="utf-8")
         payload: dict[str, object] = {
             "model": EMBED_MODEL,
@@ -46,6 +61,8 @@ def build_vector_store(src_dir: Path) -> None:
             json.dumps({"file": str(md_file), "embedding": embedding}) + "\n",
             encoding="utf-8",
         )
+        mark_step(meta, "vector")
+        save_metadata(md_file, meta)
 
 
 __all__ = ["build_vector_store"]
