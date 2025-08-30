@@ -1,6 +1,10 @@
 import argparse
 from pathlib import Path
+
+from dotenv import load_dotenv
 from docling.document_converter import DocumentConverter
+
+load_dotenv()
 
 def convert(input_path: Path, output_path: Path) -> None:
     converter = DocumentConverter()

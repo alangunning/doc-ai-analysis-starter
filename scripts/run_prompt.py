@@ -1,8 +1,12 @@
 import argparse
 import json
 from pathlib import Path
+
+from dotenv import load_dotenv
 import yaml
 from openai import OpenAI
+
+load_dotenv()
 
 
 def run_prompt(prompt_file: Path, input_text: str) -> str:

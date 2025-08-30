@@ -10,6 +10,7 @@ dependencies = [
     "pyyaml",
     "requests",
     "anyio",
+    "python-dotenv",
 ]
 
 [build-system]

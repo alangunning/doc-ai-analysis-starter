@@ -1,7 +1,11 @@
 import argparse
 from pathlib import Path
+
+from dotenv import load_dotenv
 import yaml
 from openai import OpenAI
+
+load_dotenv()
 
 
 def review(pr_body: str, prompt_path: Path) -> str:

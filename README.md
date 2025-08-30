@@ -5,7 +5,9 @@ A minimal template for automating document conversion, verification, prompt exec
 ## Requirements
 
 - Python >= 3.10
-- An `OPENAI_API_KEY` environment variable for scripts and workflows that call the OpenAI API.
+- An `OPENAI_API_KEY` environment variable for scripts and workflows that call the OpenAI API (see `.env.example`).
+
+Create a `.env` file based on `.env.example` and supply your API key (and optional settings).
 
 Install dependencies with:
 

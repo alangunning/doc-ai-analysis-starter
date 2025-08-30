@@ -2,8 +2,12 @@ import argparse
 import base64
 import json
 from pathlib import Path
+
+from dotenv import load_dotenv
 import yaml
 from openai import OpenAI
+
+load_dotenv()
 
 
 def call_model(raw_bytes: bytes, md_text: str, prompt_path: Path) -> str:

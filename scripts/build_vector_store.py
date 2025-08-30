@@ -1,9 +1,14 @@
 import argparse
 import json
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 from openai import OpenAI
 
-EMBED_MODEL = "text-embedding-3-small"
+load_dotenv()
+
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "text-embedding-3-small")
 
 def build_vectors(src_dir: Path, out_dir: Path) -> None:
     client = OpenAI()

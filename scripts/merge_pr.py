@@ -1,6 +1,10 @@
 import argparse
 import subprocess
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def merge(pr_number: int) -> None:
     subprocess.run(["gh", "pr", "merge", str(pr_number), "--merge"], check=True)
