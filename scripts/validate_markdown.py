@@ -3,6 +3,7 @@ import base64
 import json
 from pathlib import Path
 
+import os
 from dotenv import load_dotenv
 import yaml
 from openai import OpenAI
@@ -21,7 +22,8 @@ def call_model(raw_bytes: bytes, md_text: str, prompt_path: Path) -> str:
                 {"type": "text", "text": md_text},
             ]
             break
-    client = OpenAI(base_url="https://models.inference.ai.azure.com")
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://models.github.ai")
+    client = OpenAI(api_key=os.environ.get("GITHUB_TOKEN"), base_url=base_url)
     result = client.responses.create(
         model=spec["model"],
         **spec.get("modelParameters", {}),

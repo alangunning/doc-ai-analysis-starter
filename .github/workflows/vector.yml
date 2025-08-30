@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-python@v5
         if: steps.env.outputs.skip != 'true'
         with: {python-version: '3.x'}
-      - run: pip install openai
+      - run: pip install requests python-dotenv
         if: steps.env.outputs.skip != 'true'
       - run: python scripts/build_vector_store.py data/markdown vector_store
         if: steps.env.outputs.skip != 'true'

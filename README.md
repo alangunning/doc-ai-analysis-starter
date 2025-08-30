@@ -5,7 +5,7 @@ A minimal template for automating document conversion, verification, prompt exec
 ## Requirements
 
 - Python >= 3.10
-- Environment variables such as `OPENAI_API_KEY`, `GEMINI_API_KEY`, and `GITHUB_TOKEN` for model access and GitHub CLI operations (see `.env.example`).
+- Environment variables such as `GITHUB_TOKEN` (for GitHub Models) and optional `OPENAI_API_KEY` or `GEMINI_API_KEY` for model access and GitHub CLI operations (see `.env.example`).
 
 Create a `.env` file based on `.env.example` and supply your API key (and optional settings). Environment variables provided by the runtime (for example via GitHub Secrets) override values in the file, allowing cloud agents to inject `GITHUB_TOKEN`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` automatically.
 
@@ -50,6 +50,10 @@ Generate embeddings for Markdown documents and store them under `vector_store/`:
 ```bash
 python scripts/build_vector_store.py data/markdown vector_store
 ```
+
+Embeddings are fetched from the GitHub Models API using `openai/text-embedding-3-small` by
+default. The script sends a POST request to `https://models.github.ai/inference/embeddings`
+with your `GITHUB_TOKEN` and writes the returned float vectors to JSON files.
 
 ### `review_pr.py`
 

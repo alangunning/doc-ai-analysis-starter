@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,7 +17,8 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
         if msg.get("role") == "user":
             msg["content"] = msg.get("content", "") + "\n\n" + input_text
             break
-    client = OpenAI()
+    base_url = os.environ.get("OPENAI_BASE_URL", "https://models.github.ai")
+    client = OpenAI(api_key=os.environ.get("GITHUB_TOKEN"), base_url=base_url)
     response = client.responses.create(
         model=spec["model"],
         **spec.get("modelParameters", {}),
