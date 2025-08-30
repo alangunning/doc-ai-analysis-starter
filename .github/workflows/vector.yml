@@ -1,7 +1,7 @@
 name: Build Vector Store
 on:
   workflow_run:
-    workflows: ["Validate"]
+    workflows: ["Validate Markdown"]
     branches: [main]
     types:
       - completed

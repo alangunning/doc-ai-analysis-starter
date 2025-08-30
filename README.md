@@ -44,8 +44,19 @@ python scripts/run_prompt.py prompts/annual-report.prompt.yaml documents/example
 - **Convert** – auto-converts files in `documents/raw/` to Markdown and commits results.
 - **Validate** – checks converted Markdown against the source document and auto-corrects mismatches.
 - **Prompt Analysis** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
+- **Build Vector Store** – embeds validated Markdown documents into a vector store.
 - **PR Review** – summarizes pull requests.
+- **Review Comment** – posts an AI review when someone comments `/review` on a pull request.
 - **Auto Merge** – merges pull requests when a `/merge` comment is posted.
+
+## How to Showcase
+
+1. Push a PDF into `documents/raw/`.
+2. The Convert workflow produces a Markdown file in `documents/`.
+3. The Validate workflow checks the Markdown and auto-corrects mismatches.
+4. The Prompt Analysis workflow runs `run_prompt.py` for each prompt and uploads results.
+5. The Build Vector Store workflow updates `vector_store/embeddings.json`.
+6. Open a pull request to see the PR summary; comment `/review` for an AI review and `/merge` to merge automatically.
 
 ## Adding Prompts
 
