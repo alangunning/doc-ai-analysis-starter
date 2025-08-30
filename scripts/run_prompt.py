@@ -1,33 +1,7 @@
 import argparse
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-import yaml
-from openai import OpenAI
-
-load_dotenv()
-
-
-def run_prompt(prompt_file: Path, input_text: str) -> str:
-    """Execute ``prompt_file`` against ``input_text`` and return model output."""
-
-    spec = yaml.safe_load(prompt_file.read_text())
-    messages = [dict(m) for m in spec["messages"]]
-    for msg in reversed(messages):
-        if msg.get("role") == "user":
-            msg["content"] = msg.get("content", "") + "\n\n" + input_text
-            break
-    client = OpenAI(
-        api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai",
-    )
-    response = client.responses.create(
-        model=spec["model"],
-        **spec.get("modelParameters", {}),
-        input=messages,
-    )
-    return response.output[0].content[0].get("text", "")
+from docai.prompts import run_prompt
 
 
 if __name__ == "__main__":

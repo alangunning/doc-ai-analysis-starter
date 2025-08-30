@@ -34,6 +34,9 @@ data/
 
 ## Scripts
 
+Each CLI tool is a thin wrapper around reusable functions in the `docai` module
+so the same logic can be imported elsewhere.
+
 ### `convert.py`
 
 Convert raw documents (e.g., PDFs) into one or more formats:
