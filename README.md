@@ -21,13 +21,13 @@ pip install -e .
 
 ### `convert.py`
 
-Convert raw documents (e.g., PDFs) into a chosen format:
+Convert raw documents (e.g., PDFs) into one or more formats:
 
 ```bash
-python scripts/convert.py data/raw --outdir data/markdown --format markdown
+python scripts/convert.py data/raw --outdir data --format markdown --format html
 ```
 
-Use `--format html`, `json`, `text`, or `doctags` to export other supported types. The underlying library is wrapped by `docai.converter` so you can swap engines without changing calling code.
+The command above writes Markdown to `data/markdown/` and HTML to `data/html/`. Pass `--format` multiple times to emit additional outputs (`json`, `text`, or `doctags`). The underlying library is wrapped by `docai.converter` so you can swap engines without changing calling code.
 
 ### `validate_markdown.py`
 

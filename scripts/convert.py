@@ -3,23 +3,30 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from docai import OutputFormat, convert_file, suffix_for_format
+from docai import OutputFormat, convert_files, suffix_for_format
 
 load_dotenv()
 
 
-def convert_directory(source: Path, out_dir: Path, fmt: OutputFormat) -> None:
+def convert_directory(source: Path, out_dir: Path, formats: list[OutputFormat]) -> None:
+    def handle_file(file: Path) -> None:
+        rel = file.name if source.is_file() else file.relative_to(source)
+        outputs = {}
+        for fmt in formats:
+            if len(formats) == 1 and out_dir.name == fmt.value:
+                fmt_dir = out_dir
+            else:
+                fmt_dir = out_dir / fmt.value
+            out_path = fmt_dir / Path(rel).with_suffix(suffix_for_format(fmt))
+            outputs[fmt] = out_path
+        convert_files(file, outputs)
+
     if source.is_file():
-        rel = source.name
-        out_file = out_dir / Path(rel).with_suffix(suffix_for_format(fmt))
-        convert_file(source, out_file, fmt)
+        handle_file(source)
     else:
         for file in source.rglob("*"):
             if file.is_file():
-                rel = file.relative_to(source)
-                out_file = out_dir / rel.with_suffix(suffix_for_format(fmt))
-                out_file.parent.mkdir(parents=True, exist_ok=True)
-                convert_file(file, out_file, fmt)
+                handle_file(file)
 
 
 if __name__ == "__main__":
@@ -28,9 +35,11 @@ if __name__ == "__main__":
     parser.add_argument("--outdir", default="data/markdown", help="Base output directory")
     parser.add_argument(
         "--format",
-        default=OutputFormat.MARKDOWN.value,
+        dest="formats",
+        action="append",
+        default=[OutputFormat.MARKDOWN.value],
         choices=[f.value for f in OutputFormat],
-        help="Desired output format",
+        help="Desired output format(s). Can be passed multiple times.",
     )
     args = parser.parse_args()
 
@@ -38,5 +47,5 @@ if __name__ == "__main__":
     out_dir = Path(args.outdir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    fmt = OutputFormat(args.format)
-    convert_directory(in_path, out_dir, fmt)
+    fmts = [OutputFormat(f) for f in args.formats]
+    convert_directory(in_path, out_dir, fmts)

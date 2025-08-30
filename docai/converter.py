@@ -46,28 +46,39 @@ _SUFFIX_MAP: Dict[OutputFormat, str] = {
 }
 
 
-def convert_file(input_path: Path, output_path: Path, fmt: OutputFormat) -> None:
-    """Convert a document to the requested format and write it to ``output_path``.
+def convert_files(
+    input_path: Path, outputs: Dict[OutputFormat, Path]
+) -> Dict[OutputFormat, Path]:
+    """Convert ``input_path`` to multiple formats.
 
-    Parameters
-    ----------
-    input_path: Path
-        The path of the source document.
-    output_path: Path
-        Where to write the converted content.
-    fmt: OutputFormat
-        Desired output format.
+    ``outputs`` maps each desired ``OutputFormat`` to the file path where the
+    rendered content should be written.  The source document is converted only
+    once, and the requested representations are emitted to their respective
+    destinations.  The mapping of formats to the paths that were written is
+    returned for convenience.
     """
 
     converter = _DoclingConverter()
     document = converter.convert(input_path)
-    render_method = getattr(document, _METHOD_MAP[fmt])
-    content: Union[str, bytes] = render_method()
 
-    if isinstance(content, bytes):
-        output_path.write_bytes(content)
-    else:
-        output_path.write_text(content, encoding="utf-8")
+    written: Dict[OutputFormat, Path] = {}
+    for fmt, out_path in outputs.items():
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        render_method = getattr(document, _METHOD_MAP[fmt])
+        content: Union[str, bytes] = render_method()
+        if isinstance(content, bytes):
+            out_path.write_bytes(content)
+        else:
+            out_path.write_text(content, encoding="utf-8")
+        written[fmt] = out_path
+
+    return written
+
+
+def convert_file(input_path: Path, output_path: Path, fmt: OutputFormat) -> Path:
+    """Convert ``input_path`` to a single ``fmt`` and return the written path."""
+
+    return convert_files(input_path, {fmt: output_path})[fmt]
 
 
 def suffix_for_format(fmt: OutputFormat) -> str:
@@ -76,4 +87,4 @@ def suffix_for_format(fmt: OutputFormat) -> str:
     return _SUFFIX_MAP[fmt]
 
 
-__all__ = ["OutputFormat", "convert_file", "suffix_for_format"]
+__all__ = ["OutputFormat", "convert_files", "convert_file", "suffix_for_format"]
