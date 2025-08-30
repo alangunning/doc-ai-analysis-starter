@@ -10,15 +10,29 @@ jobs:
       matrix:
         prompt: [annual-report, sec-8k, insider-trades]
     steps:
+      - name: Load env
+        id: env
+        run: |
+          if [ -f .env ]; then
+            cat .env >> $GITHUB_ENV
+          fi
+          if [ "${DISABLE_AUTO_WORKFLOWS}" = "true" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
       - uses: actions/checkout@v4
+        if: steps.env.outputs.skip != 'true'
       - uses: actions/setup-python@v5
+        if: steps.env.outputs.skip != 'true'
         with: {python-version: "3.x"}
       - run: pip install openai pyyaml
+        if: steps.env.outputs.skip != 'true'
       - run: |
           for md in data/markdown/**/*.md; do
             python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md" --outdir outputs/${{ matrix.prompt }}
           done
+        if: steps.env.outputs.skip != 'true'
       - uses: actions/upload-artifact@v4
+        if: steps.env.outputs.skip != 'true'
         with:
           name: ${{ matrix.prompt }}-results
           path: outputs/${{ matrix.prompt }}/

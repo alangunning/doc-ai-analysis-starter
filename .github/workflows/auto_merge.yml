@@ -9,7 +9,19 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Load env
+        id: env
+        run: |
+          if [ -f .env ]; then
+            cat .env >> $GITHUB_ENV
+          fi
+          if [ "${DISABLE_AUTO_WORKFLOWS}" = "true" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
       - uses: actions/checkout@v4
+        if: steps.env.outputs.skip != 'true'
       - uses: actions/setup-python@v5
+        if: steps.env.outputs.skip != 'true'
         with: {python-version: '3.x'}
       - run: python scripts/merge_pr.py ${{ github.event.issue.number }}
+        if: steps.env.outputs.skip != 'true'

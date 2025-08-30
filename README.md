@@ -9,6 +9,8 @@ A minimal template for automating document conversion, verification, prompt exec
 
 Create a `.env` file based on `.env.example` and supply your API key (and optional settings).
 
+Set `DISABLE_AUTO_WORKFLOWS=true` in the `.env` file to skip all GitHub Actions automation without editing workflow files.
+
 Install dependencies with:
 
 ```bash
