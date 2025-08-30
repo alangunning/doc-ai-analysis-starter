@@ -34,12 +34,12 @@ so the script and the convert workflow default to those formats (e.g.,
 `OUTPUT_FORMATS=markdown,html`). The underlying library is wrapped by
 `docai.converter` so you can swap engines without changing calling code.
 
-### `validate_markdown.py`
+### `validate.py`
 
-Validate that a Markdown file matches the original document:
+Validate that a converted file (Markdown, HTML, JSON, etc.) matches the original document:
 
 ```bash
-python scripts/validate_markdown.py data/raw/example.pdf data/markdown/example.md
+python scripts/validate.py data/raw/example.pdf data/markdown/example.md --format markdown
 ```
 
 ### `run_prompt.py`
@@ -89,7 +89,7 @@ from docai.dublin_core import DublinCoreDocument
 ## GitHub Workflows
 
 - **Convert** – auto-converts files in `data/raw/` to Markdown and commits results.
-- **Validate** – checks converted Markdown against the source document and auto-corrects mismatches.
+- **Validate** – checks converted outputs against the source documents and auto-corrects mismatches.
 - **Vector** – builds a vector store from Markdown documents after validation.
 - **Prompt Analysis** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
 - **PR Review** – summarizes pull requests.

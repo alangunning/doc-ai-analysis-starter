@@ -1,7 +1,12 @@
-name: Validate Markdown
+name: Validate Conversions
 on:
   push:
-    paths: ["data/markdown/**/*.md"]
+    paths:
+      - "data/markdown/**/*.md"
+      - "data/html/**/*.html"
+      - "data/json/**/*.json"
+      - "data/text/**/*.txt"
+      - "data/doctags/**/*.doctags"
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -36,13 +41,14 @@ jobs:
       - run: pip install docling openai pyyaml
         if: steps.env.outputs.skip != 'true'
       - run: |
-          for md in $(git diff --name-only HEAD~1 -- 'data/markdown/**/*.md'); do
-            raw=data/raw/${md#data/markdown/}
+          for file in $(git diff --name-only HEAD~1 -- 'data/markdown/**/*.md' 'data/html/**/*.html' 'data/json/**/*.json' 'data/text/**/*.txt' 'data/doctags/**/*.doctags'); do
+            fmt=$(echo "$file" | cut -d/ -f2)
+            raw=data/raw/${file#data/$fmt/}
             raw=${raw%.*}.pdf
-            python scripts/validate_markdown.py $raw $md --prompt prompts/validate-md.prompt.yaml || (
-              git checkout -- $md
-              python scripts/convert.py $raw --outdir data/markdown --format markdown
-              git add $md
+            python scripts/validate.py $raw $file --format $fmt --prompt prompts/validate-output.prompt.yaml || (
+              git checkout -- $file
+              python scripts/convert.py $raw --outdir data --format $fmt
+              git add $file
             )
           done
         if: steps.env.outputs.skip != 'true'
@@ -50,8 +56,8 @@ jobs:
         if: steps.env.outputs.skip != 'true'
         run: |
           git diff --staged --quiet && exit 0
-          branch="fix-md-$(date +%s)"
+          branch="fix-conversion-$(date +%s)"
           git checkout -b "$branch"
-          git commit -m "docs: fix Markdown conversion"
+          git commit -m "docs: fix document conversion"
           git push origin "$branch"
-          gh pr create --fill --title "Fix Markdown conversion" --body "Auto-corrected mismatched markdown."
+          gh pr create --fill --title "Fix document conversion" --body "Auto-corrected mismatched output."
