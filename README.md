@@ -34,8 +34,9 @@ data/
 
 ## Scripts
 
-Each CLI tool is a thin wrapper around reusable functions in the `docai` module
-so the same logic can be imported elsewhere.
+Each CLI tool is a thin wrapper around reusable functions in the `docai` package.
+GitHub-specific helpers live under `docai.github` so the same interfaces can be
+extended to other providers later.
 
 ### `convert.py`
 
@@ -112,7 +113,7 @@ from docai.dublin_core import DublinCoreDocument
 - **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs.
 - **Validate** – checks converted outputs against the source documents and auto-corrects mismatches.
 - **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources.
-- **Prompt Analysis** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
+- **Analyze** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
 - **PR Review** – summarizes pull requests.
 - **Auto Merge** – merges pull requests when a `/merge` comment is posted.
 
@@ -121,7 +122,7 @@ from docai.dublin_core import DublinCoreDocument
 To add a new prompt:
 
 1. Create a `.prompt.yaml` file in `prompts/` using the GitHub Models structure (`name`, `description`, `model`, `modelParameters`, `messages`).
-2. Optionally update the `prompt-analysis.yml` matrix to include the new prompt name if you want it to run automatically in the workflow.
+2. Optionally update the `analyze.yaml` matrix to include the new prompt name if you want it to run automatically in the workflow.
 No changes to the Python scripts are required.
 
 ## License

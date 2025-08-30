@@ -12,7 +12,7 @@ import yaml
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from .converter import OutputFormat
+from ..converter import OutputFormat
 
 load_dotenv()
 

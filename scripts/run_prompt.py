@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from docai.prompts import run_prompt
+from docai.github import run_prompt
 
 
 if __name__ == "__main__":

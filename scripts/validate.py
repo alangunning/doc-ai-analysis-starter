@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from docai import OutputFormat
-from docai.validator import validate_file
+from docai.github import validate_file
 
 
 def infer_format(path: Path) -> OutputFormat:

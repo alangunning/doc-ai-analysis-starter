@@ -2,7 +2,7 @@
 
 import argparse
 
-from docai.pr import merge_pr
+from docai.github import merge_pr
 
 
 if __name__ == "__main__":

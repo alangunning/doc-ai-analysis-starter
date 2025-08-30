@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from docai.pr import review_pr
+from docai.github import review_pr
 
 
 if __name__ == "__main__":

@@ -2,10 +2,7 @@
 
 from .dublin_core import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
-from .validator import validate_file
-from .vector import build_vector_store
-from .prompts import run_prompt
-from .pr import review_pr, merge_pr
+from .github import run_prompt, review_pr, merge_pr, validate_file, build_vector_store
 
 __all__ = [
     "DublinCoreDocument",
