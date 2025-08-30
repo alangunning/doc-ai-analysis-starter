@@ -1,4 +1,5 @@
 import argparse
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -37,9 +38,8 @@ if __name__ == "__main__":
         "--format",
         dest="formats",
         action="append",
-        default=[OutputFormat.MARKDOWN.value],
-        choices=[f.value for f in OutputFormat],
-        help="Desired output format(s). Can be passed multiple times.",
+        help="Desired output format(s). Can be passed multiple times.\n"
+        "If omitted, the OUTPUT_FORMATS environment variable or Markdown is used.",
     )
     args = parser.parse_args()
 
@@ -47,5 +47,21 @@ if __name__ == "__main__":
     out_dir = Path(args.outdir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    fmts = [OutputFormat(f) for f in args.formats]
+    def parse_formats(values: list[str]) -> list[OutputFormat]:
+        formats: list[OutputFormat] = []
+        for val in values:
+            try:
+                formats.append(OutputFormat(val.strip()))
+            except ValueError as exc:  # provide clearer error message
+                valid = ", ".join(f.value for f in OutputFormat)
+                raise SystemExit(f"Invalid output format '{val}'. Choose from: {valid}") from exc
+        return formats
+
+    if args.formats:
+        fmts = parse_formats(args.formats)
+    elif os.getenv("OUTPUT_FORMATS"):
+        fmts = parse_formats(os.getenv("OUTPUT_FORMATS").split(","))
+    else:
+        fmts = [OutputFormat.MARKDOWN]
+
     convert_directory(in_path, out_dir, fmts)

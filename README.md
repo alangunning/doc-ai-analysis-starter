@@ -27,7 +27,12 @@ Convert raw documents (e.g., PDFs) into one or more formats:
 python scripts/convert.py data/raw --outdir data --format markdown --format html
 ```
 
-The command above writes Markdown to `data/markdown/` and HTML to `data/html/`. Pass `--format` multiple times to emit additional outputs (`json`, `text`, or `doctags`). The underlying library is wrapped by `docai.converter` so you can swap engines without changing calling code.
+The command above writes Markdown to `data/markdown/` and HTML to `data/html/`. Pass
+`--format` multiple times to emit additional outputs (`json`, `text`, or `doctags`).
+Alternatively, set a comma-separated list in the `OUTPUT_FORMATS` environment variable
+so the script and the convert workflow default to those formats (e.g.,
+`OUTPUT_FORMATS=markdown,html`). The underlying library is wrapped by
+`docai.converter` so you can swap engines without changing calling code.
 
 ### `validate_markdown.py`
 

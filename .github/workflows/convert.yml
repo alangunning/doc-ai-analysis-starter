@@ -32,13 +32,13 @@ jobs:
         with: {python-version: "3.x"}
       - run: pip install docling
         if: steps.env.outputs.skip != 'true'
-      - run: python scripts/convert.py data/raw --outdir data/markdown --format markdown
+      - run: python scripts/convert.py data/raw --outdir data
         if: steps.env.outputs.skip != 'true'
       - name: Commit conversions
         if: steps.env.outputs.skip != 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add data/markdown/**/*.md
-          git commit -m "docs: auto-convert to Markdown" || echo "No changes"
+          git add data
+          git commit -m "docs: auto-convert documents" || echo "No changes"
           git push
