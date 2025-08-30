@@ -2,6 +2,13 @@ import argparse
 from pathlib import Path
 
 from docai.github import run_prompt
+from docai.metadata import (
+    compute_hash,
+    is_step_done,
+    load_metadata,
+    mark_step,
+    save_metadata,
+)
 
 
 if __name__ == "__main__":
@@ -15,11 +22,23 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    result = run_prompt(args.prompt, args.markdown_doc.read_text())
     prompt_name = args.prompt.name.replace(".prompt.yaml", "")
+    step_name = f"prompt:{prompt_name}"
+
+    meta = load_metadata(args.markdown_doc)
+    file_hash = compute_hash(args.markdown_doc)
+    if meta.blake2b == file_hash and is_step_done(meta, step_name):
+        raise SystemExit(0)
+    if meta.blake2b != file_hash:
+        meta.blake2b = file_hash
+        meta.extra = {}
+
+    result = run_prompt(args.prompt, args.markdown_doc.read_text())
     out_path = (
         args.output
         if args.output
         else args.markdown_doc.with_suffix(f".{prompt_name}.json")
     )
     out_path.write_text(result + "\n", encoding="utf-8")
+    mark_step(meta, step_name)
+    save_metadata(args.markdown_doc, meta)
