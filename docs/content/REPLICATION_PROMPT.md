@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # AI Agent Prompt: Recreate `doc-ai-analysis-starter`
 
 You are an AI coding agent with access to a Bash shell and GitHub CLI. Rebuild

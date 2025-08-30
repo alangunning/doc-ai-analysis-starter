@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # AI Agent Prompt: Clone `doc-ai-analysis-starter`
 
 You are an AI coding agent with access to a Bash shell and the GitHub CLI.
