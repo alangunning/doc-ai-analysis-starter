@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional
 
 import yaml
 from dotenv import load_dotenv
@@ -12,7 +13,7 @@ from openai import OpenAI
 load_dotenv()
 
 
-def run_prompt(prompt_file: Path, input_text: str) -> str:
+def run_prompt(prompt_file: Path, input_text: str, *, model: Optional[str] = None) -> str:
     """Execute ``prompt_file`` against ``input_text`` and return model output."""
 
     spec = yaml.safe_load(prompt_file.read_text())
@@ -26,7 +27,7 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
         base_url="https://models.github.ai",
     )
     response = client.responses.create(
-        model=spec["model"],
+        model=model or spec["model"],
         **spec.get("modelParameters", {}),
         input=messages,
     )

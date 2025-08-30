@@ -41,7 +41,7 @@ jobs:
       - run: pip install docling openai pyyaml
         if: steps.env.outputs.skip != 'true'
       - run: |
-          for file in $(git diff --name-only HEAD~1 -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
+          for file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
             raw=${file%.*}.pdf
             fmt=${file##*.}
             python scripts/validate.py $raw $file --prompt prompts/validate-output.prompt.yaml || (
@@ -51,6 +51,14 @@ jobs:
             )
           done
         if: steps.env.outputs.skip != 'true'
+      - name: Commit validation metadata
+        if: steps.env.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          find data -name '*.dc.json' -print0 | xargs -0 git add
+          git commit -m "chore: update validation metadata" || echo "No changes"
+          git push
       - name: Create PR if fixes
         if: steps.env.outputs.skip != 'true'
         run: |

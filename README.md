@@ -118,16 +118,74 @@ Reusable helpers for creating and parsing Dublin Core metadata documents:
 from docai.metadata import DublinCoreDocument
 ```
 
+Each source file may include a sibling ``*.dc.json`` metadata record. The
+metadata stores a blake2b checksum and tracks which processing steps have been
+completed. A typical metadata file looks like:
+
+```json
+{
+  "blake2b": "<file hash>",
+  "extra": {
+    "steps": {
+      "conversion": true,
+      "analysis": true,
+      "prompt:annual-report": true,
+      "vector": true
+    }
+  }
+}
+```
+
+On each run the scripts compute the current checksum. If it matches the value
+in the metadata and the relevant step is marked complete, that step is skipped.
+Otherwise the step runs and the metadata file is updated so subsequent runs only
+process changed or incomplete documents.
+
+```mermaid
+flowchart LR
+    Commit[Commit document.pdf] --> Convert[Convert]
+    Convert --> Validate[Validate]
+    Validate --> Analyze[Prompt analysis]
+    Analyze --> Vector[Vector]
+    Vector --> Done[Done]
+    Meta[(.dc.json)] --> Convert
+    Meta --> Validate
+    Meta --> Analyze
+    Meta --> Vector
+    Convert --> Meta
+    Validate --> Meta
+    Analyze --> Meta
+    Vector --> Meta
+```
+
 ## GitHub Workflows
 
-- **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs.
-- **Validate** – checks converted outputs against the source documents and auto-corrects mismatches.
-- **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources.
-- **Analyze** – executes prompt templates against Markdown documents and uploads JSON output as artifacts.
-- **PR Review** – summarizes pull requests.
+- **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs, skipping files when `.dc.json` indicates conversion is complete.
+- **Validate** – checks converted outputs against the source documents and auto-corrects mismatches, skipping unchanged files via metadata.
+- **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources, omitting documents whose metadata already records the `vector` step.
+- **Analyze** – executes prompt templates against Markdown documents and uploads JSON output as artifacts, re-running only when prompts haven't been marked complete.
+- **PR Review** – runs an AI model against each pull request and posts the result as a comment, ending with `/merge` when the changes are approved.
 - **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
-- **Auto Merge** – merges pull requests when a `/merge` comment is posted.
+- **Auto Merge** – approves and merges pull requests when a `/merge` comment is posted. Disabled by default; enable by setting `ENABLE_AUTO_MERGE_WORKFLOW=true` in `.env`.
 - **Lint** – runs Ruff to check Python code style.
+
+The PR review prompt asks the model to append `/merge` when no further changes are required. Posting this comment triggers the Auto Merge workflow, which approves and merges the pull request.
+
+```mermaid
+flowchart TD
+    A[Commit or PR] --> B[Convert]
+    A --> C[Validate]
+    A --> D[Analyze]
+    A --> E[PR Review]
+    A --> F[Lint]
+    Main[Push to main] --> G[Vector]
+    Main --> H[Docs]
+    Comment[/"/merge" comment/] --> I[Auto Merge]
+    B --> M[(.dc.json)]
+    C --> M
+    D --> M
+    G --> M
+```
 
 ## Adding Prompts
 

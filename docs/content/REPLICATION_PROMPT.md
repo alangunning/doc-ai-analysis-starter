@@ -1311,6 +1311,9 @@ jobs:
       - uses: actions/setup-python@v5
         if: steps.env.outputs.skip != 'true'
         with: {python-version: '3.x'}
+      - name: Approve PR
+        if: steps.env.outputs.skip != 'true'
+        run: gh pr review ${{ github.event.issue.number }} --approve
       - run: python scripts/merge_pr.py ${{ github.event.issue.number }}
         if: steps.env.outputs.skip != 'true'
 ```
@@ -1434,6 +1437,12 @@ jobs:
 name: PR Review
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model name to use
+        required: false
+        default: gpt-4.1
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -1466,10 +1475,17 @@ jobs:
         if: steps.env.outputs.skip != 'true'
       - name: Review PR
         if: steps.env.outputs.skip != 'true'
+        id: review
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          MODEL: ${{ github.event.inputs.model || 'gpt-4.1' }}
         run: |
-          python scripts/review_pr.py prompts/pr-review.prompt.yaml "$PR_BODY"
+          python scripts/review_pr.py prompts/pr-review.prompt.yaml "$PR_BODY" --model "$MODEL" | tee pr-review.txt
+      - name: Comment on PR
+        if: steps.env.outputs.skip != 'true'
+        run: |
+          body=$(cat pr-review.txt)
+          gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments -f body="$body"
 ```
 
 ### `.github/workflows/validate.yaml`

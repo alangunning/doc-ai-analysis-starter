@@ -5,6 +5,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from docai import OutputFormat, convert_files, suffix_for_format
+from docai.metadata import (
+    compute_hash,
+    is_step_done,
+    load_metadata,
+    mark_step,
+    save_metadata,
+)
 
 load_dotenv()
 
@@ -12,11 +19,28 @@ load_dotenv()
 def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     """Convert a file or all files under a directory in-place."""
 
+    output_suffixes = {suffix_for_format(fmt) for fmt in OutputFormat}
+
     def handle_file(file: Path) -> None:
+        """Convert ``file`` if it's not already a derived output and hasn't been processed."""
+
+        if file.suffix.lower() in output_suffixes:
+            return
+
+        meta = load_metadata(file)
+        file_hash = compute_hash(file)
+        if meta.blake2b == file_hash and is_step_done(meta, "conversion"):
+            return
+        if meta.blake2b != file_hash:
+            meta.blake2b = file_hash
+            meta.extra = {}
+
         outputs = {
             fmt: file.with_suffix(suffix_for_format(fmt)) for fmt in formats
         }
         convert_files(file, outputs)
+        mark_step(meta, "conversion")
+        save_metadata(file, meta)
 
     if source.is_file():
         handle_file(source)

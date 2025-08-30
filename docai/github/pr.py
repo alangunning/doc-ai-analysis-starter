@@ -8,10 +8,10 @@ from pathlib import Path
 from .prompts import run_prompt
 
 
-def review_pr(pr_body: str, prompt_path: Path) -> str:
+def review_pr(pr_body: str, prompt_path: Path, *, model: str | None = None) -> str:
     """Run the PR review prompt against ``pr_body``."""
 
-    return run_prompt(prompt_path, pr_body)
+    return run_prompt(prompt_path, pr_body, model=model)
 
 
 def merge_pr(pr_number: int) -> None:
