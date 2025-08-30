@@ -20,6 +20,11 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     """Convert a file or all files under a directory in-place."""
 
     def handle_file(file: Path) -> None:
+        """Convert ``file`` if it's a PDF and hasn't already been processed."""
+
+        if file.suffix.lower() != ".pdf":
+            return
+
         meta = load_metadata(file)
         file_hash = compute_hash(file)
         if meta.blake2b == file_hash and is_step_done(meta, "conversion"):
@@ -27,6 +32,7 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
         if meta.blake2b != file_hash:
             meta.blake2b = file_hash
             meta.extra = {}
+
         outputs = {
             fmt: file.with_suffix(suffix_for_format(fmt)) for fmt in formats
         }
@@ -37,9 +43,8 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     if source.is_file():
         handle_file(source)
     else:
-        for file in source.rglob("*"):
-            if file.is_file():
-                handle_file(file)
+        for file in source.rglob("*.pdf"):
+            handle_file(file)
 
 
 if __name__ == "__main__":
