@@ -20,7 +20,9 @@ pip install -e .
 For the Docusaurus docs site:
 
 ```bash
+cd docs
 npm install
+npm run build
 ```
 
 ## Directory layout

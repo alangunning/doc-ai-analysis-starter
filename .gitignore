@@ -5,6 +5,6 @@ __pycache__/
 venv/
 outputs/*
 !outputs/.gitkeep
-node_modules/
-.docusaurus/
-build/
+docs/node_modules/
+docs/.docusaurus/
+docs/build/
