@@ -870,7 +870,7 @@ messages:
       - total_assets (USD)
 ```
 
-### `.github/workflows/doc-analysis.prompt.yaml`
+### `.github/prompts/doc-analysis.prompt.yaml`
 ```text
 name: Document summary
 description: Summarize Markdown documents into three bullet points.
@@ -909,7 +909,7 @@ messages:
       - price (number)
 ```
 
-### `.github/workflows/pr-review.prompt.yaml`
+### `.github/prompts/pr-review.prompt.yaml`
 ```text
 name: Pull request review
 description: Provide concise review comments for pull requests.
@@ -944,7 +944,7 @@ messages:
       - summary (string)
 ```
 
-### `.github/workflows/validate-output.prompt.yaml`
+### `.github/prompts/validate-output.prompt.yaml`
 ```text
 name: Validate Rendered Output
 description: Compare original documents with their rendered representation.
@@ -1173,7 +1173,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prompt",
         type=Path,
-        default=Path(".github/workflows/validate-output.prompt.yaml"),
+        default=Path(".github/prompts/validate-output.prompt.yaml"),
     )
     parser.add_argument(
         "--model",
@@ -1532,7 +1532,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           MODEL: ${{ github.event.inputs.model || env.PR_REVIEW_MODEL || 'gpt-4.1' }}
         run: |
-          python scripts/review_pr.py .github/workflows/pr-review.prompt.yaml "$PR_BODY" --model "$MODEL" | tee pr-review.txt
+          python scripts/review_pr.py .github/prompts/pr-review.prompt.yaml "$PR_BODY" --model "$MODEL" | tee pr-review.txt
       - name: Comment on PR
         if: steps.env.outputs.skip != 'true'
         run: |
@@ -1588,7 +1588,7 @@ jobs:
           for file in $(git diff --name-only HEAD~1 -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
             raw=${file%.*}.pdf
             fmt=${file##*.}
-            python scripts/validate.py $raw $file --prompt .github/workflows/validate-output.prompt.yaml || (
+            python scripts/validate.py $raw $file --prompt .github/prompts/validate-output.prompt.yaml || (
               git checkout -- $file
               python scripts/convert.py $raw --format $fmt
               git add $file

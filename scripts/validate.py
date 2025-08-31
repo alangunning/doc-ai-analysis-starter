@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prompt",
         type=Path,
-        default=Path(".github/workflows/validate-output.prompt.yaml"),
+        default=Path(".github/prompts/validate-output.prompt.yaml"),
     )
     parser.add_argument(
         "--model",

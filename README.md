@@ -74,7 +74,8 @@ ai-doc-analysis pipeline data/sec-form-8k/
 ```
 doc_ai/                     # Python package
 scripts/                  # CLI helpers
-.github/workflows/        # CI workflows and prompt definitions
+.github/workflows/        # CI workflows
+.github/prompts/          # Prompt definitions
 data/                     # Sample documents and outputs
 docs/                     # Docusaurus documentation
 ```

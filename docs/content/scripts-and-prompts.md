@@ -43,7 +43,7 @@ Override the embedding model with `EMBED_MODEL`.
 Produce AI-assisted feedback for a pull request using a prompt file:
 
 ```bash
-python scripts/review_pr.py .github/workflows/pr-review.prompt.yaml "PR body text"
+python scripts/review_pr.py .github/prompts/pr-review.prompt.yaml "PR body text"
 ```
 Override the model with `--model` or `PR_REVIEW_MODEL`.
 
