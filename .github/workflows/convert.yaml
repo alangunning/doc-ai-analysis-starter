@@ -27,4 +27,4 @@ jobs:
         uses: ./.github/actions/git-commit
         with:
           add: git add data
-          message: docs: auto-convert documents
+          message: "docs: auto-convert documents"

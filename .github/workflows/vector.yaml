@@ -26,4 +26,4 @@ jobs:
         uses: ./.github/actions/git-commit
         with:
           add: git add data
-          message: chore: update vectors
+          message: "chore: update vectors"
