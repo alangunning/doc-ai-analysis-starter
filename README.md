@@ -45,11 +45,11 @@ data/
 
 ## GitHub Workflows
 
-- **Convert** – convert new documents under `data/**` and commit sibling outputs.
-- **Validate** – compare converted files to sources and correct mismatches.
-- **Vector** – generate embeddings for Markdown files on `main`.
-- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents and upload JSON.
-- **PR Review** – review pull requests with an AI prompt; comment `/review` to rerun.
+- **Convert** – convert new documents under `data/**` using Docling and commit sibling outputs.
+- **Validate** – use the GitHub AI model to compare converted files to sources and correct mismatches.
+- **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
+- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
+- **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
 - **Docs** – build the Docusaurus site.
 - **Auto Merge** – merge pull requests when a `/merge` comment is present (disabled by default).
 - **Lint** – run Ruff for Python style.
@@ -60,10 +60,10 @@ Each source file may have a `<name>.metadata.json` record storing a checksum and
 
 ```mermaid
 flowchart LR
-    Commit[Commit document.pdf] --> Convert[Convert Documents]
-    Convert --> Validate[Validate Outputs]
-    Validate --> Analysis[Run Analysis Prompts]
-    Analysis --> Vector[Generate Vector Embeddings]
+    Commit[Commit document.pdf] --> Convert[Convert Documents (Docling)]
+    Convert --> Validate[Validate Outputs (GitHub AI model)]
+    Validate --> Analysis[Run Analysis Prompts (GitHub AI model)]
+    Analysis --> Vector[Generate Vector Embeddings (GitHub AI model)]
     Vector --> Done[Workflow Complete]
     Meta[(Metadata Record (.metadata.json))] --> Convert
     Meta --> Validate
@@ -77,12 +77,12 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Commit or PR] --> B[Convert Documents]
-    B --> C[Validate Outputs]
-    A --> D[Run Analysis Prompts]
-    A --> E[Review PR with AI]
+    A[Commit or PR] --> B[Convert Documents (Docling)]
+    B --> C[Validate Outputs (GitHub AI model)]
+    A --> D[Run Analysis Prompts (GitHub AI model)]
+    A --> E[Review PR with AI (GitHub AI model)]
     A --> F[Run Lint Checks]
-    Main[Push to main] --> G[Generate Vector Embeddings]
+    Main[Push to main] --> G[Generate Vector Embeddings (GitHub AI model)]
     Main --> H[Build Documentation]
     Comment[/"/merge" comment/] --> I[Auto Merge PR]
     B --> M[(Metadata Record (.metadata.json))]
