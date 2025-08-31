@@ -26,5 +26,5 @@ jobs:
         if: steps.env.outputs.skip != 'true'
         uses: ./.github/actions/git-commit
         with:
-          add: git add data
+          add: "git add data"
           message: "chore: update vectors"
