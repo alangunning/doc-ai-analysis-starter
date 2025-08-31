@@ -14,6 +14,13 @@ runs:
       run: |
         git config user.name "github-actions"
         git config user.email "actions@github.com"
+        branch=$(git rev-parse --abbrev-ref HEAD)
+        git fetch origin "$branch"
+        git pull --rebase origin "$branch"
         ${{ inputs.add }}
-        git commit -m "${{ inputs.message }}" || echo "No changes"
-        git push
+        if ! git diff --cached --quiet; then
+          git commit -m "${{ inputs.message }}"
+          git push origin "$branch"
+        else
+          echo "No changes"
+        fi
