@@ -5,6 +5,7 @@ on:
       - "data/**"
 permissions:
   contents: write
+  workflows: write
 jobs:
   convert:
     runs-on: ubuntu-latest
