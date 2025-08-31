@@ -8,7 +8,7 @@ from typing import Optional
 
 import yaml
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import NotFoundError, OpenAI
 
 load_dotenv()
 
@@ -30,16 +30,22 @@ def run_prompt(
             break
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url=base_url
-        or os.getenv("BASE_MODEL_URL")
-        or "https://models.github.ai/v1",
+        base_url=base_url or os.getenv("BASE_MODEL_URL") or "https://models.github.ai",
     )
-    response = client.responses.create(
-        model=model or spec["model"],
-        **spec.get("modelParameters", {}),
-        input=messages,
-    )
-    return response.output[0].content[0].get("text", "")
+    try:
+        response = client.responses.create(
+            model=model or spec["model"],
+            **spec.get("modelParameters", {}),
+            input=messages,
+        )
+        return response.output[0].content[0].get("text", "")
+    except NotFoundError:
+        completion = client.chat.completions.create(
+            model=model or spec["model"],
+            messages=messages,
+            **spec.get("modelParameters", {}),
+        )
+        return completion.choices[0].message.get("content", "")
 
 
 __all__ = ["run_prompt"]
