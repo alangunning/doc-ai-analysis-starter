@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-"ai-doc-analysis" = "ai_doc_analysis_starter.cli:app"
+"ai-doc-analysis" = "doc_ai.cli:app"
 
 [project.optional-dependencies]
 dev = ["ruff"]
@@ -31,4 +31,4 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["ai_doc_analysis_starter", "ai_doc_analysis_starter.*"]
+include = ["doc_ai", "doc_ai.*"]

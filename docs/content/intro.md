@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-AI Doc Analysis Starter helps you explore document-processing workflows powered by GitHub's AI models. The template includes:
+Doc AI Analysis Starter helps you explore document-processing workflows powered by GitHub's AI models. The template includes:
 
 - a Python package with helpers for conversion, validation, and analysis
 - CLI scripts that wrap the package functions

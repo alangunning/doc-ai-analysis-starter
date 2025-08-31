@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Converter Module
 
-The `ai_doc_analysis_starter.converter` package wraps the
+The `doc_ai.converter` package wraps the
 [Docling](https://github.com/docling/docling) backend to convert source
 files into several text-based representations.  The module exposes a small
 API so callers can request formats without depending on Docling directly.
@@ -42,7 +42,7 @@ Return the default file suffix for an `OutputFormat` value.
 
 ```python
 from pathlib import Path
-from ai_doc_analysis_starter.converter import (
+from doc_ai.converter import (
     OutputFormat, convert_file, convert_files, suffix_for_format,
 )
 

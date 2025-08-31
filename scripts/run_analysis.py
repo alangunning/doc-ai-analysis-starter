@@ -2,8 +2,8 @@ import argparse
 import os
 from pathlib import Path
 
-from ai_doc_analysis_starter.github import run_prompt
-from ai_doc_analysis_starter.metadata import (
+from doc_ai.github import run_prompt
+from doc_ai.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,

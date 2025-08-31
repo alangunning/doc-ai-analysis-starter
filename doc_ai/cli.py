@@ -7,9 +7,9 @@ from typing import List, Optional
 import typer
 from rich.console import Console
 
-from ai_doc_analysis_starter import OutputFormat, convert_files, suffix_for_format
-from ai_doc_analysis_starter.github import build_vector_store, run_prompt, validate_file
-from ai_doc_analysis_starter.metadata import (
+from doc_ai import OutputFormat, convert_files, suffix_for_format
+from doc_ai.github import build_vector_store, run_prompt, validate_file
+from doc_ai.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,
@@ -24,12 +24,12 @@ app = typer.Typer(
 )
 
 ASCII_ART = r"""
-    ___    ____   ____                ___                __           _
-   /   |  /  _/  / __ \____  _____   /   |  ____  ____ _/ /_  _______(_)____
-  / /| |  / /   / / / / __ \/ ___/  / /| | / __ \/ __ `/ / / / / ___/ / ___/
- / ___ |_/ /   / /_/ / /_/ / /__   / ___ |/ / / / /_/ / / /_/ (__  ) (__  )
-/_/  |_/___/  /_____/\____/\___/  /_/  |_/_/ /_/\__,_/_/\__, /____/_/____/
-                                                       /____/
+    _____   ____   _____            _____    _____ _      _____
+   |  __ \ / __ \ / ____|     /\   |_   _|  / ____| |    |_   _|
+   | |  | | |  | | |        /  \    | |   | |    | |      | |
+   | |  | | |  | | |       / /\ \   | |   | |    | |      | |
+   | |__| | |__| | |____  / ____ \ _| |_  | |____| |____ _| |_
+   |_____/ \____/ \_____|/_/    \_\_____|  \_____|______|_____|
 """
 
 SUPPORTED_SUFFIXES = {
