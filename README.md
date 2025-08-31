@@ -72,11 +72,11 @@ ai-doc-analysis pipeline data/sec-form-8k/
 ## Directory Overview
 
 ```
-doc_ai/   # Python package
-scripts/                   # CLI helpers
-prompts/                   # Prompt definitions
-data/                      # Sample documents and outputs
-docs/                      # Docusaurus documentation
+doc_ai/                     # Python package
+scripts/                  # CLI helpers
+.github/workflows/        # CI workflows and prompt definitions
+data/                     # Sample documents and outputs
+docs/                     # Docusaurus documentation
 ```
 
 `data` is organized by document type. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
