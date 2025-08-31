@@ -1,7 +1,7 @@
 
-# AI Doc Analysis Starter
+# Doc AI Analysis Starter
 
-AI Doc Analysis Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests. Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
+Doc AI Analysis Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests. Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
 
 ## Quick Start
 
@@ -72,7 +72,7 @@ ai-doc-analysis pipeline data/sec-form-8k/
 ## Directory Overview
 
 ```
-ai_doc_analysis_starter/   # Python package
+doc_ai/   # Python package
 scripts/                   # CLI helpers
 prompts/                   # Prompt definitions
 data/                      # Sample documents and outputs

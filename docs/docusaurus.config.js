@@ -11,7 +11,7 @@ const organizationName = process.env.GITHUB_ORG ?? 'alangunning';
 const projectName = process.env.GITHUB_REPO ?? 'doc-ai-analysis-starter';
 
 const config = {
-  title: 'AI Doc Analysis Starter',
+  title: 'Doc AI Analysis Starter',
   tagline: 'Starter template for AI document analysis',
   url: siteUrl,
   // When deploying to GitHub Pages, the base URL must match the repo name.
@@ -40,7 +40,7 @@ const config = {
   ],
   themeConfig: {
     navbar: {
-      title: 'AI Doc Analysis Starter',
+      title: 'Doc AI Analysis Starter',
     },
     footer: {
       style: 'dark',

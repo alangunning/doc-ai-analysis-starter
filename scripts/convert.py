@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 # Allow running without installing as a package by adding project root to path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from ai_doc_analysis_starter import OutputFormat, convert_files, suffix_for_format
+from doc_ai import OutputFormat, convert_files, suffix_for_format
 from docling.exceptions import ConversionError
-from ai_doc_analysis_starter.metadata import (
+from doc_ai.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,

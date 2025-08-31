@@ -5,7 +5,7 @@ sidebar_position: 5
 
 # Metadata Module
 
-The `ai_doc_analysis_starter.metadata` package tracks processing state in [Dublin Core](https://www.dublincore.org/specifications/dublin-core/) JSON files that live alongside each source document.
+The `doc_ai.metadata` package tracks processing state in [Dublin Core](https://www.dublincore.org/specifications/dublin-core/) JSON files that live alongside each source document.
 
 ## Overview
 

@@ -2,9 +2,9 @@ import argparse
 import os
 from pathlib import Path
 
-from ai_doc_analysis_starter import OutputFormat
-from ai_doc_analysis_starter.github import validate_file
-from ai_doc_analysis_starter.metadata import (
+from doc_ai import OutputFormat
+from doc_ai.github import validate_file
+from doc_ai.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,

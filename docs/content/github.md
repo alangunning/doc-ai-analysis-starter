@@ -5,7 +5,7 @@ sidebar_position: 4
 
 # GitHub Module
 
-The `ai_doc_analysis_starter.github` package provides helpers for working with GitHub and GitHub Models.
+The `doc_ai.github` package provides helpers for working with GitHub and GitHub Models.
 
 ## Key APIs
 
