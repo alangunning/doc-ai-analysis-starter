@@ -27,15 +27,18 @@ npm run build
 
 ## Directory layout
 
-Each source document is stored under `data/<name>/<name>.pdf`. Conversions,
-embeddings, and other derived files are written alongside the source so every
-representation stays grouped together:
+Each source document is stored under `data/<name>/<name>.<ext>` where `<ext>`
+can be any format supported by Docling (PDF, DOCX, PPTX, etc.). Conversions,
+prompts, embeddings, and other derived files are written alongside the source
+so every representation stays grouped together:
 
 ```
 data/
   sample/
     sample.pdf
+    sample.prompt.yaml
     sample.md
+    sample.sample.json
     sample.html
     sample.embedding.json
 ```
@@ -48,7 +51,8 @@ extended to other providers later.
 
 ### `convert.py`
 
-Convert raw documents (e.g., PDFs) into one or more formats:
+Convert raw documents (PDFs, Word docs, slide decks, etc.) into one or more
+formats:
 
 ```bash
 python scripts/convert.py data/sample/sample.pdf --format markdown --format html
@@ -73,13 +77,15 @@ Override the model with `--model` or `VALIDATE_MODEL`.
 
 ### `run_prompt.py`
 
-Run a prompt definition against a Markdown document and save JSON output next to the source file:
+Run a prompt definition that lives next to a Markdown document and save JSON
+output next to the source file:
 
 ```bash
-python scripts/run_prompt.py prompts/annual-report.prompt.yaml data/example/example.md
+python scripts/run_prompt.py data/example/example.prompt.yaml data/example/example.md
 ```
 
-The above writes `data/example/example.annual-report.json`. Override the model with `--model` or `ANALYZE_MODEL`.
+The above writes `data/example/example.example.json`. Override the model with
+`--model` or `ANALYZE_MODEL`.
 
 ### `build_vector_store.py`
 
@@ -163,10 +169,14 @@ flowchart LR
 
 ## GitHub Workflows
 
-- **Convert** – auto-converts newly added `data/**/*.pdf` files and commits sibling format outputs, skipping files when `.dc.json` indicates conversion is complete.
+- **Convert** – auto-converts newly added documents under `data/**` and commits
+  sibling format outputs, skipping files when `.dc.json` indicates conversion is
+  complete.
 - **Validate** – checks converted outputs against the source documents and auto-corrects mismatches, skipping unchanged files via metadata.
 - **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources, omitting documents whose metadata already records the `vector` step.
-- **Analyze** – executes prompt templates against Markdown documents and uploads JSON output as artifacts, re-running only when prompts haven't been marked complete.
+- **Analyze** – auto-discovers `*.prompt.yaml` files next to Markdown documents,
+  executes each prompt, and uploads JSON output as artifacts, re-running only
+  when prompts haven't been marked complete.
 - **PR Review** – runs an AI model against each pull request and posts the result as a comment, ending with `/merge` when the changes are approved.
 - **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
 - **Auto Merge** – approves and merges pull requests when a `/merge` comment is posted. Disabled by default; enable by setting `ENABLE_AUTO_MERGE_WORKFLOW=true` in `.env`.
@@ -194,8 +204,9 @@ flowchart TD
 
 To add a new prompt:
 
-1. Create a `.prompt.yaml` file in `prompts/` using the GitHub Models structure (`name`, `description`, `model`, `modelParameters`, `messages`).
-2. Optionally update the `analyze.yaml` matrix to include the new prompt name if you want it to run automatically in the workflow.
+1. Create a `.prompt.yaml` file next to the document (e.g.,
+   `data/acme-report/acme-report.prompt.yaml`).
+2. Commit the prompt and document; the Analyze workflow will run it automatically.
 No changes to the Python scripts are required.
 
 ## License

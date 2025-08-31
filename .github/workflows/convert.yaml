@@ -1,7 +1,8 @@
 name: Convert
 on:
   push:
-    paths: ["data/**/*.pdf"]
+    paths:
+      - "data/**"
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -19,7 +20,9 @@ jobs:
         with:
           packages: docling
       - run: |
-          files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.pdf')
+          files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*' \
+            ':!data/**/*.md' ':!data/**/*.html' ':!data/**/*.json' ':!data/**/*.txt' \
+            ':!data/**/*.doctags' ':!data/**/*.prompt.yaml')
           for f in $files; do
             python scripts/convert.py "$f"
           done

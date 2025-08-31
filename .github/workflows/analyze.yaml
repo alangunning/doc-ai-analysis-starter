@@ -2,15 +2,14 @@ name: Prompt Analysis
 on:
   workflow_dispatch:
   push:
-    paths: ["data/**/*.md"]
+    paths:
+      - "data/**/*.md"
+      - "data/**/*.prompt.yaml"
 jobs:
   analyze:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    strategy:
-      matrix:
-        prompt: [annual-report, sec-8k, insider-trades]
     steps:
       - name: Load env
         id: env
@@ -22,13 +21,18 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           packages: openai pyyaml
-      - run: |
-          for md in data/**/*.md; do
-            python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md"
-          done
+      - name: Run prompts
         if: steps.env.outputs.skip != 'true'
+        run: |
+          for prompt in $(find data -name '*.prompt.yaml'); do
+            base=${prompt%.prompt.yaml}
+            md="$base.md"
+            if [ -f "$md" ]; then
+              python scripts/run_prompt.py "$prompt" "$md"
+            fi
+          done
       - uses: actions/upload-artifact@v4
         if: steps.env.outputs.skip != 'true'
         with:
-          name: ${{ matrix.prompt }}-results
-          path: data/**/*.${{ matrix.prompt }}.json
+          name: prompt-results
+          path: data/**/*.json
