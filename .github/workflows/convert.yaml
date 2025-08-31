@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OUTPUT_FORMATS: markdown,html
     steps:
       - name: Load env
         id: env

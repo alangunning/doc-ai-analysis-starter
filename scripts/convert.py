@@ -20,9 +20,7 @@ def _suffix(fmt: OutputFormat) -> str:
     """Return desired suffix for ``fmt``."""
 
     suf = suffix_for_format(fmt)
-    if fmt == OutputFormat.MARKDOWN:
-        return ".converted.md"
-    return suf
+    return f".converted{suf}"
 
 
 def convert_path(source: Path, formats: list[OutputFormat]) -> None:
