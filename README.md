@@ -31,7 +31,7 @@ data/
     apple-sec-8-k.pdf.converted.json
     apple-sec-8-k.pdf.converted.text
     apple-sec-8-k.pdf.converted.doctags
-    apple-sec-8-k.pdf.dc.json
+    apple-sec-8-k.pdf.metadata.json
   annual-report/
     annual-report.prompt.yaml
     acme-2023.pdf
@@ -40,7 +40,7 @@ data/
     acme-2023.pdf.converted.json
     acme-2023.pdf.converted.text
     acme-2023.pdf.converted.doctags
-    acme-2023.pdf.dc.json
+    acme-2023.pdf.metadata.json
 ```
 
 ## GitHub Workflows
@@ -56,7 +56,7 @@ data/
 
 ### Dublin Core metadata
 
-Each source file may have a `<name>.dc.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete.
+Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete.
 
 ```mermaid
 flowchart LR
@@ -65,7 +65,7 @@ flowchart LR
     Validate --> Analysis[Run analysis]
     Analysis --> Vector[Vector]
     Vector --> Done[Done]
-    Meta[(.dc.json)] --> Convert
+    Meta[(.metadata.json)] --> Convert
     Meta --> Validate
     Meta --> Analysis
     Meta --> Vector
@@ -85,7 +85,7 @@ flowchart TD
     Main[Push to main] --> G[Vector]
     Main --> H[Docs]
     Comment[/"/merge" comment/] --> I[Auto Merge]
-    B --> M[(.dc.json)]
+    B --> M[(.metadata.json)]
     C --> M
     D --> M
     G --> M
