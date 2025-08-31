@@ -11,6 +11,7 @@ from __future__ import annotations
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Union
+import json
 
 from docling.document_converter import DocumentConverter as _DoclingConverter
 
@@ -25,14 +26,15 @@ class OutputFormat(str, Enum):
     DOCTAGS = "doctags"
 
 
-# Map output formats to the method on the Docling Document object
-# that renders that representation.
+# Map output formats to the method on the Docling ``DoclingDocument``
+# that renders that representation.  Docling changed its API to expose
+# ``export_to_*`` helpers instead of ``as_*`` methods, so adapt to the new
+# names here.
 _METHOD_MAP: Dict[OutputFormat, str] = {
-    OutputFormat.MARKDOWN: "as_markdown",
-    OutputFormat.HTML: "as_html",
-    OutputFormat.JSON: "as_json",
-    OutputFormat.TEXT: "as_text",
-    OutputFormat.DOCTAGS: "as_doctags",
+    OutputFormat.MARKDOWN: "export_to_markdown",
+    OutputFormat.HTML: "export_to_html",
+    OutputFormat.TEXT: "export_to_text",
+    OutputFormat.DOCTAGS: "export_to_doctags",
 }
 
 # File extension for each format so callers can write outputs with a
@@ -59,13 +61,21 @@ def convert_files(
     """
 
     converter = _DoclingConverter()
-    document = converter.convert(input_path)
+    result = converter.convert(input_path)
+    doc = result.document
 
     written: Dict[OutputFormat, Path] = {}
     for fmt, out_path in outputs.items():
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        render_method = getattr(document, _METHOD_MAP[fmt])
-        content: Union[str, bytes] = render_method()
+        if fmt == OutputFormat.JSON:
+            # ``DoclingDocument`` doesn't expose an explicit JSON exporter; use
+            # the dictionary representation and serialize it ourselves.
+            content: Union[str, bytes] = json.dumps(
+                doc.export_to_dict(), ensure_ascii=False
+            )
+        else:
+            render_method = getattr(doc, _METHOD_MAP[fmt])
+            content = render_method()
         if isinstance(content, bytes):
             out_path.write_bytes(content)
         else:

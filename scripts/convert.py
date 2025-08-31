@@ -18,6 +18,41 @@ from ai_doc_analysis_starter.metadata import (
     save_metadata,
 )
 
+# File suffixes supported by Docling's ``DocumentConverter``.
+# Anything not in this list will be skipped instead of raising an error when
+# walking directories of mixed content.
+SUPPORTED_SUFFIXES = {
+    ".docx",
+    ".pptx",
+    ".html",
+    ".htm",
+    ".pdf",
+    ".asciidoc",
+    ".adoc",
+    ".md",
+    ".markdown",
+    ".csv",
+    ".xlsx",
+    ".xml",
+    ".json",
+    # Common image formats
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".tif",
+    ".tiff",
+    ".bmp",
+    ".webp",
+    ".svg",
+    # Common audio formats
+    ".wav",
+    ".mp3",
+    ".flac",
+    ".m4a",
+    ".ogg",
+}
+
 load_dotenv()
 
 
@@ -41,6 +76,8 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
         """Convert ``file`` if it's not already a derived output and hasn't been processed."""
 
         if is_output_file(file):
+            return
+        if file.suffix.lower() not in SUPPORTED_SUFFIXES:
             return
 
         meta = load_metadata(file)
