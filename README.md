@@ -56,12 +56,18 @@ AI Doc Analysis Starter is a template for building end‑to‑end document pipel
 
 4. **Try it out**
 
-   Convert a document and validate the Markdown output:
+Convert a document and validate the Markdown output:
 
-   ```bash
-   python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
-   python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
-   ```
+```bash
+python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
+python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
+```
+
+Or run the whole pipeline in one go with the orchestrator CLI:
+
+```bash
+ai-doc-analysis pipeline data/sec-form-8k/
+```
 
 ## Directory Overview
 

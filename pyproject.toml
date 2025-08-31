@@ -11,7 +11,12 @@ dependencies = [
     "requests",
     "anyio",
     "python-dotenv",
+    "typer",
+    "rich",
 ]
+
+[project.scripts]
+"ai-doc-analysis" = "ai_doc_analysis_starter.cli:app"
 
 [project.optional-dependencies]
 dev = ["ruff"]
