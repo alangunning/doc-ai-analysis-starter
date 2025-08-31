@@ -25,10 +25,31 @@ A starter template for converting documents, validating outputs, running prompts
 data/
   sec-form-8k/
     sec-form-8k.prompt.yaml
+    apple-sec-8-k.pdf
+    apple-sec-8-k.pdf.converted.md
+    apple-sec-8-k.pdf.converted.html
+    apple-sec-8-k.pdf.converted.json
+    apple-sec-8-k.pdf.converted.text
+    apple-sec-8-k.pdf.converted.doctags
+    apple-sec-8-k.pdf.metadata.json
   sec-form-10q/
     sec-form-10q.prompt.yaml
+    acme-2024-q1.pdf
+    acme-2024-q1.pdf.converted.md
+    acme-2024-q1.pdf.converted.html
+    acme-2024-q1.pdf.converted.json
+    acme-2024-q1.pdf.converted.text
+    acme-2024-q1.pdf.converted.doctags
+    acme-2024-q1.pdf.metadata.json
   sec-form-4/
     sec-form-4.prompt.yaml
+    insider-2024-01-01.pdf
+    insider-2024-01-01.pdf.converted.md
+    insider-2024-01-01.pdf.converted.html
+    insider-2024-01-01.pdf.converted.json
+    insider-2024-01-01.pdf.converted.text
+    insider-2024-01-01.pdf.converted.doctags
+    insider-2024-01-01.pdf.metadata.json
 ```
 
 ## GitHub Workflows
