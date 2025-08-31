@@ -5,12 +5,12 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'Doc Analysis AI Starter',
   tagline: 'Starter template for AI document analysis',
-  url: 'https://YOUR_GITHUB_USERNAME.github.io',
+  url: 'https://alangunning.github.io',
   baseUrl: '/doc-ai-analysis-starter/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'YOUR_GITHUB_USERNAME',
+  organizationName: 'alangunning',
   projectName: 'doc-analysis-ai-starter',
   presets: [
     [
