@@ -138,7 +138,7 @@ def validate_doc(
     raw: Path,
     rendered: Path,
     fmt: OutputFormat | None = None,
-    prompt: Path = Path("prompts/validate-output.prompt.yaml"),
+    prompt: Path = Path(".github/workflows/validate-output.prompt.yaml"),
     model: str | None = None,
     base_url: str | None = None,
 ) -> None:
@@ -234,7 +234,7 @@ def validate(
     rendered: Path = typer.Argument(..., help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
     prompt: Path = typer.Option(
-        Path("prompts/validate-output.prompt.yaml"),
+        Path(".github/workflows/validate-output.prompt.yaml"),
         help="Prompt file",
     ),
     model: Optional[str] = typer.Option(
@@ -280,7 +280,7 @@ def embed(
 def pipeline(
     source: Path = typer.Argument(..., help="Directory with raw documents"),
     prompt: Path = typer.Option(
-        Path("prompts/doc-analysis.prompt.yaml"),
+        Path(".github/workflows/doc-analysis.prompt.yaml"),
         help="Analysis prompt file",
     ),
     format: List[OutputFormat] = typer.Option(
@@ -300,7 +300,7 @@ def pipeline(
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
     convert_path(source, fmts)
-    validation_prompt = Path("prompts/validate-output.prompt.yaml")
+    validation_prompt = Path(".github/workflows/validate-output.prompt.yaml")
     for raw_file in source.rglob("*"):
         if not raw_file.is_file():
             continue
