@@ -1,7 +1,7 @@
 
-# Doc AI Analysis Starter
+# Doc AI Starter
 
-Doc AI Analysis Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests. Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
+Doc AI Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests. Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
 
 ## Quick Start
 
@@ -66,7 +66,7 @@ python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/a
 Or run the whole pipeline in one go with the orchestrator CLI:
 
 ```bash
-ai-doc-analysis pipeline data/sec-form-8k/
+doc-ai pipeline data/sec-form-8k/
 ```
 
 ## Directory Overview

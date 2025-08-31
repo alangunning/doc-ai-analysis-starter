@@ -1,4 +1,4 @@
-"""Reusable helpers for the doc-ai-analysis-starter template."""
+"""Reusable helpers for the Doc AI Starter template."""
 
 from .metadata import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format

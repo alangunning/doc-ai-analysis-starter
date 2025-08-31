@@ -1,5 +1,5 @@
 [project]
-name = "ai-doc-analysis-starter"
+name = "doc-ai-starter"
 version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-"ai-doc-analysis" = "doc_ai.cli:app"
+"doc-ai" = "doc_ai.cli:app"
 
 [project.optional-dependencies]
 dev = ["ruff"]

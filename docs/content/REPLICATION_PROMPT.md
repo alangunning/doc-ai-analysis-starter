@@ -84,7 +84,7 @@ ENABLE_DOCS_WORKFLOW=true
 ### `pyproject.toml`
 ```text
 [project]
-name = "doc-ai-analysis-starter"
+name = "doc-ai-starter"
 version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 requires-python = ">=3.10"
@@ -108,7 +108,7 @@ include = ["doc_ai", "doc_ai.*"]
 
 ### `doc_ai/__init__.py`
 ```text
-"""Reusable helpers for the doc-ai-analysis-starter template."""
+"""Reusable helpers for the Doc AI Starter template."""
 
 from .metadata import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
@@ -1206,7 +1206,7 @@ if __name__ == "__main__":
 import {themes as prismThemes} from 'prism-react-renderer';
 
 const config = {
-  title: 'Doc AI Analysis Starter',
+  title: 'Doc AI Starter',
   tagline: 'Starter template for AI document analysis',
   url: 'https://YOUR_GITHUB_USERNAME.github.io',
   baseUrl: '/',
@@ -1231,11 +1231,11 @@ const config = {
   ],
   themeConfig: {
     navbar: {
-      title: 'Doc AI Analysis Starter',
+      title: 'Doc AI Starter',
     },
     footer: {
       style: 'dark',
-      copyright: `Copyright © ${new Date().getFullYear()} Doc AI Analysis Starter`,
+      copyright: `Copyright © ${new Date().getFullYear()} Doc AI Starter`,
     },
     prism: {
       theme: prismThemes.github,
@@ -1250,7 +1250,7 @@ export default config;
 ### `docs/package.json`
 ```text
 {
-  "name": "doc-ai-analysis-starter-docs",
+  "name": "doc-ai-starter-docs",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -1275,7 +1275,7 @@ sidebar_position: 1
 
 # Introduction
 
-Welcome to the Doc AI Analysis Starter template. This site is built with Docusaurus and documents how to use the repository.
+Welcome to the Doc AI Starter template. This site is built with Docusaurus and documents how to use the repository.
 ```
 
 ### `docs/sidebars.js`
