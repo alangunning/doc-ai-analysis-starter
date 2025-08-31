@@ -17,5 +17,7 @@ runs:
   using: composite
   steps:
     - shell: bash
+      env:
+        PR_BODY: ${{ inputs.body }}
       run: |
-        python scripts/review_pr.py "${{ inputs.prompt }}" "${{ inputs.body }}" --model "${{ inputs.model }}" | tee "${{ inputs.output-file }}"
+        python scripts/review_pr.py "${{ inputs.prompt }}" "$PR_BODY" --model "${{ inputs.model }}" | tee "${{ inputs.output-file }}"
