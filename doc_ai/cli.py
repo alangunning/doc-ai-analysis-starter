@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 from dotenv import load_dotenv
 
-from doc_ai import OutputFormat, convert_files, suffix_for_format
+from doc_ai.converter import OutputFormat, convert_path, suffix_for_format
 from doc_ai.github import build_vector_store, run_prompt, validate_file
 from doc_ai.metadata import (
     compute_hash,
@@ -18,7 +18,6 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
-from docling.exceptions import ConversionError
 
 load_dotenv()
 
@@ -35,37 +34,6 @@ ASCII_ART = r"""
    | |__| | |__| | |____  / ____ \ _| |_  | |____| |____ _| |_
    |_____/ \____/ \_____|/_/    \_\_____|  \_____|______|_____|
 """
-
-SUPPORTED_SUFFIXES = {
-    ".docx",
-    ".pptx",
-    ".html",
-    ".htm",
-    ".pdf",
-    ".asciidoc",
-    ".adoc",
-    ".md",
-    ".markdown",
-    ".csv",
-    ".xlsx",
-    ".xml",
-    ".json",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".tif",
-    ".tiff",
-    ".bmp",
-    ".webp",
-    ".svg",
-    ".wav",
-    ".mp3",
-    ".flac",
-    ".m4a",
-    ".ogg",
-}
-
 
 def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
@@ -87,51 +55,6 @@ def _parse_env_formats() -> List[OutputFormat] | None:
                 f"Invalid output format '{val}'. Choose from: {valid}"
             ) from exc
     return formats
-
-
-def convert_path(source: Path, formats: List[OutputFormat]) -> None:
-    output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
-
-    def is_output_file(path: Path) -> bool:
-        name = path.name.lower()
-        return any(name.endswith(suf) for suf in output_suffixes)
-
-    def handle_file(file: Path) -> None:
-        if is_output_file(file):
-            return
-        if file.suffix.lower() not in SUPPORTED_SUFFIXES:
-            return
-
-        meta = load_metadata(file)
-        file_hash = compute_hash(file)
-        if meta.blake2b == file_hash and is_step_done(meta, "conversion"):
-            return
-        if meta.blake2b != file_hash:
-            meta.blake2b = file_hash
-            meta.extra = {}
-
-        outputs = {
-            fmt: file.with_name(file.name + _suffix(fmt))
-            for fmt in formats
-            if not (fmt == OutputFormat.MARKDOWN and file.suffix.lower() == ".md")
-        }
-        if not outputs:
-            mark_step(meta, "conversion")
-            save_metadata(file, meta)
-            return
-        try:
-            convert_files(file, outputs)
-        except ConversionError:
-            return
-        mark_step(meta, "conversion")
-        save_metadata(file, meta)
-
-    if source.is_file():
-        handle_file(source)
-    else:
-        for file in source.rglob("*"):
-            if file.is_file():
-                handle_file(file)
 
 
 def validate_doc(
