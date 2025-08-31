@@ -1077,7 +1077,7 @@ if __name__ == "__main__":
     print(review_pr(args.pr_body, args.prompt, model=args.model))
 ```
 
-### `scripts/run_prompt.py`
+### `scripts/run_analysis.py`
 ```text
 import argparse
 import os
@@ -1110,7 +1110,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     prompt_name = args.prompt.name.replace(".prompt.yaml", "")
-    step_name = f"prompt:{prompt_name}"
+    step_name = "analysis"
 
     meta = load_metadata(args.markdown_doc)
     file_hash = compute_hash(args.markdown_doc)
@@ -1184,7 +1184,7 @@ if __name__ == "__main__":
 
     meta = load_metadata(args.raw)
     file_hash = compute_hash(args.raw)
-    if meta.blake2b == file_hash and is_step_done(meta, "analysis"):
+    if meta.blake2b == file_hash and is_step_done(meta, "validation"):
         raise SystemExit(0)
     if meta.blake2b != file_hash:
         meta.blake2b = file_hash
@@ -1195,7 +1195,7 @@ if __name__ == "__main__":
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
-    mark_step(meta, "analysis")
+    mark_step(meta, "validation")
     save_metadata(args.raw, meta)
 ```
 
@@ -1290,56 +1290,40 @@ export default {
 /* Custom styles for Docusaurus */
 ```
 
-### `.github/workflows/analyze.yaml`
+### `.github/workflows/analysis.yaml`
 ```text
-name: Prompt Analysis
+name: Analysis
 on:
   workflow_dispatch:
   push:
-    paths: ["data/**/*.md"]
+    paths:
+      - "data/**/*.md"
+      - "data/**/*.prompt.yaml"
 jobs:
-  analyze:
+  analysis:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    strategy:
-      matrix:
-        prompt: [annual-report, sec-8k, insider-trades]
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
-        run: |
-          if [ -f .env ]; then
-            while IFS='=' read -r key value; do
-              if [[ -z "$key" || "$key" == \#* ]]; then
-                continue
-              fi
-              if [ -z "${!key}" ]; then
-                echo "$key=$value" >> $GITHUB_ENV
-                export "$key=$value"
-              fi
-            done < .env
-          fi
-          if [ "${DISABLE_ALL_WORKFLOWS}" = "true" ] || [ "${ENABLE_PROMPT_ANALYSIS_WORKFLOW}" != "true" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          fi
-      - uses: actions/checkout@v4
+        uses: ./.github/actions/load-env
+        with:
+          enable-workflow: ENABLE_PROMPT_ANALYSIS_WORKFLOW
+      - name: Setup Python
         if: steps.env.outputs.skip != 'true'
-      - uses: actions/setup-python@v5
+        uses: ./.github/actions/setup-python
+        with:
+          packages: openai pyyaml
+      - name: Run analysis
         if: steps.env.outputs.skip != 'true'
-        with: {python-version: "3.x"}
-      - run: pip install openai pyyaml
-        if: steps.env.outputs.skip != 'true'
-      - run: |
-          for md in data/**/*.md; do
-            python scripts/run_prompt.py prompts/${{ matrix.prompt }}.prompt.yaml "$md" --outdir outputs/${{ matrix.prompt }}
-          done
-        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/run-analysis
       - uses: actions/upload-artifact@v4
         if: steps.env.outputs.skip != 'true'
         with:
-          name: ${{ matrix.prompt }}-results
-          path: outputs/${{ matrix.prompt }}/
+          name: prompt-results
+          path: data/**/*.json
 ```
 
 ### `.github/workflows/auto-merge.yaml`

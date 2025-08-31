@@ -1,4 +1,4 @@
-name: Prompt Analysis
+name: Analysis
 on:
   workflow_dispatch:
   push:
@@ -6,7 +6,7 @@ on:
       - "data/**/*.md"
       - "data/**/*.prompt.yaml"
 jobs:
-  analyze:
+  analysis:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,9 +22,9 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           packages: openai pyyaml
-      - name: Run prompts
+      - name: Run analysis
         if: steps.env.outputs.skip != 'true'
-        uses: ./.github/actions/run-prompts
+        uses: ./.github/actions/run-analysis
       - uses: actions/upload-artifact@v4
         if: steps.env.outputs.skip != 'true'
         with:
