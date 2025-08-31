@@ -6,7 +6,7 @@ const config = {
   title: 'AI Doc Analysis Starter',
   tagline: 'Starter template for AI document analysis',
   url: 'https://alangunning.github.io',
-  baseUrl: '/ai-doc-analysis-starter/',
+  baseUrl: '/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
