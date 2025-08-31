@@ -7,8 +7,8 @@ const config = {
   tagline: 'Starter template for AI document analysis',
   url: 'https://alangunning.github.io',
   // When deploying to GitHub Pages, the base URL must match the repo name.
-  // The site is served from https://alangunning.github.io/doc-ai-analysis-starter/
-  baseUrl: '/doc-ai-analysis-starter/',
+  // The docs are served from https://alangunning.github.io/doc-ai-analysis-starter/docs/
+  baseUrl: '/doc-ai-analysis-starter/docs/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
@@ -21,6 +21,7 @@ const config = {
         docs: {
           path: 'content',
           sidebarPath: require.resolve('./sidebars.js'),
+          routeBasePath: '/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

@@ -1,6 +1,6 @@
 # ai-doc-analysis-starter
 
-A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional Dublin Core metadata lets workflows skip work they've already completed.
+A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional Dublin Core metadata lets workflows skip work they've already completed. The docs are published to https://alangunning.github.io/doc-ai-analysis-starter/docs/.
 
 ## Quick Start
 
@@ -85,7 +85,7 @@ flowchart TD
     G --> M
 ```
 
-For CLI usage and adding prompts, see `docs/content/scripts-and-prompts.md`.
+For CLI usage and adding prompts, see the [scripts and prompts guide](https://alangunning.github.io/doc-ai-analysis-starter/docs/scripts-and-prompts).
 
 ## License
 
