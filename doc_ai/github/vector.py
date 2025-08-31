@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+from requests import RequestException
+import logging
 
 from ..metadata import (
     compute_hash,
@@ -22,9 +25,18 @@ load_dotenv()
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
 
+_log = logging.getLogger(__name__)
 
-def build_vector_store(src_dir: Path) -> None:
-    """Generate embeddings for Markdown files in ``src_dir``."""
+
+def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
+    """Generate embeddings for Markdown files in ``src_dir``.
+
+    Args:
+        src_dir: Directory containing Markdown files to embed.
+        fail_fast: If ``True``, raise an exception when an HTTP request
+            repeatedly fails. Otherwise, log the error and continue with the
+            next file.
+    """
 
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -53,8 +65,36 @@ def build_vector_store(src_dir: Path) -> None:
         }
         if EMBED_DIMENSIONS:
             payload["dimensions"] = int(EMBED_DIMENSIONS)
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
-        resp.raise_for_status()
+
+        success = False
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = requests.post(
+                    api_url, headers=headers, json=payload, timeout=60
+                )
+                resp.raise_for_status()
+                success = True
+                break
+            except RequestException as exc:
+                wait = 2 ** attempt
+                _log.error(
+                    "Embedding request failed for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                )
+                if attempt == max_attempts:
+                    if fail_fast:
+                        raise
+                    _log.error("Skipping %s after repeated failures", md_file)
+                    break
+                time.sleep(wait)
+
+        if not success:
+            continue
+
         embedding = resp.json()["data"][0]["embedding"]
         out_file = md_file.with_suffix(".embedding.json")
         out_file.write_text(
