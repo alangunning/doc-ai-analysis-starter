@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - "data/**"
+permissions:
+  contents: write
 jobs:
   convert:
     runs-on: ubuntu-latest
