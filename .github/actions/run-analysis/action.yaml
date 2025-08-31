@@ -1,5 +1,5 @@
-name: Run prompts
-description: Execute prompt YAMLs against Markdown documents.
+name: Run analysis
+description: Execute analysis prompts against Markdown documents.
 inputs:
   path:
     description: Root directory to search for prompts.
@@ -14,6 +14,6 @@ runs:
           dir=$(dirname "$prompt")
           for md in "$dir"/*.md; do
             [ -f "$md" ] || continue
-            python scripts/run_prompt.py "$prompt" "$md"
+            python scripts/run_analysis.py "$prompt" "$md"
           done
         done

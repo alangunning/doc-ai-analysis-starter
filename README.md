@@ -84,13 +84,13 @@ python scripts/validate.py data/example/example.pdf data/example/example.convert
 ```
 Override the model with `--model` or `VALIDATE_MODEL`.
 
-### `run_prompt.py`
+### `run_analysis.py`
 
 Run a prompt definition stored in a document-type directory against a Markdown
 document and save JSON output next to the source file:
 
 ```bash
-python scripts/run_prompt.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.converted.md
+python scripts/run_analysis.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.converted.md
 ```
 
 The above writes `data/sec-8k/apple-sec-8-k.sec-8k.json`. Override the model
@@ -163,16 +163,16 @@ process changed or incomplete documents.
 flowchart LR
     Commit[Commit document.pdf] --> Convert[Convert]
     Convert --> Validate[Validate]
-    Validate --> Analyze[Prompt analysis]
-    Analyze --> Vector[Vector]
+    Validate --> Analysis[Run analysis]
+    Analysis --> Vector[Vector]
     Vector --> Done[Done]
     Meta[(.dc.json)] --> Convert
     Meta --> Validate
-    Meta --> Analyze
+    Meta --> Analysis
     Meta --> Vector
     Convert --> Meta
     Validate --> Meta
-    Analyze --> Meta
+    Analysis --> Meta
     Vector --> Meta
 ```
 
@@ -183,7 +183,7 @@ flowchart LR
   complete.
 - **Validate** – checks converted outputs against the source documents and auto-corrects mismatches, skipping unchanged files via metadata.
 - **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources, omitting documents whose metadata already records the `vector` step.
-- **Analyze** – auto-discovers `<doc-type>.prompt.yaml` files in each
+- **Analysis** – auto-discovers `<doc-type>.prompt.yaml` files in each
   `data/<doc-type>` directory, runs them against every Markdown document in that
   directory, and uploads JSON output as artifacts, re-running only when prompts
   haven't been marked complete.
@@ -198,7 +198,7 @@ The PR review prompt asks the model to append `/merge` when no further changes a
 flowchart TD
     A[Commit or PR] --> B[Convert]
     A --> C[Validate]
-    A --> D[Analyze]
+    A --> D[Analysis]
     A --> E[PR Review]
     A --> F[Lint]
     Main[Push to main] --> G[Vector]
@@ -216,7 +216,7 @@ To add a new prompt:
 
 1. Create a `.prompt.yaml` file next to the document (e.g.,
    `data/acme-report/acme-report.prompt.yaml`).
-2. Commit the prompt and document; the Analyze workflow will run it automatically.
+2. Commit the prompt and document; the Analysis workflow will run it automatically.
 No changes to the Python scripts are required.
 
 ## License
