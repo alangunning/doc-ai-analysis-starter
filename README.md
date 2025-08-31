@@ -31,23 +31,23 @@ Documents are organized by type under `data/<doc-type>/`. Each directory
 contains a prompt definition named `<doc-type>.prompt.yaml` plus any number of
 source files (PDFs, Word docs, slide decks, etc.). Conversions, prompts,
 embeddings, and other derived files are written next to each source so every
-representation stays grouped together. Derived outputs use the suffix
-`.converted.<ext>` (for example `.converted.md` or `.converted.html`) so raw
-sources can coexist with generated files:
+representation stays grouped together. Derived outputs retain the original
+extension and append `.converted.<ext>` (for example `.pdf.converted.md` or
+`.pdf.converted.html`) so raw sources can coexist with generated files:
 
 ```
 data/
   sec-8k/
     sec-8k.prompt.yaml
     apple-sec-8-k.pdf
-    apple-sec-8-k.converted.md
-    apple-sec-8-k.converted.html
+    apple-sec-8-k.pdf.converted.md
+    apple-sec-8-k.pdf.converted.html
     apple-sec-8-k.sec-8k.json
   annual-report/
     annual-report.prompt.yaml
     acme-2023.pdf
-    acme-2023.converted.md
-    acme-2023.converted.html
+    acme-2023.pdf.converted.md
+    acme-2023.pdf.converted.html
     acme-2023.annual-report.json
 ```
 
@@ -68,7 +68,7 @@ python scripts/convert.py data/sample/sample.pdf --format markdown --format html
 ```
 
 Outputs are written alongside the source file, so the example above produces
-`data/sample/sample.converted.md` and `data/sample/sample.converted.html`. Pass `--format` multiple
+`data/sample/sample.pdf.converted.md` and `data/sample/sample.pdf.converted.html`. Pass `--format` multiple
 times to emit additional outputs (`json`, `text`, or `doctags`). Alternatively,
 set a comma-separated list in the `OUTPUT_FORMATS` environment variable so the
 script and the convert workflow default to those formats (e.g.,
@@ -80,7 +80,7 @@ script and the convert workflow default to those formats (e.g.,
 Validate that a converted file (Markdown, HTML, JSON, etc.) matches the original document:
 
 ```bash
-python scripts/validate.py data/example/example.pdf data/example/example.converted.md
+python scripts/validate.py data/example/example.pdf data/example/example.pdf.converted.md
 ```
 Override the model with `--model` or `VALIDATE_MODEL`.
 
@@ -90,7 +90,7 @@ Run a prompt definition stored in a document-type directory against a Markdown
 document and save JSON output next to the source file:
 
 ```bash
-python scripts/run_analysis.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.converted.md
+python scripts/run_analysis.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.pdf.converted.md
 ```
 
 The above writes `data/sec-8k/apple-sec-8-k.sec-8k.json`. Override the model

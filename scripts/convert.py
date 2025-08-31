@@ -89,7 +89,7 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
             meta.extra = {}
 
         outputs = {
-            fmt: file.with_suffix(_suffix(fmt))
+            fmt: file.with_name(file.name + _suffix(fmt))
             for fmt in formats
             if not (fmt == OutputFormat.MARKDOWN and file.suffix.lower() == ".md")
         }
