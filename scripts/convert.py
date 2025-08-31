@@ -16,15 +16,28 @@ from docai.metadata import (
 load_dotenv()
 
 
+def _suffix(fmt: OutputFormat) -> str:
+    """Return desired suffix for ``fmt``."""
+
+    suf = suffix_for_format(fmt)
+    if fmt == OutputFormat.MARKDOWN:
+        return ".converted.md"
+    return suf
+
+
 def convert_path(source: Path, formats: list[OutputFormat]) -> None:
     """Convert a file or all files under a directory in-place."""
 
-    output_suffixes = {suffix_for_format(fmt) for fmt in OutputFormat}
+    output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
+
+    def is_output_file(path: Path) -> bool:
+        name = path.name.lower()
+        return any(name.endswith(suf) for suf in output_suffixes)
 
     def handle_file(file: Path) -> None:
         """Convert ``file`` if it's not already a derived output and hasn't been processed."""
 
-        if file.suffix.lower() in output_suffixes:
+        if is_output_file(file):
             return
 
         meta = load_metadata(file)
@@ -36,8 +49,14 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
             meta.extra = {}
 
         outputs = {
-            fmt: file.with_suffix(suffix_for_format(fmt)) for fmt in formats
+            fmt: file.with_suffix(_suffix(fmt))
+            for fmt in formats
+            if not (fmt == OutputFormat.MARKDOWN and file.suffix.lower() == ".md")
         }
+        if not outputs:
+            mark_step(meta, "conversion")
+            save_metadata(file, meta)
+            return
         convert_files(file, outputs)
         mark_step(meta, "conversion")
         save_metadata(file, meta)
