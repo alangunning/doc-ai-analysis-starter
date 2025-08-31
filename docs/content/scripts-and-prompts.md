@@ -27,9 +27,9 @@ Override the model with `--model` or `VALIDATE_MODEL`.
 Run a prompt definition against a Markdown document and save JSON output:
 
 ```bash
-python scripts/run_analysis.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.pdf.converted.md
+python scripts/run_analysis.py data/sec-form-8k/sec-form-8k.prompt.yaml data/sec-form-8k/apple-sec-8-k.pdf.converted.md
 ```
-The above writes `data/sec-8k/apple-sec-8-k.sec-8k.json`. Override the model with `--model` or `ANALYZE_MODEL`.
+The above writes `data/sec-form-8k/apple-sec-8-k.sec-form-8k.json`. Override the model with `--model` or `ANALYZE_MODEL`.
 
 ## build_vector_store.py
 Generate embeddings for Markdown files and write them next to each source:

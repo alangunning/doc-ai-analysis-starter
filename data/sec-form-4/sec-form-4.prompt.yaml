@@ -1,12 +1,12 @@
-name: Insider trading extraction
-description: Parse insider trading filings and output structured transactions.
+name: SEC Form 4 transaction extraction
+description: Parse SEC Form 4 filings and output structured transactions.
 model: openai/gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
   - role: system
     content: |-
-      You parse insider trading filings and output structured transactions.
+      You parse SEC Form 4 filings and output structured transactions.
   - role: user
     content: |-
       Extract the following fields from the text:

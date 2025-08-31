@@ -850,24 +850,24 @@ class DublinCoreDocument:
         return out
 ```
 
-### `data/annual-report/annual-report.prompt.yaml`
+### `data/sec-form-10q/sec-form-10q.prompt.yaml`
 ```text
-name: Annual report KPIs
-description: Extract key financial metrics from annual report sections.
+name: SEC Form 10-Q KPIs
+description: Extract key financial metrics from SEC Form 10-Q sections.
 model: openai/gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
   - role: system
     content: |-
-      You are a data-extraction assistant. Given an annual report section, return key KPIs in JSON.
+      You are a data-extraction assistant. Given a Form 10-Q section, return key quarterly metrics in JSON.
   - role: user
     content: |-
       Extract the following fields from the text:
       - revenue (USD)
       - operating_income (USD)
       - net_income (USD)
-      - employees (integer)
+      - total_assets (USD)
 ```
 
 ### `prompts/doc-analysis.prompt.yaml`
@@ -886,17 +886,17 @@ messages:
       Summarize the following document in three bullet points.
 ```
 
-### `data/insider-trades/insider-trades.prompt.yaml`
+### `data/sec-form-4/sec-form-4.prompt.yaml`
 ```text
-name: Insider trading extraction
-description: Parse insider trading filings and output structured transactions.
+name: SEC Form 4 transaction extraction
+description: Parse SEC Form 4 filings and output structured transactions.
 model: openai/gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
   - role: system
     content: |-
-      You parse insider trading filings and output structured transactions.
+      You parse SEC Form 4 filings and output structured transactions.
   - role: user
     content: |-
       Extract the following fields from the text:
@@ -925,17 +925,17 @@ messages:
       Review the following pull request description and suggest improvements.
 ```
 
-### `data/sec-8k/sec-8k.prompt.yaml`
+### `data/sec-form-8k/sec-form-8k.prompt.yaml`
 ```text
-name: SEC 8-K summary
-description: Extract structured event details from SEC 8-K filings.
+name: SEC Form 8-K summary
+description: Extract structured event details from SEC Form 8-K filings.
 model: openai/gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
   - role: system
     content: |-
-      You are a SEC filing assistant. Given an 8-K section, summarize the event.
+      You are a SEC filing assistant. Given a Form 8-K section, summarize the event.
   - role: user
     content: |-
       Extract the following fields from the text:
