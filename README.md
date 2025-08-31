@@ -6,7 +6,7 @@ A starter template for converting documents, validating outputs, running prompts
 
 1. **Requirements**
    - Python ≥ 3.10
-   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI.
+   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI (you can [prototype for free](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models)).
 
 2. **Install dependencies**
    ```bash
