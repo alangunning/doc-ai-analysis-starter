@@ -187,12 +187,12 @@ flowchart LR
   `data/<doc-type>` directory, runs them against every Markdown document in that
   directory, and uploads JSON output as artifacts, re-running only when prompts
   haven't been marked complete.
-- **PR Review** – runs an AI model against each pull request and posts the result as a comment, ending with `/merge` when the changes are approved.
+- **PR Review** – runs an AI model against each pull request and posts the result as a comment, ending with `/merge` when the changes are approved. Comment `/review` on a pull request to trigger the workflow manually.
 - **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
 - **Auto Merge** – approves and merges pull requests when a `/merge` comment is posted. Disabled by default; enable by setting `ENABLE_AUTO_MERGE_WORKFLOW=true` in `.env`.
 - **Lint** – runs Ruff to check Python code style.
 
-The PR review prompt asks the model to append `/merge` when no further changes are required. Posting this comment triggers the Auto Merge workflow, which approves and merges the pull request.
+The PR review prompt asks the model to append `/merge` when no further changes are required. Posting this comment triggers the Auto Merge workflow, which approves and merges the pull request. Use `/review` in a comment to re-run the PR Review workflow on demand.
 
 ```mermaid
 flowchart TD

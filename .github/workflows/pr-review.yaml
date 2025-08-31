@@ -1,6 +1,8 @@
 name: PR Review
 on:
   pull_request:
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       model:
@@ -9,6 +11,7 @@ on:
         default: gpt-4.1
 jobs:
   review:
+    if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && startsWith(github.event.comment.body, '/review'))
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -32,7 +35,7 @@ jobs:
         uses: ./.github/actions/review-pr
         with:
           prompt: prompts/pr-review.prompt.yaml
-          body: ${{ github.event.pull_request.body }}
+          body: ${{ github.event.pull_request.body || github.event.issue.body }}
           model: ${{ env.MODEL }}
           output-file: pr-review.txt
       - name: Comment on PR
