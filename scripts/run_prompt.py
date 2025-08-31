@@ -35,7 +35,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     prompt_name = args.prompt.name.replace(".prompt.yaml", "")
-    step_name = f"prompt:{prompt_name}"
+    step_name = "analysis"
 
     meta = load_metadata(args.markdown_doc)
     file_hash = compute_hash(args.markdown_doc)
