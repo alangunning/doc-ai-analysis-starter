@@ -24,7 +24,7 @@ def run_prompt(prompt_file: Path, input_text: str, *, model: Optional[str] = Non
             break
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai",
+        base_url="https://models.github.ai/v1",
     )
     response = client.responses.create(
         model=model or spec["model"],
