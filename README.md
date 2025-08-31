@@ -1,4 +1,4 @@
-# doc-ai-analysis-starter
+# doc-analysis-ai-starter
 
 A minimal template for automating document conversion, verification, prompt execution, and AI-assisted pull request review using GitHub Actions and GitHub Models. The repository also provides optional utilities for working with Dublin Core metadata.
 
