@@ -46,7 +46,7 @@ Each workflow can run independently, but together they form an end-to-end proces
 - **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
 - **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
 - **Docs** – build the Docusaurus site.
-- **Auto Merge** – merge pull requests when a `/merge` comment is present (disabled by default).
+- **Auto Merge** – after an AI review, a `/merge` comment triggers the workflow to auto‑approve and merge the pull request with the GitHub AI model (disabled by default).
 - **Lint** – run Ruff for Python style.
 
 Each step updates the document's `<name>.metadata.json` record so completed work is skipped on subsequent runs.

@@ -8,7 +8,7 @@ AI Doc Analysis Starter helps you explore document-processing workflows powered 
 
 - a Python package with helpers for conversion, validation, and analysis
 - CLI scripts that wrap the package functions
-- GitHub Actions that automate each step of the pipeline
+- GitHub Actions that automate each step of the pipeline, including AI-based PR review and optional auto-approve & merge
 - this Docusaurus site with additional guides and references
 
 Use the navigation to dive into specific topics:

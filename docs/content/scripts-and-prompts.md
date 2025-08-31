@@ -48,7 +48,7 @@ python scripts/review_pr.py prompts/pr-review.prompt.yaml "PR body text"
 Override the model with `--model` or `PR_REVIEW_MODEL`.
 
 ## merge_pr.py
-Merge a pull request when authorized:
+Merge a pull request when authorized; used by the Auto Merge workflow after an AI review:
 
 ```bash
 python scripts/merge_pr.py 123
