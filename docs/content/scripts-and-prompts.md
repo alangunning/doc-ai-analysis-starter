@@ -1,11 +1,11 @@
 ---
 title: CLI Scripts and Prompts
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # CLI Scripts
 
-Each command-line tool wraps functions from the `ai_doc_analysis_starter` package and can be run directly.
+The repository ships with small command-line utilities that expose the core features of the Python package. They can be invoked directly and are useful for prototyping outside of GitHub Actions.
 
 ## convert.py
 Convert raw documents (PDF, Word, slides, etc.) into one or more formats:

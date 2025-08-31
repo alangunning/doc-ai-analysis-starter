@@ -1,25 +1,56 @@
+
 # AI Doc Analysis Starter
 
-A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional metadata lets workflows skip work they've already completed. See the [converter docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/converter), [GitHub integration docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/github), and [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for details. The docs are published to [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/) (configurable in `.env`).
+AI Doc Analysis Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests. Full documentation is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
 
 ## Quick Start
 
 1. **Requirements**
    - Python ≥ 3.10
-   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI (you can [prototype for free](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models)).
+   - Node ≥ 18 for building the docs (optional)
+   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI (you can [prototype for free](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models))
 
-2. **Install dependencies**
+2. **Install**
+
    ```bash
    pip install -e .
-   cd docs
-   npm install
-   npm run build   # builds the optional Docusaurus docs
    ```
 
-3. **Configuration**
-   Copy `.env.example` to `.env` and edit values as needed. Environment variables provided by the runtime override values in the file. Set `DISABLE_ALL_WORKFLOWS=true` to skip automation or toggle individual workflows with `ENABLE_*` variables.
+   Optionally build the documentation site:
 
-## Directory Layout
+   ```bash
+   cd docs
+   npm install
+   npm run build
+   cd ..
+   ```
+
+3. **Configure**
+
+   Copy `.env.example` to `.env` and adjust variables as needed. Environment variables from the runtime override values in the file. Set `DISABLE_ALL_WORKFLOWS=true` to skip automation or toggle individual workflows with `ENABLE_*` variables.
+
+4. **Try it out**
+
+   Convert a document and validate the Markdown output:
+
+   ```bash
+   python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
+   python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
+   ```
+
+## Directory Overview
+
+```
+ai_doc_analysis_starter/   # Python package
+scripts/                   # CLI helpers
+prompts/                   # Prompt definitions
+data/                      # Sample documents and outputs
+docs/                      # Docusaurus documentation
+```
+
+`data` is organized by document type. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
+
+Example structure:
 
 ```
 data/
@@ -52,20 +83,20 @@ data/
     insider-2024-01-01.pdf.metadata.json
 ```
 
-## GitHub Workflows
+## Automated Workflows
+
+GitHub Actions automate the common pipeline steps:
 
 - **Convert** – convert new documents under `data/**` using Docling and commit sibling outputs.
 - **Validate** – use the GitHub AI model to compare converted files to sources and correct mismatches.
-- **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
 - **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
+- **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
 - **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
 - **Docs** – build the Docusaurus site.
 - **Auto Merge** – merge pull requests when a `/merge` comment is present (disabled by default).
 - **Lint** – run Ruff for Python style.
 
-### Metadata
-
-Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields.
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields.
 
 ```mermaid
 flowchart LR
