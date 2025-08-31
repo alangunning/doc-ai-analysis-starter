@@ -147,7 +147,7 @@ completed. A typical metadata file looks like:
     "steps": {
       "conversion": true,
       "validation": true,
-      "prompt:annual-report": true,
+      "analysis": true,
       "vector": true
     }
   }
