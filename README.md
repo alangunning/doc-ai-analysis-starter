@@ -164,36 +164,36 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables in the [Workflow Toggles](#workflow-toggles) table.
 
 ```mermaid
-graph LR;
-    Commit[Commit document.pdf] --> Convert[Convert Documents (Docling)];
-    Convert --> Validate[Validate Outputs (GitHub AI model)];
-    Validate --> Analysis[Run Analysis Prompts (GitHub AI model)];
-    Analysis --> Vector[Generate Vector Embeddings (GitHub AI model)];
-    Vector --> Done[Workflow Complete];
-    Meta[(Metadata Record (.metadata.json))] --> Convert;
-    Meta --> Validate;
-    Meta --> Analysis;
-    Meta --> Vector;
-    Convert --> Meta;
-    Validate --> Meta;
-    Analysis --> Meta;
-    Vector --> Meta;
+graph LR
+    Commit[Commit document.pdf] --> Convert["Convert Documents (Docling)"]
+    Convert --> Validate["Validate Outputs (GitHub AI model)"]
+    Validate --> Analysis["Run Analysis Prompts (GitHub AI model)"]
+    Analysis --> Vector["Generate Vector Embeddings (GitHub AI model)"]
+    Vector --> Done[Workflow Complete]
+    Meta[("Metadata Record (.metadata.json)")] --> Convert
+    Meta --> Validate
+    Meta --> Analysis
+    Meta --> Vector
+    Convert --> Meta
+    Validate --> Meta
+    Analysis --> Meta
+    Vector --> Meta
 ```
 
 ```mermaid
-graph TD;
-    A[Commit or PR] --> B[Convert Documents (Docling)];
-    B --> C[Validate Outputs (GitHub AI model)];
-    A --> D[Run Analysis Prompts (GitHub AI model)];
-    A --> E[Review PR with AI (GitHub AI model)];
-    A --> F[Run Lint Checks];
-    Main[Push to main] --> G[Generate Vector Embeddings (GitHub AI model)];
-    Main --> H[Build Documentation];
-    Comment["/merge"] --> I[Auto Merge PR];
-    B --> M[(Metadata Record (.metadata.json))];
-    C --> M;
-    D --> M;
-    G --> M;
+graph TD
+    A[Commit or PR] --> B["Convert Documents (Docling)"]
+    B --> C["Validate Outputs (GitHub AI model)"]
+    A --> D["Run Analysis Prompts (GitHub AI model)"]
+    A --> E["Review PR with AI (GitHub AI model)"]
+    A --> F[Run Lint Checks]
+    Main[Push to main] --> G["Generate Vector Embeddings (GitHub AI model)"]
+    Main --> H[Build Documentation]
+    Comment["/merge"] --> I[Auto Merge PR]
+    B --> M[("Metadata Record (.metadata.json)")]
+    C --> M
+    D --> M
+    G --> M
 ```
 
 For CLI usage and adding prompts, see `docs/content/scripts-and-prompts.md`.
