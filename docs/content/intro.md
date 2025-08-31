@@ -11,6 +11,13 @@ AI Doc Analysis Starter helps you explore document-processing workflows powered 
 - GitHub Actions that automate each step of the pipeline, including AI-based PR review and optional auto-approve & merge
 - this Docusaurus site with additional guides and references
 
+## Getting Started
+
+1. Follow the Quick Start steps in the repository `README.md` to install dependencies.
+2. Inspect the sample documents under `data/` or add your own files.
+3. Use the CLI scripts to convert, validate, and analyze documents.
+4. Review the workflow docs to see how GitHub Actions connect the pieces.
+
 Use the navigation to dive into specific topics:
 
 - [Workflow Overview](./workflows)
