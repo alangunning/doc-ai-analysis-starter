@@ -29,6 +29,31 @@ AI Doc Analysis Starter is a template for building end‑to‑end document pipel
 
    Copy `.env.example` to `.env` and adjust variables as needed. Environment variables from the runtime override values in the file. Set `DISABLE_ALL_WORKFLOWS=true` to skip automation or toggle individual workflows with `ENABLE_*` variables.
 
+   #### Workflow Toggles
+
+   | Variable | Workflow |
+   | --- | --- |
+   | `ENABLE_CONVERT_WORKFLOW` | Convert documents |
+   | `ENABLE_VALIDATE_WORKFLOW` | Validate outputs |
+   | `ENABLE_PROMPT_ANALYSIS_WORKFLOW` | Run analysis prompts |
+   | `ENABLE_VECTOR_WORKFLOW` | Generate vector embeddings |
+   | `ENABLE_PR_REVIEW_WORKFLOW` | Review pull requests |
+   | `ENABLE_DOCS_WORKFLOW` | Build documentation site |
+   | `ENABLE_AUTO_MERGE_WORKFLOW` | Auto merge pull requests |
+   | `ENABLE_LINT_WORKFLOW` | Run lint checks |
+
+   Example `.env` snippet:
+
+   ```env
+   # run convert and PR review workflows
+   ENABLE_CONVERT_WORKFLOW=true
+   ENABLE_PR_REVIEW_WORKFLOW=true
+
+   # skip validation and docs workflows
+   ENABLE_VALIDATE_WORKFLOW=false
+   ENABLE_DOCS_WORKFLOW=false
+   ```
+
 4. **Try it out**
 
    Convert a document and validate the Markdown output:
@@ -96,7 +121,7 @@ GitHub Actions automate the common pipeline steps:
 - **Auto Merge** – after an AI review, a `/merge` comment triggers the workflow to auto‑approve and merge the pull request with the GitHub AI model (disabled by default).
 - **Lint** – run Ruff for Python style.
 
-Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields.
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables in the [Workflow Toggles](#workflow-toggles) table.
 
 ```mermaid
 flowchart LR
