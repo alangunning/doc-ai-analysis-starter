@@ -1,6 +1,6 @@
 # AI Doc Analysis Starter
 
-A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional Dublin Core metadata lets workflows skip work they've already completed. The docs are published to [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/) (configurable in `.env`).
+A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional metadata lets workflows skip work they've already completed. See the [converter docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/converter), [GitHub integration docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/github), and [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for details. The docs are published to [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/) (configurable in `.env`).
 
 ## Quick Start
 
@@ -54,18 +54,18 @@ data/
 - **Auto Merge** – merge pull requests when a `/merge` comment is present (disabled by default).
 - **Lint** – run Ruff for Python style.
 
-### Dublin Core metadata
+### Metadata
 
-Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete.
+Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields.
 
 ```mermaid
 flowchart LR
-    Commit[Commit document.pdf] --> Convert[Convert]
-    Convert --> Validate[Validate]
-    Validate --> Analysis[Run analysis]
-    Analysis --> Vector[Vector]
-    Vector --> Done[Done]
-    Meta[(.metadata.json)] --> Convert
+    Commit[Commit document.pdf] --> Convert[Convert Documents]
+    Convert --> Validate[Validate Outputs]
+    Validate --> Analysis[Run Analysis Prompts]
+    Analysis --> Vector[Generate Vector Embeddings]
+    Vector --> Done[Workflow Complete]
+    Meta[(Metadata Record (.metadata.json))] --> Convert
     Meta --> Validate
     Meta --> Analysis
     Meta --> Vector
@@ -77,15 +77,15 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Commit or PR] --> B[Convert]
-    B --> C[Validate]
-    A --> D[Analysis]
-    A --> E[PR Review]
-    A --> F[Lint]
-    Main[Push to main] --> G[Vector]
-    Main --> H[Docs]
-    Comment[/"/merge" comment/] --> I[Auto Merge]
-    B --> M[(.metadata.json)]
+    A[Commit or PR] --> B[Convert Documents]
+    B --> C[Validate Outputs]
+    A --> D[Run Analysis Prompts]
+    A --> E[Review PR with AI]
+    A --> F[Run Lint Checks]
+    Main[Push to main] --> G[Generate Vector Embeddings]
+    Main --> H[Build Documentation]
+    Comment[/"/merge" comment/] --> I[Auto Merge PR]
+    B --> M[(Metadata Record (.metadata.json))]
     C --> M
     D --> M
     G --> M
