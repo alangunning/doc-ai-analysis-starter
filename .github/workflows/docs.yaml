@@ -18,13 +18,12 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
         uses: ./.github/actions/load-env
         with:
           enable-workflow: ENABLE_DOCS_WORKFLOW
-      - uses: actions/checkout@v4
-        if: steps.env.outputs.skip != 'true'
       - uses: actions/setup-node@v4
         if: steps.env.outputs.skip != 'true'
         with:

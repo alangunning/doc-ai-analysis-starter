@@ -9,6 +9,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
         uses: ./.github/actions/load-env
@@ -26,4 +27,4 @@ jobs:
         uses: ./.github/actions/git-commit
         with:
           add: git add data
-          message: chore: update vectors
+          message: "chore: update vectors"
