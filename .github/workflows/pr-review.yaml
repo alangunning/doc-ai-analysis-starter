@@ -23,7 +23,7 @@ jobs:
         if: steps.env.outputs.skip != 'true'
         uses: ./.github/actions/setup-python
         with:
-          packages: ". openai pyyaml"
+          packages: "openai pyyaml"
       - name: Review PR
         if: steps.env.outputs.skip != 'true'
         id: review
