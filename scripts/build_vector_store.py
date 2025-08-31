@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from doc_analysis_ai_starter.github import build_vector_store
+from ai_doc_analysis_starter.github import build_vector_store
 
 
 if __name__ == "__main__":

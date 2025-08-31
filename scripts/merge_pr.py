@@ -2,7 +2,7 @@
 
 import argparse
 
-from doc_analysis_ai_starter.github import merge_pr
+from ai_doc_analysis_starter.github import merge_pr
 
 
 if __name__ == "__main__":

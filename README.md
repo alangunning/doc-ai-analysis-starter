@@ -1,4 +1,4 @@
-# doc-analysis-ai-starter
+# ai-doc-analysis-starter
 
 A minimal template for automating document conversion, verification, prompt execution, and AI-assisted pull request review using GitHub Actions and GitHub Models. The repository also provides optional utilities for working with Dublin Core metadata.
 
@@ -54,8 +54,8 @@ data/
 ## Scripts
 
 Each CLI tool is a thin wrapper around reusable functions in the
-`doc_analysis_ai_starter` package. GitHub-specific helpers live under
-`doc_analysis_ai_starter.github` so the same interfaces can be extended to other
+`ai_doc_analysis_starter` package. GitHub-specific helpers live under
+`ai_doc_analysis_starter.github` so the same interfaces can be extended to other
 providers later.
 
 ### `convert.py`
@@ -73,7 +73,7 @@ times to emit additional outputs (`json`, `text`, or `doctags`). Alternatively,
 set a comma-separated list in the `OUTPUT_FORMATS` environment variable so the
 script and the convert workflow default to those formats (e.g.,
 `OUTPUT_FORMATS=markdown,html`). The underlying library is wrapped by
-`doc_analysis_ai_starter.converter` so you can swap engines without changing calling code.
+`ai_doc_analysis_starter.converter` so you can swap engines without changing calling code.
 
 ### `validate.py`
 
@@ -133,7 +133,7 @@ python scripts/merge_pr.py 123
 Reusable helpers for creating and parsing Dublin Core metadata documents:
 
 ```python
-from doc_analysis_ai_starter.metadata import DublinCoreDocument
+from ai_doc_analysis_starter.metadata import DublinCoreDocument
 ```
 
 Each source file may include a sibling ``*.dc.json`` metadata record. The

@@ -1,5 +1,5 @@
 [project]
-name = "doc-analysis-ai-starter"
+name = "ai-doc-analysis-starter"
 version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 requires-python = ">=3.10"
@@ -26,4 +26,4 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["doc_analysis_ai_starter", "doc_analysis_ai_starter.*"]
+include = ["ai_doc_analysis_starter", "ai_doc_analysis_starter.*"]

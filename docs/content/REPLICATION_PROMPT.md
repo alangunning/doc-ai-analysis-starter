@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# AI Agent Prompt: Recreate `doc-analysis-ai-starter`
+# AI Agent Prompt: Recreate `ai-doc-analysis-starter`
 
 You are an AI coding agent with access to a Bash shell and GitHub CLI. Rebuild
 this repository **without cloning or downloading any remote template**.
@@ -18,7 +18,7 @@ Follow the steps exactly and stop on any error.
    ```
 2. Reproduce the directory tree:
    ```bash
-   mkdir -p data outputs prompts scripts doc_analysis_ai_starter/converter doc_analysis_ai_starter/github doc_analysis_ai_starter/metadata docs/content docs/src/css .github/workflows docs/build
+   mkdir -p data outputs prompts scripts ai_doc_analysis_starter/converter ai_doc_analysis_starter/github ai_doc_analysis_starter/metadata docs/content docs/src/css .github/workflows docs/build
    touch data/.gitkeep outputs/.gitkeep docs/build/.gitkeep
    ```
 3. For each file path listed in the **Appendix**, create the file and paste the
@@ -84,7 +84,7 @@ ENABLE_DOCS_WORKFLOW=true
 ### `pyproject.toml`
 ```text
 [project]
-name = "doc-analysis-ai-starter"
+name = "ai-doc-analysis-starter"
 version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 requires-python = ">=3.10"
@@ -103,12 +103,12 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["doc_analysis_ai_starter", "doc_analysis_ai_starter.*"]
+include = ["ai_doc_analysis_starter", "ai_doc_analysis_starter.*"]
 ```
 
-### `doc_analysis_ai_starter/__init__.py`
+### `ai_doc_analysis_starter/__init__.py`
 ```text
-"""Reusable helpers for the doc-analysis-ai-starter template."""
+"""Reusable helpers for the ai-doc-analysis-starter template."""
 
 from .metadata import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
@@ -128,7 +128,7 @@ __all__ = [
 ]
 ```
 
-### `doc_analysis_ai_starter/converter/__init__.py`
+### `ai_doc_analysis_starter/converter/__init__.py`
 ```text
 from .document_converter import OutputFormat, convert_file, convert_files, suffix_for_format
 
@@ -140,7 +140,7 @@ __all__ = [
 ]
 ```
 
-### `doc_analysis_ai_starter/converter/document_converter.py`
+### `ai_doc_analysis_starter/converter/document_converter.py`
 ```text
 """Unified document conversion helpers.
 
@@ -234,7 +234,7 @@ def suffix_for_format(fmt: OutputFormat) -> str:
 __all__ = ["OutputFormat", "convert_files", "convert_file", "suffix_for_format"]
 ```
 
-### `doc_analysis_ai_starter/github/__init__.py`
+### `ai_doc_analysis_starter/github/__init__.py`
 ```text
 from .prompts import run_prompt
 from .pr import review_pr, merge_pr
@@ -250,7 +250,7 @@ __all__ = [
 ]
 ```
 
-### `doc_analysis_ai_starter/github/pr.py`
+### `ai_doc_analysis_starter/github/pr.py`
 ```text
 """Pull request helpers."""
 
@@ -277,7 +277,7 @@ def merge_pr(pr_number: int) -> None:
 __all__ = ["review_pr", "merge_pr"]
 ```
 
-### `doc_analysis_ai_starter/github/prompts.py`
+### `ai_doc_analysis_starter/github/prompts.py`
 ```text
 """Prompt execution helpers."""
 
@@ -317,7 +317,7 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
 __all__ = ["run_prompt"]
 ```
 
-### `doc_analysis_ai_starter/github/validator.py`
+### `ai_doc_analysis_starter/github/validator.py`
 ```text
 """Rendering validation helpers."""
 
@@ -384,7 +384,7 @@ def validate_file(
 __all__ = ["validate_file"]
 ```
 
-### `doc_analysis_ai_starter/github/vector.py`
+### `ai_doc_analysis_starter/github/vector.py`
 ```text
 """Embedding helpers for Markdown files."""
 
@@ -439,16 +439,16 @@ def build_vector_store(src_dir: Path) -> None:
 __all__ = ["build_vector_store"]
 ```
 
-### `doc_analysis_ai_starter/metadata/__init__.py`
+### `ai_doc_analysis_starter/metadata/__init__.py`
 ```text
-"""Metadata utilities for doc_analysis_ai_starter."""
+"""Metadata utilities for ai_doc_analysis_starter."""
 
 from .dublin_core import DublinCoreDocument
 
 __all__ = ["DublinCoreDocument"]
 ```
 
-### `doc_analysis_ai_starter/metadata/dublin_core.py`
+### `ai_doc_analysis_starter/metadata/dublin_core.py`
 ```text
 """Dublin Core metadata utilities."""
 
@@ -965,7 +965,7 @@ messages:
 import argparse
 from pathlib import Path
 
-from doc_analysis_ai_starter.github import build_vector_store
+from ai_doc_analysis_starter.github import build_vector_store
 
 
 if __name__ == "__main__":
@@ -983,7 +983,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from doc_analysis_ai_starter import OutputFormat, convert_files, suffix_for_format
+from ai_doc_analysis_starter import OutputFormat, convert_files, suffix_for_format
 
 load_dotenv()
 
@@ -1045,7 +1045,7 @@ if __name__ == "__main__":
 
 import argparse
 
-from doc_analysis_ai_starter.github import merge_pr
+from ai_doc_analysis_starter.github import merge_pr
 
 
 if __name__ == "__main__":
@@ -1061,7 +1061,7 @@ import argparse
 import os
 from pathlib import Path
 
-from doc_analysis_ai_starter.github import review_pr
+from ai_doc_analysis_starter.github import review_pr
 
 
 if __name__ == "__main__":
@@ -1083,8 +1083,8 @@ import argparse
 import os
 from pathlib import Path
 
-from doc_analysis_ai_starter.github import run_prompt
-from doc_analysis_ai_starter.metadata import (
+from ai_doc_analysis_starter.github import run_prompt
+from ai_doc_analysis_starter.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,
@@ -1139,9 +1139,9 @@ import argparse
 import os
 from pathlib import Path
 
-from doc_analysis_ai_starter import OutputFormat
-from doc_analysis_ai_starter.github import validate_file
-from doc_analysis_ai_starter.metadata import (
+from ai_doc_analysis_starter import OutputFormat
+from ai_doc_analysis_starter.github import validate_file
+from ai_doc_analysis_starter.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,
@@ -1206,7 +1206,7 @@ if __name__ == "__main__":
 import {themes as prismThemes} from 'prism-react-renderer';
 
 const config = {
-  title: 'Doc Analysis AI Starter',
+  title: 'AI Doc Analysis Starter',
   tagline: 'Starter template for AI document analysis',
   url: 'https://YOUR_GITHUB_USERNAME.github.io',
   baseUrl: '/',
@@ -1214,7 +1214,7 @@ const config = {
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
   organizationName: 'YOUR_GITHUB_USERNAME',
-  projectName: 'doc-analysis-ai-starter',
+  projectName: 'ai-doc-analysis-starter',
   presets: [
     [
       'classic',
@@ -1231,11 +1231,11 @@ const config = {
   ],
   themeConfig: {
     navbar: {
-      title: 'Doc Analysis AI Starter',
+      title: 'AI Doc Analysis Starter',
     },
     footer: {
       style: 'dark',
-      copyright: `Copyright © ${new Date().getFullYear()} Doc Analysis AI Starter`,
+      copyright: `Copyright © ${new Date().getFullYear()} AI Doc Analysis Starter`,
     },
     prism: {
       theme: prismThemes.github,
@@ -1250,7 +1250,7 @@ export default config;
 ### `docs/package.json`
 ```text
 {
-  "name": "doc-analysis-ai-starter-docs",
+  "name": "ai-doc-analysis-starter-docs",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -1275,7 +1275,7 @@ sidebar_position: 1
 
 # Introduction
 
-Welcome to the Doc Analysis AI Starter template. This site is built with Docusaurus and documents how to use the repository.
+Welcome to the AI Doc Analysis Starter template. This site is built with Docusaurus and documents how to use the repository.
 ```
 
 ### `docs/sidebars.js`
