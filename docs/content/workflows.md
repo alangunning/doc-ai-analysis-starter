@@ -52,18 +52,18 @@ Each workflow can run independently, but together they form an end-to-end proces
 Each step updates the document's `<name>.metadata.json` record so completed work is skipped on subsequent runs.
 
 ```mermaid
-flowchart LR
-    Commit[Commit document.pdf] --> Convert[Convert Documents (Docling)]
-    Convert --> Validate[Validate Outputs (GitHub AI model)]
-    Validate --> Analysis[Run Analysis Prompts (GitHub AI model)]
-    Analysis --> Vector[Generate Vector Embeddings (GitHub AI model)]
-    Vector --> Done[Workflow Complete]
-    Meta[(Metadata Record (.metadata.json))] --> Convert
-    Meta --> Validate
-    Meta --> Analysis
-    Meta --> Vector
-    Convert --> Meta
-    Validate --> Meta
-    Analysis --> Meta
-    Vector --> Meta
+graph LR;
+    Commit[Commit document.pdf] --> Convert[Convert Documents (Docling)];
+    Convert --> Validate[Validate Outputs (GitHub AI model)];
+    Validate --> Analysis[Run Analysis Prompts (GitHub AI model)];
+    Analysis --> Vector[Generate Vector Embeddings (GitHub AI model)];
+    Vector --> Done[Workflow Complete];
+    Meta[(Metadata Record (.metadata.json))] --> Convert;
+    Meta --> Validate;
+    Meta --> Analysis;
+    Meta --> Vector;
+    Convert --> Meta;
+    Validate --> Meta;
+    Analysis --> Meta;
+    Vector --> Meta;
 ```
