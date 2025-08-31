@@ -96,22 +96,22 @@ data/
     apple-sec-8-k.pdf.metadata.json
   sec-form-10q/
     sec-form-10q.prompt.yaml
-    acme-2024-q1.pdf
-    acme-2024-q1.pdf.converted.md
-    acme-2024-q1.pdf.converted.html
-    acme-2024-q1.pdf.converted.json
-    acme-2024-q1.pdf.converted.text
-    acme-2024-q1.pdf.converted.doctags
-    acme-2024-q1.pdf.metadata.json
+    apple-sec-form-10q.pdf
+    apple-sec-form-10q.pdf.converted.md
+    apple-sec-form-10q.pdf.converted.html
+    apple-sec-form-10q.pdf.converted.json
+    apple-sec-form-10q.pdf.converted.text
+    apple-sec-form-10q.pdf.converted.doctags
+    apple-sec-form-10q.pdf.metadata.json
   sec-form-4/
     sec-form-4.prompt.yaml
-    insider-2024-01-01.pdf
-    insider-2024-01-01.pdf.converted.md
-    insider-2024-01-01.pdf.converted.html
-    insider-2024-01-01.pdf.converted.json
-    insider-2024-01-01.pdf.converted.text
-    insider-2024-01-01.pdf.converted.doctags
-    insider-2024-01-01.pdf.metadata.json
+    apple-sec-form-4.pdf
+    apple-sec-form-4.pdf.converted.md
+    apple-sec-form-4.pdf.converted.html
+    apple-sec-form-4.pdf.converted.json
+    apple-sec-form-4.pdf.converted.text
+    apple-sec-form-4.pdf.converted.doctags
+    apple-sec-form-4.pdf.metadata.json
 ```
 
 ## Documentation
