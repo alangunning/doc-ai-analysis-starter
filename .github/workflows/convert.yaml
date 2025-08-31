@@ -10,6 +10,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OUTPUT_FORMATS: markdown,html
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
         uses: ./.github/actions/load-env

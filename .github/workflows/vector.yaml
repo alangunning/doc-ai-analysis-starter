@@ -9,6 +9,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
         uses: ./.github/actions/load-env
