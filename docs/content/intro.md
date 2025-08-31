@@ -11,6 +11,15 @@ AI Doc Analysis Starter helps you explore document-processing workflows powered 
 - GitHub Actions that automate each step of the pipeline, including AI-based PR review and optional auto-approve & merge
 - this Docusaurus site with additional guides and references
 
+## Pipeline at a Glance
+
+1. Convert documents (`scripts/convert.py`, Convert workflow)
+2. Validate conversions (`scripts/validate.py`, Validate workflow)
+3. Run analysis prompts (`scripts/run_analysis.py`, Analysis workflow)
+4. Build vector embeddings (`scripts/build_vector_store.py`, Vector workflow)
+
+Each step writes to a `<name>.metadata.json` file so completed work can be skipped in subsequent runs.
+
 ## Getting Started
 
 1. Follow the Quick Start steps in the repository `README.md` to install dependencies.
