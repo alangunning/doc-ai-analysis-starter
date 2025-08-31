@@ -35,7 +35,7 @@ const config = {
     },
     footer: {
       style: 'dark',
-      copyright: `Copyright © ${new Date().getFullYear()} AI Doc Analysis Starter`,
+      copyright: `Copyright © ${new Date().getFullYear()} Alan Gunning`,
     },
     prism: {
       theme: prismThemes.github,
