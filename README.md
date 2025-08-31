@@ -54,6 +54,24 @@ Doc AI Analysis Starter is a template for building end‑to‑end document pipel
    ENABLE_DOCS_WORKFLOW=false
    ```
 
+   #### Model Base URL
+
+   The helpers default to GitHub's public models at `https://models.github.ai`. To use a different endpoint, set `BASE_MODEL_URL` or a workflow-specific variable:
+
+   | Variable | Purpose |
+   | --- | --- |
+   | `BASE_MODEL_URL` | Default for all modules |
+   | `ANALYZE_BASE_MODEL_URL` | Analysis prompts |
+   | `VALIDATE_BASE_MODEL_URL` | Output validation |
+   | `PR_REVIEW_BASE_MODEL_URL` | Pull request reviews |
+   | `VECTOR_BASE_MODEL_URL` | Embedding generation |
+
+   Example override:
+
+   ```env
+   BASE_MODEL_URL=https://models.mycompany.example
+   ```
+
 4. **Try it out**
 
 Convert a document and validate the Markdown output:

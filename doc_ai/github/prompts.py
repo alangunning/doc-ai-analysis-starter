@@ -12,6 +12,8 @@ from openai import OpenAI
 
 load_dotenv()
 
+DEFAULT_MODEL_BASE_URL = "https://models.github.ai"
+
 
 def run_prompt(
     prompt_file: Path,
@@ -32,7 +34,7 @@ def run_prompt(
         api_key=os.getenv("GITHUB_TOKEN"),
         base_url=base_url
         or os.getenv("BASE_MODEL_URL")
-        or "https://models.github.ai/v1",
+        or f"{DEFAULT_MODEL_BASE_URL}/v1",
     )
     response = client.responses.create(
         model=model or spec["model"],
@@ -42,4 +44,4 @@ def run_prompt(
     return response.output[0].content[0].get("text", "")
 
 
-__all__ = ["run_prompt"]
+__all__ = ["run_prompt", "DEFAULT_MODEL_BASE_URL"]

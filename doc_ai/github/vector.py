@@ -16,6 +16,7 @@ from ..metadata import (
     mark_step,
     save_metadata,
 )
+from .prompts import DEFAULT_MODEL_BASE_URL
 
 load_dotenv()
 
@@ -29,8 +30,12 @@ def build_vector_store(src_dir: Path) -> None:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN not set")
-
-    api_url = "https://models.github.ai/inference/embeddings"
+    base_url = (
+        os.getenv("VECTOR_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL")
+        or DEFAULT_MODEL_BASE_URL
+    )
+    api_url = f"{base_url}/inference/embeddings"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",

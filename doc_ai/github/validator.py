@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from ..converter import OutputFormat
+from .prompts import DEFAULT_MODEL_BASE_URL
 
 load_dotenv()
 
@@ -53,7 +54,7 @@ def validate_file(
         base_url=base_url
         or os.getenv("VALIDATE_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
-        or "https://models.github.ai",
+        or DEFAULT_MODEL_BASE_URL,
     )
     result = client.responses.create(
         model=model or spec["model"],

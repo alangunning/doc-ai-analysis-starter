@@ -292,6 +292,8 @@ from openai import OpenAI
 
 load_dotenv()
 
+DEFAULT_MODEL_BASE_URL = "https://models.github.ai"
+
 
 def run_prompt(prompt_file: Path, input_text: str) -> str:
     """Execute ``prompt_file`` against ``input_text`` and return model output."""
@@ -304,7 +306,7 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
             break
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai",
+        base_url=os.getenv("BASE_MODEL_URL") or f"{DEFAULT_MODEL_BASE_URL}/v1",
     )
     response = client.responses.create(
         model=spec["model"],
@@ -314,7 +316,7 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
     return response.output[0].content[0].get("text", "")
 
 
-__all__ = ["run_prompt"]
+__all__ = ["run_prompt", "DEFAULT_MODEL_BASE_URL"]
 ```
 
 ### `doc_ai/github/validator.py`
@@ -334,6 +336,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from ..converter import OutputFormat
+from .prompts import DEFAULT_MODEL_BASE_URL
 
 load_dotenv()
 
@@ -370,7 +373,9 @@ def validate_file(
     )
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai",
+        base_url=os.getenv("VALIDATE_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL")
+        or DEFAULT_MODEL_BASE_URL,
     )
     result = client.responses.create(
         model=model or spec["model"],
@@ -397,6 +402,8 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from .prompts import DEFAULT_MODEL_BASE_URL
+
 load_dotenv()
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
@@ -409,8 +416,12 @@ def build_vector_store(src_dir: Path) -> None:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN not set")
-
-    api_url = "https://models.github.ai/inference/embeddings"
+    base_url = (
+        os.getenv("VECTOR_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL")
+        or DEFAULT_MODEL_BASE_URL
+    )
+    api_url = f"{base_url}/inference/embeddings"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
