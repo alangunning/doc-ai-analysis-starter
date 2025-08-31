@@ -850,7 +850,7 @@ class DublinCoreDocument:
         return out
 ```
 
-### `prompts/annual-report.prompt.yaml`
+### `data/annual-report/annual-report.prompt.yaml`
 ```text
 name: Annual report KPIs
 description: Extract key financial metrics from annual report sections.
@@ -886,7 +886,7 @@ messages:
       Summarize the following document in three bullet points.
 ```
 
-### `prompts/insider-trades.prompt.yaml`
+### `data/insider-trades/insider-trades.prompt.yaml`
 ```text
 name: Insider trading extraction
 description: Parse insider trading filings and output structured transactions.
@@ -925,7 +925,7 @@ messages:
       Review the following pull request description and suggest improvements.
 ```
 
-### `prompts/sec-8k.prompt.yaml`
+### `data/sec-8k/sec-8k.prompt.yaml`
 ```text
 name: SEC 8-K summary
 description: Extract structured event details from SEC 8-K filings.

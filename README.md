@@ -27,20 +27,24 @@ npm run build
 
 ## Directory layout
 
-Each source document is stored under `data/<name>/<name>.<ext>` where `<ext>`
-can be any format supported by Docling (PDF, DOCX, PPTX, etc.). Conversions,
-prompts, embeddings, and other derived files are written alongside the source
-so every representation stays grouped together:
+Documents are organized by type under `data/<doc-type>/`. Each directory
+contains a prompt definition named `<doc-type>.prompt.yaml` plus any number of
+source files (PDFs, Word docs, slide decks, etc.). Conversions, prompts,
+embeddings, and other derived files are written next to each source so every
+representation stays grouped together:
 
 ```
 data/
-  sample/
-    sample.pdf
-    sample.prompt.yaml
-    sample.md
-    sample.sample.json
-    sample.html
-    sample.embedding.json
+  sec-8k/
+    sec-8k.prompt.yaml
+    apple-sec-8-k.pdf
+    apple-sec-8-k.md
+    apple-sec-8-k.sec-8k.json
+  annual-report/
+    annual-report.prompt.yaml
+    acme-2023.pdf
+    acme-2023.md
+    acme-2023.annual-report.json
 ```
 
 ## Scripts
@@ -77,15 +81,15 @@ Override the model with `--model` or `VALIDATE_MODEL`.
 
 ### `run_prompt.py`
 
-Run a prompt definition that lives next to a Markdown document and save JSON
-output next to the source file:
+Run a prompt definition stored in a document-type directory against a Markdown
+document and save JSON output next to the source file:
 
 ```bash
-python scripts/run_prompt.py data/example/example.prompt.yaml data/example/example.md
+python scripts/run_prompt.py data/sec-8k/sec-8k.prompt.yaml data/sec-8k/apple-sec-8-k.md
 ```
 
-The above writes `data/example/example.example.json`. Override the model with
-`--model` or `ANALYZE_MODEL`.
+The above writes `data/sec-8k/apple-sec-8-k.sec-8k.json`. Override the model
+with `--model` or `ANALYZE_MODEL`.
 
 ### `build_vector_store.py`
 
@@ -174,9 +178,10 @@ flowchart LR
   complete.
 - **Validate** – checks converted outputs against the source documents and auto-corrects mismatches, skipping unchanged files via metadata.
 - **Vector** – generates embeddings for Markdown files on `main` and writes them next to the sources, omitting documents whose metadata already records the `vector` step.
-- **Analyze** – auto-discovers `*.prompt.yaml` files next to Markdown documents,
-  executes each prompt, and uploads JSON output as artifacts, re-running only
-  when prompts haven't been marked complete.
+- **Analyze** – auto-discovers `<doc-type>.prompt.yaml` files in each
+  `data/<doc-type>` directory, runs them against every Markdown document in that
+  directory, and uploads JSON output as artifacts, re-running only when prompts
+  haven't been marked complete.
 - **PR Review** – runs an AI model against each pull request and posts the result as a comment, ending with `/merge` when the changes are approved.
 - **Docs** – builds the Docusaurus site and deploys to GitHub Pages.
 - **Auto Merge** – approves and merges pull requests when a `/merge` comment is posted. Disabled by default; enable by setting `ENABLE_AUTO_MERGE_WORKFLOW=true` in `.env`.

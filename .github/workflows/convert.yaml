@@ -20,12 +20,7 @@ jobs:
         with:
           packages: docling
       - run: |
-          files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*' \
-            ':!data/**/*.md' ':!data/**/*.html' ':!data/**/*.json' ':!data/**/*.txt' \
-            ':!data/**/*.doctags' ':!data/**/*.prompt.yaml')
-          for f in $files; do
-            python scripts/convert.py "$f"
-          done
+          python scripts/convert.py data
         if: steps.env.outputs.skip != 'true'
       - name: Commit conversions
         if: steps.env.outputs.skip != 'true'
