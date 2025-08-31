@@ -1,10 +1,15 @@
 import argparse
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Allow running without installing as a package by adding project root to path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from doc_analysis_ai_starter import OutputFormat, convert_files, suffix_for_format
+from docling.exceptions import ConversionError
 from doc_analysis_ai_starter.metadata import (
     compute_hash,
     is_step_done,
@@ -55,7 +60,10 @@ def convert_path(source: Path, formats: list[OutputFormat]) -> None:
             mark_step(meta, "conversion")
             save_metadata(file, meta)
             return
-        convert_files(file, outputs)
+        try:
+            convert_files(file, outputs)
+        except ConversionError:
+            return
         mark_step(meta, "conversion")
         save_metadata(file, meta)
 
