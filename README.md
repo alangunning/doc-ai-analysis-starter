@@ -1,6 +1,6 @@
-# ai-doc-analysis-starter
+# AI Doc Analysis Starter
 
-A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional Dublin Core metadata lets workflows skip work they've already completed. The docs are published to `${DOCS_SITE_URL}${DOCS_BASE_URL}` (configurable in `.env`).
+A starter template for converting documents, validating outputs, running prompts, and reviewing pull requests with AI. GitHub Actions orchestrate the steps and optional metadata lets workflows skip work they've already completed. See the [converter docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/converter), [GitHub integration docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/github), and [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for details. The docs are published to [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/) (configurable in `.env`).
 
 ## Quick Start
 
@@ -45,27 +45,27 @@ data/
 
 ## GitHub Workflows
 
-- **Convert** – convert new documents under `data/**` and commit sibling outputs.
-- **Validate** – compare converted files to sources and correct mismatches.
-- **Vector** – generate embeddings for Markdown files on `main`.
-- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents and upload JSON.
-- **PR Review** – review pull requests with an AI prompt; comment `/review` to rerun.
+- **Convert** – convert new documents under `data/**` using Docling and commit sibling outputs.
+- **Validate** – use the GitHub AI model to compare converted files to sources and correct mismatches.
+- **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
+- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
+- **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
 - **Docs** – build the Docusaurus site.
 - **Auto Merge** – merge pull requests when a `/merge` comment is present (disabled by default).
 - **Lint** – run Ruff for Python style.
 
-### Dublin Core metadata
+### Metadata
 
-Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete.
+Each source file may have a `<name>.metadata.json` record storing a checksum and which steps have run. Workflows skip work when the metadata indicates a step is complete. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields.
 
 ```mermaid
 flowchart LR
-    Commit[Commit document.pdf] --> Convert[Convert]
-    Convert --> Validate[Validate]
-    Validate --> Analysis[Run analysis]
-    Analysis --> Vector[Vector]
-    Vector --> Done[Done]
-    Meta[(.metadata.json)] --> Convert
+    Commit[Commit document.pdf] --> Convert[Convert Documents (Docling)]
+    Convert --> Validate[Validate Outputs (GitHub AI model)]
+    Validate --> Analysis[Run Analysis Prompts (GitHub AI model)]
+    Analysis --> Vector[Generate Vector Embeddings (GitHub AI model)]
+    Vector --> Done[Workflow Complete]
+    Meta[(Metadata Record (.metadata.json))] --> Convert
     Meta --> Validate
     Meta --> Analysis
     Meta --> Vector
@@ -77,15 +77,15 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Commit or PR] --> B[Convert]
-    B --> C[Validate]
-    A --> D[Analysis]
-    A --> E[PR Review]
-    A --> F[Lint]
-    Main[Push to main] --> G[Vector]
-    Main --> H[Docs]
-    Comment[/"/merge" comment/] --> I[Auto Merge]
-    B --> M[(.metadata.json)]
+    A[Commit or PR] --> B[Convert Documents (Docling)]
+    B --> C[Validate Outputs (GitHub AI model)]
+    A --> D[Run Analysis Prompts (GitHub AI model)]
+    A --> E[Review PR with AI (GitHub AI model)]
+    A --> F[Run Lint Checks]
+    Main[Push to main] --> G[Generate Vector Embeddings (GitHub AI model)]
+    Main --> H[Build Documentation]
+    Comment[/"/merge" comment/] --> I[Auto Merge PR]
+    B --> M[(Metadata Record (.metadata.json))]
     C --> M
     D --> M
     G --> M
