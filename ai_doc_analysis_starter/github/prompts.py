@@ -13,7 +13,13 @@ from openai import OpenAI
 load_dotenv()
 
 
-def run_prompt(prompt_file: Path, input_text: str, *, model: Optional[str] = None) -> str:
+def run_prompt(
+    prompt_file: Path,
+    input_text: str,
+    *,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+) -> str:
     """Execute ``prompt_file`` against ``input_text`` and return model output."""
 
     spec = yaml.safe_load(prompt_file.read_text())
@@ -24,7 +30,9 @@ def run_prompt(prompt_file: Path, input_text: str, *, model: Optional[str] = Non
             break
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai/v1",
+        base_url=base_url
+        or os.getenv("BASE_MODEL_URL")
+        or "https://models.github.ai/v1",
     )
     response = client.responses.create(
         model=model or spec["model"],

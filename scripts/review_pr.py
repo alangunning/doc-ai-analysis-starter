@@ -14,5 +14,18 @@ if __name__ == "__main__":
         default=os.getenv("PR_REVIEW_MODEL"),
         help="Model name override",
     )
+    parser.add_argument(
+        "--base-model-url",
+        default=os.getenv("PR_REVIEW_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL"),
+        help="Model base URL override",
+    )
     args = parser.parse_args()
-    print(review_pr(args.pr_body, args.prompt, model=args.model))
+    print(
+        review_pr(
+            args.pr_body,
+            args.prompt,
+            model=args.model,
+            base_url=args.base_model_url,
+        )
+    )

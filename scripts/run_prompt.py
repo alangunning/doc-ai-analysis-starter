@@ -26,6 +26,12 @@ if __name__ == "__main__":
         default=os.getenv("ANALYZE_MODEL"),
         help="Model name override",
     )
+    parser.add_argument(
+        "--base-model-url",
+        default=os.getenv("ANALYZE_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL"),
+        help="Model base URL override",
+    )
     args = parser.parse_args()
 
     prompt_name = args.prompt.name.replace(".prompt.yaml", "")
@@ -40,7 +46,10 @@ if __name__ == "__main__":
         meta.extra = {}
 
     result = run_prompt(
-        args.prompt, args.markdown_doc.read_text(), model=args.model
+        args.prompt,
+        args.markdown_doc.read_text(),
+        model=args.model,
+        base_url=args.base_model_url,
     )
     out_path = (
         args.output

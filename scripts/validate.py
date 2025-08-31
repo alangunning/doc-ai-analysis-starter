@@ -43,6 +43,12 @@ if __name__ == "__main__":
         default=os.getenv("VALIDATE_MODEL"),
         help="Model name override",
     )
+    parser.add_argument(
+        "--base-model-url",
+        default=os.getenv("VALIDATE_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL"),
+        help="Model base URL override",
+    )
     args = parser.parse_args()
 
     meta = load_metadata(args.raw)
@@ -54,7 +60,12 @@ if __name__ == "__main__":
         meta.extra = {}
     fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
     verdict = validate_file(
-        args.raw, args.rendered, fmt, args.prompt, model=args.model
+        args.raw,
+        args.rendered,
+        fmt,
+        args.prompt,
+        model=args.model,
+        base_url=args.base_model_url,
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")

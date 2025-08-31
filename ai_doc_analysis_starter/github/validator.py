@@ -38,6 +38,7 @@ def validate_file(
     fmt: OutputFormat,
     prompt_path: Path,
     model: str | None = None,
+    base_url: str | None = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -49,7 +50,10 @@ def validate_file(
     )
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
-        base_url="https://models.github.ai",
+        base_url=base_url
+        or os.getenv("VALIDATE_BASE_MODEL_URL")
+        or os.getenv("BASE_MODEL_URL")
+        or "https://models.github.ai",
     )
     result = client.responses.create(
         model=model or spec["model"],
