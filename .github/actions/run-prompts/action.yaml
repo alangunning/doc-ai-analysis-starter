@@ -1,0 +1,19 @@
+name: Run prompts
+description: Execute prompt YAMLs against Markdown documents.
+inputs:
+  path:
+    description: Root directory to search for prompts.
+    required: false
+    default: data
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        for prompt in $(find "${{ inputs.path }}" -name '*.prompt.yaml'); do
+          dir=$(dirname "$prompt")
+          for md in "$dir"/*.md; do
+            [ -f "$md" ] || continue
+            python scripts/run_prompt.py "$prompt" "$md"
+          done
+        done

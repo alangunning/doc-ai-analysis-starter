@@ -20,14 +20,11 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           packages: docling
-      - run: |
-          python scripts/convert.py data
+      - run: python scripts/convert.py data
         if: steps.env.outputs.skip != 'true'
       - name: Commit conversions
         if: steps.env.outputs.skip != 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add data
-          git commit -m "docs: auto-convert documents" || echo "No changes"
-          git push
+        uses: ./.github/actions/git-commit
+        with:
+          add: git add data
+          message: docs: auto-convert documents

@@ -23,14 +23,7 @@ jobs:
           packages: openai pyyaml
       - name: Run prompts
         if: steps.env.outputs.skip != 'true'
-        run: |
-          for prompt in $(find data -name '*.prompt.yaml'); do
-            dir=$(dirname "$prompt")
-            for md in "$dir"/*.md; do
-              [ -f "$md" ] || continue
-              python scripts/run_prompt.py "$prompt" "$md"
-            done
-          done
+        uses: ./.github/actions/run-prompts
       - uses: actions/upload-artifact@v4
         if: steps.env.outputs.skip != 'true'
         with:

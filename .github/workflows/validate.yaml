@@ -26,31 +26,17 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           packages: docling openai pyyaml
-      - run: |
-          for file in $(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags'); do
-            raw=${file%.*}.pdf
-            fmt=${file##*.}
-            python scripts/validate.py $raw $file --prompt prompts/validate-output.prompt.yaml || (
-              git checkout -- $file
-              python scripts/convert.py $raw --format $fmt
-              git add $file
-            )
-          done
-        if: steps.env.outputs.skip != 'true'
+      - if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/validate-outputs
+        with:
+          before: ${{ github.event.before }}
+          sha: ${{ github.sha }}
       - name: Commit validation metadata
         if: steps.env.outputs.skip != 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          find data -name '*.dc.json' -print0 | xargs -0 git add
-          git commit -m "chore: update validation metadata" || echo "No changes"
-          git push
+        uses: ./.github/actions/git-commit
+        with:
+          add: find data -name '*.dc.json' -print0 | xargs -0 git add
+          message: chore: update validation metadata
       - name: Create PR if fixes
         if: steps.env.outputs.skip != 'true'
-        run: |
-          git diff --staged --quiet && exit 0
-          branch="fix-conversion-$(date +%s)"
-          git checkout -b "$branch"
-          git commit -m "docs: fix document conversion"
-          git push origin "$branch"
-          gh pr create --fill --title "Fix document conversion" --body "Auto-corrected mismatched output."
+        uses: ./.github/actions/create-fix-pr

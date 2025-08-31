@@ -1,0 +1,21 @@
+name: Review PR
+description: Run automated PR review script.
+inputs:
+  prompt:
+    description: Prompt file to use.
+    required: true
+  body:
+    description: Pull request body.
+    required: true
+  model:
+    description: Model name.
+    required: true
+  output-file:
+    description: File to store review output.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        python scripts/review_pr.py "${{ inputs.prompt }}" "${{ inputs.body }}" --model "${{ inputs.model }}" | tee "${{ inputs.output-file }}"

@@ -1,0 +1,19 @@
+name: Git Commit
+description: Commit and push changes.
+inputs:
+  add:
+    description: Shell command to add files.
+    required: true
+  message:
+    description: Commit message.
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        ${{ inputs.add }}
+        git commit -m "${{ inputs.message }}" || echo "No changes"
+        git push

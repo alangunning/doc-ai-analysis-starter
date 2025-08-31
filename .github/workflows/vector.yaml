@@ -23,9 +23,7 @@ jobs:
         if: steps.env.outputs.skip != 'true'
       - name: Commit vectors
         if: steps.env.outputs.skip != 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add data
-          git commit -m "chore: update vectors" || echo "No changes"
-          git push
+        uses: ./.github/actions/git-commit
+        with:
+          add: git add data
+          message: chore: update vectors
