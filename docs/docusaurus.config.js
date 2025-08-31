@@ -21,6 +21,8 @@ const config = {
   favicon: 'img/favicon.ico',
   organizationName,
   projectName,
+  markdown: { mermaid: true },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       'classic',
