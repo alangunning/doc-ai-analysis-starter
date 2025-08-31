@@ -13,6 +13,7 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
       - name: Load env
         id: env
         uses: ./.github/actions/load-env
@@ -22,7 +23,7 @@ jobs:
         if: steps.env.outputs.skip != 'true'
         uses: ./.github/actions/setup-python
         with:
-          packages: openai pyyaml
+          packages: ". openai pyyaml"
       - name: Review PR
         if: steps.env.outputs.skip != 'true'
         id: review
