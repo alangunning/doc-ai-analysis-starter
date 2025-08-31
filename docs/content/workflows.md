@@ -49,6 +49,19 @@ Each workflow can run independently, but together they form an end-to-end proces
 - **Auto Merge** – after an AI review, a `/merge` comment triggers the workflow to auto‑approve and merge the pull request with the GitHub AI model (disabled by default).
 - **Lint** – run Ruff for Python style.
 
+The table below shows when each workflow runs and how to toggle it:
+
+| Workflow | Trigger | Env toggle |
+| --- | --- | --- |
+| Convert | Push to `data/**` | `ENABLE_CONVERT_WORKFLOW` |
+| Validate | Push converted outputs | `ENABLE_VALIDATE_WORKFLOW` |
+| Analysis | Push Markdown or `.prompt.yaml`, or manual dispatch | `ENABLE_PROMPT_ANALYSIS_WORKFLOW` |
+| Vector | Push to `main` with Markdown | `ENABLE_VECTOR_WORKFLOW` |
+| PR Review | Pull request or `/review` comment | `ENABLE_PR_REVIEW_WORKFLOW` |
+| Docs | Push to `docs/**` on `main` | `ENABLE_DOCS_WORKFLOW` |
+| Auto Merge | `/merge` issue comment | `ENABLE_AUTO_MERGE_WORKFLOW` |
+| Lint | Push/PR touching Python files | `ENABLE_LINT_WORKFLOW` |
+
 Each step updates the document's `<name>.metadata.json` record so completed work is skipped on subsequent runs.
 
 ```mermaid

@@ -127,18 +127,20 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 
 ## Automated Workflows
 
-GitHub Actions automate the common pipeline steps:
+GitHub Actions tie the pieces together. Each workflow runs on a specific trigger and can be disabled with its `ENABLE_*` variable.
 
-- **Convert** – convert new documents under `data/**` using Docling and commit sibling outputs.
-- **Validate** – use the GitHub AI model to compare converted files to sources and correct mismatches.
-- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
-- **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
-- **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
-- **Docs** – build the Docusaurus site.
-- **Auto Merge** – after an AI review, a `/merge` comment triggers the workflow to auto‑approve and merge the pull request with the GitHub AI model (disabled by default).
-- **Lint** – run Ruff for Python style.
+| Workflow | Trigger | Purpose |
+| --- | --- | --- |
+| Convert | Push to `data/**` | Convert new documents with Docling and commit sibling outputs |
+| Validate | Push converted outputs | Compare rendered files to sources and correct mismatches |
+| Analysis | Push Markdown or `.prompt.yaml`, or manual dispatch | Run custom prompts against Markdown and upload JSON |
+| Vector | Push to `main` with Markdown | Generate embeddings for search |
+| PR Review | Pull request or `/review` comment | Provide AI feedback on the PR body |
+| Docs | Push to `docs/**` on `main` | Build and publish the documentation site |
+| Auto Merge | `/merge` issue comment | Approve and merge a pull request after review |
+| Lint | Push/PR touching Python files | Run Ruff style checks |
 
-Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables in the [Workflow Toggles](#workflow-toggles) table.
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables in the [Workflow Toggles](#workflow-toggles) table.
 
 ```mermaid
 graph LR;
