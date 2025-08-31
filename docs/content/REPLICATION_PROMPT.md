@@ -1184,7 +1184,7 @@ if __name__ == "__main__":
 
     meta = load_metadata(args.raw)
     file_hash = compute_hash(args.raw)
-    if meta.blake2b == file_hash and is_step_done(meta, "analysis"):
+    if meta.blake2b == file_hash and is_step_done(meta, "validation"):
         raise SystemExit(0)
     if meta.blake2b != file_hash:
         meta.blake2b = file_hash
@@ -1195,7 +1195,7 @@ if __name__ == "__main__":
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
-    mark_step(meta, "analysis")
+    mark_step(meta, "validation")
     save_metadata(args.raw, meta)
 ```
 
