@@ -1,6 +1,6 @@
 name: Pull request review
 description: Provide concise review comments for pull requests. If the changes are acceptable, end the comment with `/merge` on its own line.
-model: openai/gpt-4o-mini
+model: openai/gpt-4.1
 modelParameters:
   temperature: 0
 messages:
