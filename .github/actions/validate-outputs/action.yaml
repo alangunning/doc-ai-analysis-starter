@@ -27,7 +27,14 @@ runs:
               fi
             done
           fi
-          fmt=${file##*.}
+          case "${file##*.}" in
+            md) fmt="markdown" ;;
+            html) fmt="html" ;;
+            json) fmt="json" ;;
+            txt) fmt="text" ;;
+            doctags) fmt="doctags" ;;
+            *) fmt="${file##*.}" ;;
+          esac
           python scripts/validate.py "$raw" "$file" --prompt .github/prompts/validate-output.prompt.yaml || (
             git checkout -- "$file"
             python scripts/convert.py "$raw" --format "$fmt"
