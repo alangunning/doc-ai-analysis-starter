@@ -91,7 +91,11 @@ flowchart TD
     G --> M
 ```
 
-For CLI usage and adding prompts, see `docs/content/scripts-and-prompts.md`.
+For CLI usage, environment variables, and detailed workflow information, see:
+
+- [CLI scripts](https://alangunning.github.io/doc-ai-analysis-starter/docs/scripts)
+- [Environment variables](https://alangunning.github.io/doc-ai-analysis-starter/docs/environment)
+- [Workflows & metadata](https://alangunning.github.io/doc-ai-analysis-starter/docs/workflows-and-metadata)
 
 ## License
 
