@@ -5,7 +5,7 @@ on:
       - "data/**"
 permissions:
   contents: write
-  workflow: write # allow commits to trigger downstream workflows
+  actions: write
 jobs:
   convert:
     runs-on: ubuntu-latest
