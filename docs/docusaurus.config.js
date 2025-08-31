@@ -1,19 +1,28 @@
 // @ts-check
 
 import {themes as prismThemes} from 'prism-react-renderer';
+import * as dotenv from 'dotenv';
+
+dotenv.config({path: '../.env'});
+
+const siteUrl = process.env.DOCS_SITE_URL ?? 'https://alangunning.github.io';
+const baseUrl = process.env.DOCS_BASE_URL ?? '/doc-ai-analysis-starter/docs/';
+const organizationName = process.env.GITHUB_ORG ?? 'alangunning';
+const projectName = process.env.GITHUB_REPO ?? 'doc-ai-analysis-starter';
 
 const config = {
   title: 'AI Doc Analysis Starter',
   tagline: 'Starter template for AI document analysis',
-  url: 'https://alangunning.github.io',
+  url: siteUrl,
   // When deploying to GitHub Pages, the base URL must match the repo name.
-  // The docs are served from https://alangunning.github.io/doc-ai-analysis-starter/docs/
-  baseUrl: '/doc-ai-analysis-starter/docs/',
+  baseUrl: baseUrl,
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'alangunning',
-  projectName: 'doc-ai-analysis-starter',
+  organizationName,
+  projectName,
+  markdown: { mermaid: true },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       'classic',

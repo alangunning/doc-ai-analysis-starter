@@ -13,7 +13,7 @@ _DEF_STEP_KEY = "steps"
 
 def metadata_path(doc_path: Path) -> Path:
     """Return the companion Dublin Core metadata path for ``doc_path``."""
-    return doc_path.with_suffix(doc_path.suffix + ".dc.json")
+    return doc_path.with_suffix(doc_path.suffix + ".metadata.json")
 
 
 def load_metadata(doc_path: Path) -> DublinCoreDocument:
