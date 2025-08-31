@@ -28,13 +28,19 @@ data/
     apple-sec-8-k.pdf
     apple-sec-8-k.pdf.converted.md
     apple-sec-8-k.pdf.converted.html
-    apple-sec-8-k.sec-8k.json
+    apple-sec-8-k.pdf.converted.json
+    apple-sec-8-k.pdf.converted.text
+    apple-sec-8-k.pdf.converted.doctags
+    apple-sec-8-k.pdf.dc.json
   annual-report/
     annual-report.prompt.yaml
     acme-2023.pdf
     acme-2023.pdf.converted.md
     acme-2023.pdf.converted.html
-    acme-2023.annual-report.json
+    acme-2023.pdf.converted.json
+    acme-2023.pdf.converted.text
+    acme-2023.pdf.converted.doctags
+    acme-2023.pdf.dc.json
 ```
 
 ## GitHub Workflows
