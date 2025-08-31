@@ -19,12 +19,16 @@ dependencies = [
 "ai-doc-analysis" = "doc_ai.cli:app"
 
 [project.optional-dependencies]
-dev = ["ruff"]
+dev = ["ruff", "pytest"]
 
 [tool.ruff]
 [tool.ruff.lint]
 select = ["E", "F", "W"]
 ignore = ["E501"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
