@@ -53,9 +53,10 @@ data/
 
 ## Scripts
 
-Each CLI tool is a thin wrapper around reusable functions in the `docai` package.
-GitHub-specific helpers live under `docai.github` so the same interfaces can be
-extended to other providers later.
+Each CLI tool is a thin wrapper around reusable functions in the
+`doc_analysis_ai_starter` package. GitHub-specific helpers live under
+`doc_analysis_ai_starter.github` so the same interfaces can be extended to other
+providers later.
 
 ### `convert.py`
 
@@ -72,7 +73,7 @@ times to emit additional outputs (`json`, `text`, or `doctags`). Alternatively,
 set a comma-separated list in the `OUTPUT_FORMATS` environment variable so the
 script and the convert workflow default to those formats (e.g.,
 `OUTPUT_FORMATS=markdown,html`). The underlying library is wrapped by
-`docai.converter` so you can swap engines without changing calling code.
+`doc_analysis_ai_starter.converter` so you can swap engines without changing calling code.
 
 ### `validate.py`
 
@@ -132,7 +133,7 @@ python scripts/merge_pr.py 123
 Reusable helpers for creating and parsing Dublin Core metadata documents:
 
 ```python
-from docai.metadata import DublinCoreDocument
+from doc_analysis_ai_starter.metadata import DublinCoreDocument
 ```
 
 Each source file may include a sibling ``*.dc.json`` metadata record. The

@@ -18,7 +18,7 @@ Follow the steps exactly and stop on any error.
    ```
 2. Reproduce the directory tree:
    ```bash
-   mkdir -p data outputs prompts scripts docai/converter docai/github docai/metadata docs/content docs/src/css .github/workflows docs/build
+   mkdir -p data outputs prompts scripts doc_analysis_ai_starter/converter doc_analysis_ai_starter/github doc_analysis_ai_starter/metadata docs/content docs/src/css .github/workflows docs/build
    touch data/.gitkeep outputs/.gitkeep docs/build/.gitkeep
    ```
 3. For each file path listed in the **Appendix**, create the file and paste the
@@ -103,10 +103,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["docai", "docai.*"]
+include = ["doc_analysis_ai_starter", "doc_analysis_ai_starter.*"]
 ```
 
-### `docai/__init__.py`
+### `doc_analysis_ai_starter/__init__.py`
 ```text
 """Reusable helpers for the doc-analysis-ai-starter template."""
 
@@ -128,7 +128,7 @@ __all__ = [
 ]
 ```
 
-### `docai/converter/__init__.py`
+### `doc_analysis_ai_starter/converter/__init__.py`
 ```text
 from .document_converter import OutputFormat, convert_file, convert_files, suffix_for_format
 
@@ -140,7 +140,7 @@ __all__ = [
 ]
 ```
 
-### `docai/converter/document_converter.py`
+### `doc_analysis_ai_starter/converter/document_converter.py`
 ```text
 """Unified document conversion helpers.
 
@@ -234,7 +234,7 @@ def suffix_for_format(fmt: OutputFormat) -> str:
 __all__ = ["OutputFormat", "convert_files", "convert_file", "suffix_for_format"]
 ```
 
-### `docai/github/__init__.py`
+### `doc_analysis_ai_starter/github/__init__.py`
 ```text
 from .prompts import run_prompt
 from .pr import review_pr, merge_pr
@@ -250,7 +250,7 @@ __all__ = [
 ]
 ```
 
-### `docai/github/pr.py`
+### `doc_analysis_ai_starter/github/pr.py`
 ```text
 """Pull request helpers."""
 
@@ -277,7 +277,7 @@ def merge_pr(pr_number: int) -> None:
 __all__ = ["review_pr", "merge_pr"]
 ```
 
-### `docai/github/prompts.py`
+### `doc_analysis_ai_starter/github/prompts.py`
 ```text
 """Prompt execution helpers."""
 
@@ -317,7 +317,7 @@ def run_prompt(prompt_file: Path, input_text: str) -> str:
 __all__ = ["run_prompt"]
 ```
 
-### `docai/github/validator.py`
+### `doc_analysis_ai_starter/github/validator.py`
 ```text
 """Rendering validation helpers."""
 
@@ -384,7 +384,7 @@ def validate_file(
 __all__ = ["validate_file"]
 ```
 
-### `docai/github/vector.py`
+### `doc_analysis_ai_starter/github/vector.py`
 ```text
 """Embedding helpers for Markdown files."""
 
@@ -439,16 +439,16 @@ def build_vector_store(src_dir: Path) -> None:
 __all__ = ["build_vector_store"]
 ```
 
-### `docai/metadata/__init__.py`
+### `doc_analysis_ai_starter/metadata/__init__.py`
 ```text
-"""Metadata utilities for docai."""
+"""Metadata utilities for doc_analysis_ai_starter."""
 
 from .dublin_core import DublinCoreDocument
 
 __all__ = ["DublinCoreDocument"]
 ```
 
-### `docai/metadata/dublin_core.py`
+### `doc_analysis_ai_starter/metadata/dublin_core.py`
 ```text
 """Dublin Core metadata utilities."""
 
@@ -965,7 +965,7 @@ messages:
 import argparse
 from pathlib import Path
 
-from docai.github import build_vector_store
+from doc_analysis_ai_starter.github import build_vector_store
 
 
 if __name__ == "__main__":
@@ -983,7 +983,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from docai import OutputFormat, convert_files, suffix_for_format
+from doc_analysis_ai_starter import OutputFormat, convert_files, suffix_for_format
 
 load_dotenv()
 
@@ -1045,7 +1045,7 @@ if __name__ == "__main__":
 
 import argparse
 
-from docai.github import merge_pr
+from doc_analysis_ai_starter.github import merge_pr
 
 
 if __name__ == "__main__":
@@ -1061,7 +1061,7 @@ import argparse
 import os
 from pathlib import Path
 
-from docai.github import review_pr
+from doc_analysis_ai_starter.github import review_pr
 
 
 if __name__ == "__main__":
@@ -1083,8 +1083,8 @@ import argparse
 import os
 from pathlib import Path
 
-from docai.github import run_prompt
-from docai.metadata import (
+from doc_analysis_ai_starter.github import run_prompt
+from doc_analysis_ai_starter.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,
@@ -1139,9 +1139,9 @@ import argparse
 import os
 from pathlib import Path
 
-from docai import OutputFormat
-from docai.github import validate_file
-from docai.metadata import (
+from doc_analysis_ai_starter import OutputFormat
+from doc_analysis_ai_starter.github import validate_file
+from doc_analysis_ai_starter.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,

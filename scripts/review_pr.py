@@ -2,7 +2,7 @@ import argparse
 import os
 from pathlib import Path
 
-from docai.github import review_pr
+from doc_analysis_ai_starter.github import review_pr
 
 
 if __name__ == "__main__":

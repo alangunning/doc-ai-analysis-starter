@@ -4,8 +4,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from docai import OutputFormat, convert_files, suffix_for_format
-from docai.metadata import (
+from doc_analysis_ai_starter import OutputFormat, convert_files, suffix_for_format
+from doc_analysis_ai_starter.metadata import (
     compute_hash,
     is_step_done,
     load_metadata,

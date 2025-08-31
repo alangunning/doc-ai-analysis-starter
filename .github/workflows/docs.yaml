@@ -37,9 +37,9 @@ jobs:
         if: steps.env.outputs.skip != 'true'
         working-directory: docs
       - uses: actions/upload-pages-artifact@v4
-        if: steps.env.outputs.skip != 'true'
+        if: steps.env.outputs.skip != 'true' && github.event.repository.has_pages
         with:
           path: docs/build
       - id: deployment
-        if: steps.env.outputs.skip != 'true'
+        if: steps.env.outputs.skip != 'true' && github.event.repository.has_pages
         uses: actions/deploy-pages@v4

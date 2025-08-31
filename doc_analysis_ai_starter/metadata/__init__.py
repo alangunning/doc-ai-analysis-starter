@@ -1,4 +1,4 @@
-"""Metadata utilities for docai."""
+"""Metadata utilities for doc_analysis_ai_starter."""
 
 from __future__ import annotations
 
