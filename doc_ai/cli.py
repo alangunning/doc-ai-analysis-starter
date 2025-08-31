@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional
+import os
 
 import typer
 from rich.console import Console
+from dotenv import load_dotenv
 
 from doc_ai import OutputFormat, convert_files, suffix_for_format
 from doc_ai.github import build_vector_store, run_prompt, validate_file
@@ -17,6 +19,8 @@ from doc_ai.metadata import (
     save_metadata,
 )
 from docling.exceptions import ConversionError
+
+load_dotenv()
 
 console = Console()
 app = typer.Typer(
@@ -65,6 +69,24 @@ SUPPORTED_SUFFIXES = {
 
 def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
+
+
+def _parse_env_formats() -> List[OutputFormat] | None:
+    """Return formats from OUTPUT_FORMATS env var if set."""
+
+    env_val = os.getenv("OUTPUT_FORMATS")
+    if not env_val:
+        return None
+    formats: List[OutputFormat] = []
+    for val in env_val.split(","):
+        try:
+            formats.append(OutputFormat(val.strip()))
+        except ValueError as exc:
+            valid = ", ".join(f.value for f in OutputFormat)
+            raise typer.BadParameter(
+                f"Invalid output format '{val}'. Choose from: {valid}"
+            ) from exc
+    return formats
 
 
 def convert_path(source: Path, formats: List[OutputFormat]) -> None:
@@ -201,7 +223,8 @@ def convert(
     ),
 ) -> None:
     """Convert files using Docling."""
-    fmts = format or [OutputFormat.MARKDOWN]
+    env_fmts = _parse_env_formats()
+    fmts = format or env_fmts or [OutputFormat.MARKDOWN]
     convert_path(source, fmts)
 
 
@@ -274,7 +297,8 @@ def pipeline(
     ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
-    fmts = format or [OutputFormat.MARKDOWN]
+    env_fmts = _parse_env_formats()
+    fmts = format or env_fmts or [OutputFormat.MARKDOWN]
     convert_path(source, fmts)
     validation_prompt = Path("prompts/validate-output.prompt.yaml")
     for raw_file in source.rglob("*"):
