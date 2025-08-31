@@ -6,7 +6,9 @@ const config = {
   title: 'AI Doc Analysis Starter',
   tagline: 'Starter template for AI document analysis',
   url: 'https://alangunning.github.io',
-  baseUrl: '/',
+  // When deploying to GitHub Pages, the base URL must match the repo name.
+  // The site is served from https://alangunning.github.io/ai-doc-analysis-starter/
+  baseUrl: '/ai-doc-analysis-starter/',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
