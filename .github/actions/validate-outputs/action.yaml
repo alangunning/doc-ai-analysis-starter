@@ -12,7 +12,12 @@ runs:
   steps:
     - shell: bash
       run: |
-        git diff -z --name-only "${{ inputs.before }}" "${{ inputs.sha }}" -- \
+        before="${{ inputs.before }}"
+        sha="${{ inputs.sha }}"
+        if [[ -z "$before" ]]; then
+          before=$(git rev-parse "$sha^" 2>/dev/null || git hash-object -t tree /dev/null)
+        fi
+        git diff -z --name-only "$before" "$sha" -- \
           'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags' |
           while IFS= read -r -d '' file; do
             [[ "$file" != *.converted.* ]] && continue
