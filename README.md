@@ -15,7 +15,7 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 1. **Requirements**
    - Python ≥ 3.10
    - Node ≥ 18 for building the docs (optional)
-   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI (you can [prototype for free](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models))
+   - `GITHUB_TOKEN` for access to GitHub Models and the GitHub CLI. When creating a fine‑grained personal access token, grant **Read** access to **Models** under the account permissions tab (not the repositories tab). You can [prototype for free](https://docs.github.com/en/github-models/use-github-models/prototyping-with-ai-models)
 
 2. **Install**
 
