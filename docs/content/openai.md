@@ -11,6 +11,15 @@ uploads through `/v1/uploads`, reference remote URLs directly, or encode
 in-memory bytes—returning `file_id` values that integrate with the
 Responses API.
 
+### Environment overrides
+
+Two environment variables adjust the default behaviour:
+
+- `OPENAI_FILE_PURPOSE` – change the purpose passed to file uploads
+  (defaults to `user_data`).
+- `OPENAI_USE_UPLOAD` – when set to `1`, `true`, or `yes`, force all uploads
+  to use the resumable `/v1/uploads` API regardless of file size.
+
 ## create_response
 
 `create_response` assembles a request to the Responses API from any mix of

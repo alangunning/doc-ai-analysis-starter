@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
 from pathlib import Path
+import os
 
 from openai import OpenAI
 
 from .files import (
-    DEFAULT_CHUNK_SIZE,
     input_file_from_bytes,
     input_file_from_id,
     input_file_from_url,
@@ -41,7 +41,7 @@ def create_response(
     file_bytes: Sequence[Tuple[str, bytes]] | None = None,
     file_paths: Union[str, Path, Sequence[Union[str, Path]], None] = None,
     system: Union[str, Sequence[str], None] = None,
-    file_purpose: str = "user_data",
+    file_purpose: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
     **kwargs: Any,
 ) -> Any:
@@ -63,17 +63,19 @@ def create_response(
         ``(filename, data)`` tuples for in-memory file contents to encode as
         ``file_data`` entries.
     file_paths:
-        One or more local filesystem paths to upload before the request. Files
-        larger than ``DEFAULT_CHUNK_SIZE`` will use the resumable ``/v1/uploads``
-        API automatically.
+        One or more local filesystem paths to upload before the request. Large
+        files automatically switch to the resumable ``/v1/uploads`` API.
     system:
         Optional system message(s) to prepend to the request.
     file_purpose:
-        Purpose used when uploading files. Defaults to ``"user_data"``.
+        Purpose used when uploading files. Defaults to ``"user_data"`` and may be
+        overridden via the ``OPENAI_FILE_PURPOSE`` environment variable.
     progress:
         Optional callback invoked with the number of bytes uploaded. Useful for
         displaying progress bars.
     """
+
+    file_purpose = file_purpose or os.getenv("OPENAI_FILE_PURPOSE", "user_data")
 
     content: list[Dict[str, Any]] = []
     for text in _ensure_seq(texts):
@@ -86,12 +88,10 @@ def create_response(
         content.append(input_file_from_bytes(filename, data))
     for path in _ensure_seq(file_paths):
         p = Path(path)
-        use_upload = p.stat().st_size > DEFAULT_CHUNK_SIZE
         file_id = upload_file(
             client,
             p,
             purpose=file_purpose,
-            use_upload=use_upload,
             progress=progress,
         )
         content.append(input_file_from_id(file_id))

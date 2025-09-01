@@ -26,7 +26,8 @@ Merge a pull request using the GitHub CLI.
 Validate a rendered file against its source document and return the model's JSON verdict. Pass
 `show_progress=True` to emit upload progress callbacks for integration with the CLI's progress bars.
 
-Uploaded files use `purpose="user_data"` as recommended by OpenAI's file API guidelines.
+Uploaded files default to `purpose="user_data"`; set `OPENAI_FILE_PURPOSE`
+to override this value.
 
 The helper delegates to `doc_ai.openai.create_response`, uploading any local
 paths (switching to the resumable `/v1/uploads` service for large files) and

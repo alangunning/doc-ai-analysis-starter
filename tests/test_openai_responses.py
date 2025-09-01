@@ -1,8 +1,5 @@
 from unittest.mock import MagicMock
 
-from pathlib import Path
-from unittest.mock import MagicMock
-
 from doc_ai.openai import (
     create_response,
     create_response_with_file_url,
@@ -62,17 +59,16 @@ def test_create_response_with_file_paths(monkeypatch, tmp_path):
 
     calls = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload, progress=None):
+    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
         calls.append(use_upload)
         return "file-id"
 
     monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
-    monkeypatch.setattr("doc_ai.openai.responses.DEFAULT_CHUNK_SIZE", 1)
 
     client = MagicMock()
     create_response(client, model="gpt-4.1", file_paths=[file_path])
 
-    assert calls == [True]
+    assert calls == [None]
     client.responses.create.assert_called_once()
 
 
@@ -84,7 +80,6 @@ def test_create_response_with_system_message():
         system="sys",
         texts=["hello"],
     )
-
     client.responses.create.assert_called_once_with(
         model="gpt-4.1",
         input=[
@@ -92,4 +87,23 @@ def test_create_response_with_system_message():
             {"role": "user", "content": [{"type": "input_text", "text": "hello"}]},
         ],
     )
+
+def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("hi")
+
+    calls = []
+
+    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+        calls.append(purpose)
+        return "file-id"
+
+    monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
+    monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
+
+    client = MagicMock()
+    create_response(client, model="gpt-4.1", file_paths=[file_path])
+
+    assert calls == ["assistants"]
+    client.responses.create.assert_called_once()
 

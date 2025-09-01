@@ -1,7 +1,8 @@
 import io
+import io
 import types
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, ANY
 
 from doc_ai.openai import (
     upload_file,
@@ -122,3 +123,36 @@ def test_upload_file_via_uploads_keeps_handle_open():
     mock_client.uploads.complete.assert_called_once_with(
         "upl-1", part_ids=["part1", "part2", "part3"]
     )
+
+
+def test_upload_file_env_purpose(monkeypatch, tmp_path):
+    file_path = tmp_path / "file.pdf"
+    file_path.write_text("content")
+    mock_client = MagicMock()
+    mock_client.files.create.return_value = types.SimpleNamespace(id="file-123")
+
+    monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
+    upload_file(mock_client, file_path)
+
+    mock_client.files.create.assert_called_once()
+    assert mock_client.files.create.call_args[1]["purpose"] == "assistants"
+
+
+def test_upload_file_env_force_upload(monkeypatch, tmp_path):
+    file_path = tmp_path / "file.bin"
+    file_path.write_bytes(b"1234")
+    mock_client = MagicMock()
+    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.parts.create.return_value = types.SimpleNamespace(id="part1")
+    mock_client.uploads.complete.return_value = types.SimpleNamespace(
+        file=types.SimpleNamespace(id="file-x")
+    )
+
+    monkeypatch.setenv("OPENAI_USE_UPLOAD", "1")
+    monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
+    file_id = upload_file(mock_client, file_path)
+    assert file_id == "file-x"
+    mock_client.uploads.create.assert_called_once_with(
+        purpose="assistants", filename="file.bin", bytes=4, mime_type="application/octet-stream"
+    )
+    mock_client.files.create.assert_not_called()

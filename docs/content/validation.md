@@ -11,7 +11,9 @@ Doc AI Starter validates Docling's Markdown output against the original PDF usin
 
 The snippet below uploads the PDF once and references it by `file_id` using
 helpers from `doc_ai.openai`. The model compares the PDF with the provided
-Markdown and returns a JSON verdict.
+Markdown and returns a JSON verdict. Uploads default to the `user_data`
+purpose; set `OPENAI_FILE_PURPOSE` to change it or `OPENAI_USE_UPLOAD=1` to
+always use the resumable `/v1/uploads` API.
 
 ```python
 from pathlib import Path
@@ -24,7 +26,7 @@ def validate_pdf_vs_md_openai(pdf_path, md_path, model="gpt-4o-mini"):
     client = OpenAI(base_url=OPENAI_BASE)
     md = Path(md_path).read_text(encoding="utf-8")
 
-    pdf_id = upload_file(client, pdf_path, purpose="user_data")
+    pdf_id = upload_file(client, pdf_path)
 
     resp = create_response(
         client,

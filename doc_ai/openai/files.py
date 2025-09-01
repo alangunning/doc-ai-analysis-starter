@@ -10,6 +10,7 @@ from __future__ import annotations
 import base64
 import mimetypes
 from pathlib import Path
+import os
 from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
 from openai import OpenAI
@@ -33,9 +34,9 @@ def _open_file(file: Union[str, Path, BinaryIO]) -> tuple[BinaryIO, bool]:
 def upload_file(
     client: OpenAI,
     file: Union[str, Path, BinaryIO],
-    purpose: str = "user_data",
+    purpose: str | None = None,
     *,
-    use_upload: bool = False,
+    use_upload: bool | None = None,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
@@ -47,6 +48,25 @@ def upload_file(
     splits the file into parts of ``chunk_size`` bytes. When ``progress`` is
     provided it is called with the number of bytes uploaded.
     """
+    size = None
+    if isinstance(file, (str, Path)):
+        size = Path(file).stat().st_size
+    elif hasattr(file, "seek"):
+        pos = file.tell()
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(pos)
+
+    if purpose is None:
+        purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
+
+    if use_upload is None:
+        env_flag = os.getenv("OPENAI_USE_UPLOAD")
+        if env_flag is not None:
+            use_upload = env_flag.lower() in {"1", "true", "yes", "on"}
+        else:
+            use_upload = size is not None and size > chunk_size
+
     if use_upload:
         return upload_large_file(
             client,
@@ -56,15 +76,6 @@ def upload_file(
             mime_type=mime_type,
             progress=progress,
         )
-
-    size = None
-    if isinstance(file, (str, Path)):
-        size = Path(file).stat().st_size
-    elif hasattr(file, "seek"):
-        pos = file.tell()
-        file.seek(0, 2)
-        size = file.tell()
-        file.seek(pos)
 
     fh, should_close = _open_file(file)
     try:
@@ -90,9 +101,9 @@ def input_file_from_url(file_url: str) -> Dict[str, str]:
 def input_file_from_path(
     client: OpenAI,
     path: Union[str, Path],
-    purpose: str = "user_data",
+    purpose: str | None = None,
     *,
-    use_upload: bool = False,
+    use_upload: bool | None = None,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
@@ -131,7 +142,7 @@ def input_file_from_bytes(filename: str, data: bytes) -> Dict[str, str]:
 def upload_large_file(
     client: OpenAI,
     file: Union[str, Path, BinaryIO],
-    purpose: str = "user_data",
+    purpose: str | None = None,
     *,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
@@ -144,6 +155,9 @@ def upload_large_file(
     ``file_id`` that can be used with other OpenAI APIs. If ``progress`` is
     provided it is invoked with the size of each chunk as it uploads.
     """
+    if purpose is None:
+        purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
+
     # Determine filename and file size
     if isinstance(file, (str, Path)):
         path = Path(file)

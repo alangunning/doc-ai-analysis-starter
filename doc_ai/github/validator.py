@@ -94,7 +94,6 @@ def validate_file(
             texts=[user_text],
             file_urls=file_urls or None,
             file_paths=file_paths or None,
-            file_purpose="user_data",
             progress=progress_cb,
             **spec.get("modelParameters", {}),
         )

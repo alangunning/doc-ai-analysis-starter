@@ -3,7 +3,6 @@ import runpy
 import sys
 from pathlib import Path
 import yaml
-from unittest.mock import MagicMock, patch
 
 from doc_ai.converter import OutputFormat
 from doc_ai.github.validator import validate_file
@@ -39,8 +38,8 @@ def test_validate_file_returns_json(tmp_path):
 
     uploads = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload, progress=None):
-        uploads.append((Path(path).name, purpose, use_upload))
+    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+        uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
     with patch(
@@ -53,8 +52,8 @@ def test_validate_file_returns_json(tmp_path):
     assert result == {"ok": True}
     mock_openai.assert_called_once()
     assert uploads == [
-        ("raw.pdf", "user_data", False),
-        ("rendered.txt", "user_data", False),
+        ("raw.pdf", "user_data"),
+        ("rendered.txt", "user_data"),
     ]
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
@@ -89,12 +88,17 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
 
     called: list[bool] = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload, progress=None):
+    import doc_ai.openai.files as files_mod
+
+    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+        if use_upload is None:
+            size = Path(path).stat().st_size
+            use_upload = size > files_mod.DEFAULT_CHUNK_SIZE
         called.append(use_upload)
         return f"{Path(path).name}-id"
 
     monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
-    monkeypatch.setattr("doc_ai.openai.responses.DEFAULT_CHUNK_SIZE", 1)
+    monkeypatch.setattr(files_mod, "DEFAULT_CHUNK_SIZE", 1)
 
     mock_response = MagicMock(output_text="{}")
     mock_client = MagicMock()
@@ -104,6 +108,50 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
     assert called == [True, True]
+
+
+def test_validate_file_env_purpose(monkeypatch, tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    uploads: list[tuple[str, str]] = []
+
+    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+        uploads.append((Path(path).name, purpose))
+        return f"{Path(path).name}-id"
+
+    mock_response = MagicMock(output_text="{}")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
+        "doc_ai.openai.responses.upload_file", side_effect=fake_upload_file
+    ):
+        validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+
+    assert uploads == [
+        ("raw.pdf", "assistants"),
+        ("rendered.txt", "assistants"),
+    ]
 
 
 def test_validate_file_with_urls(tmp_path):
