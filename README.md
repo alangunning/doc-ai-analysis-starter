@@ -41,18 +41,25 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
 4. **Try it out**
 
-Convert a document and validate the Markdown output:
+   Ensure the CLI has access to your GitHub Models token. Set
+   `GITHUB_TOKEN` in `.env` or pass it on the command line:
 
-```bash
-python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
-python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
-```
+   ```bash
+   GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py --help
+   ```
 
-Or run the whole pipeline in one go with the orchestrator CLI:
+   Convert a document and validate the Markdown output:
 
-```bash
-doc-ai pipeline data/sec-form-8k/
-```
+   ```bash
+   python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
+   python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
+   ```
+
+   Or run the whole pipeline in one go with the orchestrator CLI:
+
+   ```bash
+   doc-ai pipeline data/sec-form-8k/
+   ```
 
 ## Directory Overview
 

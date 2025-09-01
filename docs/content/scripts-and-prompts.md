@@ -7,6 +7,8 @@ sidebar_position: 3
 
 The repository ships with small command-line utilities that expose the core features of the Python package. They can be invoked directly and are useful for prototyping outside of GitHub Actions.
 
+> **Note:** Set the `GITHUB_TOKEN` environment variable so the scripts can access GitHub Models. Either define it in `.env` or pass it inline when invoking a command, e.g., `GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py`.
+
 ## convert.py
 Convert raw documents (PDF, Word, slides, etc.) into one or more formats:
 
