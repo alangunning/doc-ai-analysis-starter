@@ -12,7 +12,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 import json
-from contextlib import nullcontext
 
 from rich.console import Console
 
@@ -21,12 +20,25 @@ from rich.console import Console
 # module doesn't trigger those imports.  Tests patch ``_DoclingConverter`` so we
 # keep a module level reference that can be swapped out.  The instantiated
 # converter is cached to avoid repeated heavy initialisation during a single
-# process run.  A sentinel file in ``~/.cache/doc_ai`` records that the converter
-# has been loaded once so subsequent *local* runs can skip the progress message.
+# process run.
 _DoclingConverter = None
 _converter_instance = None
-_CACHE_MARKER = Path.home() / ".cache" / "doc_ai" / "docling_ready"
 _console = Console()
+
+
+def _ensure_models_downloaded() -> None:
+    """Pre-fetch Docling model assets with progress and caching."""
+
+    try:
+        from huggingface_hub.utils import enable_progress_bars
+
+        enable_progress_bars()
+
+        from docling.utils.model_downloader import download_models
+
+        download_models(progress=True)
+    except Exception as exc:  # pragma: no cover - network/availability issues
+        _console.print(f"[yellow]Model pre-download failed: {exc}[/yellow]")
 
 
 def _get_docling_converter():
@@ -36,22 +48,17 @@ def _get_docling_converter():
     if _converter_instance is not None:
         return _converter_instance
 
-    show_status = not _CACHE_MARKER.exists()
-    status = (
-        _console.status("Loading Docling (first run may download models)...")
-        if show_status
-        else nullcontext()
-    )
-    with status:  # pragma: no cover - visual progress only
+    _ensure_models_downloaded()
+
+    with _console.status(
+        "Loading Docling (first run may download models)..."
+    ):
         if _DoclingConverter is None:
             from docling.document_converter import (  # type: ignore
                 DocumentConverter as _Docling,  # pylint: disable=C0415
             )
             _DoclingConverter = _Docling
         _converter_instance = _DoclingConverter()
-    if show_status:
-        _CACHE_MARKER.parent.mkdir(parents=True, exist_ok=True)
-        _CACHE_MARKER.touch()
     return _converter_instance
 
 # Supported high level output formats.

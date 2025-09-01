@@ -7,7 +7,10 @@ def test_convert_path_returns_results(tmp_path):
     input_file = tmp_path / "input.pdf"
     input_file.write_bytes(b"pdf")
 
-    with patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter:
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+    ):
         dc._converter_instance = None
         mock_doc = MagicMock()
         mock_doc.export_to_text.return_value = "plain"
