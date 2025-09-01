@@ -2,6 +2,8 @@ import argparse
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from doc_ai import OutputFormat
 from doc_ai.github import validate_file
 from doc_ai.metadata import (
@@ -11,6 +13,8 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
+
+load_dotenv()
 
 
 def infer_format(path: Path) -> OutputFormat:
@@ -46,7 +50,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--base-model-url",
         default=os.getenv("VALIDATE_BASE_MODEL_URL")
-        or os.getenv("BASE_MODEL_URL"),
+        or os.getenv("BASE_MODEL_URL")
+        or "https://api.openai.com/v1",
         help="Model base URL override",
     )
     args = parser.parse_args()

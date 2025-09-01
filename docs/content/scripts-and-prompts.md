@@ -11,6 +11,8 @@ The repository ships with small command-line utilities that expose the core feat
 > access GitHub Models. Each script calls `load_dotenv()`, so a token in
 > `.env` is loaded automatically; alternatively, pass it inline when
 > invoking a command, e.g., `GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py`.
+> Command-line flags always take precedence over environment variables and
+> `.env` entries.
 
 ## convert.py
 Convert raw documents (PDF, Word, slides, etc.) into one or more formats:
@@ -41,10 +43,12 @@ python scripts/validate.py data/example/example.pdf data/example/example.pdf.con
 Override the model with `--model` or `VALIDATE_MODEL`.
 
 Behind the scenes the script uploads both files using `client.files.create` and
-invokes `client.responses.create` with `input_file` attachments. This avoids
-token‑overflow issues on long documents. To reduce cost you can point
-`--model` to a smaller option like `openai/gpt-4o-mini`, or split the source
-into chunks and validate them separately.
+invokes `client.responses.create` with `input_file` attachments. GitHub Models
+lack a file API, so the command automatically targets OpenAI's
+`https://api.openai.com/v1` endpoint and uses the `OPENAI_API_KEY` token. This
+avoids token‑overflow issues on long documents. To reduce cost you can point
+`--model` to a smaller option like `gpt-4o-mini`, or split the source into
+chunks and validate them separately.
 
 ```mermaid
 sequenceDiagram

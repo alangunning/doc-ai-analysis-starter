@@ -35,7 +35,8 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 3. **Configure**
 
    Copy `.env.example` to `.env` and adjust variables as needed. Environment
-   variables from the runtime override values in the file. See the
+   variables from the runtime override values in the file and command-line
+   flags override both. See the
    [Configuration guide](docs/content/configuration.md) for details on
    workflow toggles and model settings.
 
@@ -57,10 +58,11 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
    ```
 
-   The validation script uploads both files using GitHub's Responses API, so it
-   can handle very long documents without running into token limits. For a more
-   cost‑efficient run, specify a smaller model such as
-   `openai/gpt-4o-mini` with `--model`, or split oversized documents into
+   The validation script uploads both files with OpenAI's Responses API because
+   GitHub Models do not yet support file inputs. Set `OPENAI_API_KEY` and the
+   base URL to `https://api.openai.com/v1` to handle very long documents without
+   running into token limits. For a more cost‑efficient run, specify a smaller
+   model such as `gpt-4o-mini` with `--model`, or split oversized documents into
    chunks and validate them individually.
 
    Or run the whole pipeline in one go with the orchestrator CLI:
