@@ -14,9 +14,9 @@ import typer
 from rich.console import Console
 from dotenv import load_dotenv
 
-# Ensure project root is on sys.path when running as a script.
+# Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
-    sys.path.append(str(Path(__file__).resolve().parent.parent))
+    sys.path[0] = str(Path(__file__).resolve().parent.parent)
 
 from doc_ai.converter import OutputFormat, convert_path, suffix_for_format
 from doc_ai.github import build_vector_store, run_prompt, validate_file
