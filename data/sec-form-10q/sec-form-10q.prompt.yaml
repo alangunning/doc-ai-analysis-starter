@@ -1,6 +1,6 @@
 name: SEC Form 10-Q — Investor Extractor
 description: Extract high-value, investor-actionable facts and metrics from any SEC Form 10-Q filing text.
-model: openai/4o
+model: openai/gpt-4o
 modelParameters:
   temperature: 0
 messages:

@@ -1,6 +1,6 @@
 name: Document summary
 description: Summarize Markdown documents into three bullet points.
-model: openai/4o
+model: openai/gpt-4o
 modelParameters:
   temperature: 0
 messages:
