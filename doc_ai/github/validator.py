@@ -54,7 +54,7 @@ def validate_file(
         base_url=base_url
         or os.getenv("VALIDATE_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL,
+        or f"{DEFAULT_MODEL_BASE_URL}/v1",
     )
     if hasattr(client, "responses"):
         result = client.responses.create(
