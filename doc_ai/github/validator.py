@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import mimetypes
 from pathlib import Path
 from typing import Dict
 
@@ -22,7 +23,11 @@ def _build_messages(raw_path: Path, rendered_text: str, fmt: OutputFormat, promp
     """Build OpenAI chat messages embedding the raw file and rendered text."""
     spec = yaml.safe_load(prompt_path.read_text())
     messages = [dict(m) for m in spec["messages"]]
-    raw_b64 = base64.b64encode(raw_path.read_bytes()).decode()
+    raw_bytes = raw_path.read_bytes()
+    raw_b64 = base64.b64encode(raw_bytes).decode()
+    mime_type, _ = mimetypes.guess_type(raw_path)
+    mime_type = mime_type or "application/octet-stream"
+    raw_data_url = f"data:{mime_type};base64,{raw_b64}"
     for i, msg in enumerate(messages):
         if msg.get("role") == "user":
             text = msg.get("content", "").replace("{format}", fmt.value)
@@ -30,7 +35,7 @@ def _build_messages(raw_path: Path, rendered_text: str, fmt: OutputFormat, promp
                 {"type": "text", "text": text},
                 {
                     "type": "file",
-                    "file": {"file_data": raw_b64, "filename": raw_path.name},
+                    "file": {"file_data": raw_data_url, "filename": raw_path.name},
                 },
                 {"type": "text", "text": rendered_text},
             ]
