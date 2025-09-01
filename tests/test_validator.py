@@ -39,10 +39,14 @@ def test_validate_file_returns_json(tmp_path):
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
+    assert mock_client.files.create.call_count == 2
+    for call in mock_client.files.create.call_args_list:
+        assert call.kwargs["purpose"] == "assistants"
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
+    assert content[0] == {"type": "input_text", "text": "Check text"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["file1", "file2"]
 
