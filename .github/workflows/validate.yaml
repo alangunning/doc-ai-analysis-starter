@@ -38,7 +38,7 @@ jobs:
         uses: ./.github/actions/git-commit
         with:
           add: "find data -name '*.dc.json' -print0 | xargs -0 git add"
-          message: "chore: update validation metadata"
+          message: "workflow: auto update validation metadata"
       - name: Create PR if fixes
         if: steps.env.outputs.skip != 'true'
         uses: ./.github/actions/create-fix-pr
