@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Union
+from typing import Any, Dict, Tuple, Union
 import json
 from contextlib import nullcontext
 
@@ -88,19 +88,25 @@ _SUFFIX_MAP: Dict[OutputFormat, str] = {
 
 
 def convert_files(
-    input_path: Path, outputs: Dict[OutputFormat, Path]
-) -> Dict[OutputFormat, Path]:
+    input_path: Path,
+    outputs: Dict[OutputFormat, Path],
+    *,
+    return_status: bool = False,
+) -> Dict[OutputFormat, Path] | Tuple[Dict[OutputFormat, Path], Any]:
     """Convert ``input_path`` to multiple formats.
 
     ``outputs`` maps each desired ``OutputFormat`` to the file path where the
     rendered content should be written.  The source document is converted only
     once, and the requested representations are emitted to their respective
     destinations.  The mapping of formats to the paths that were written is
-    returned for convenience.
+    returned for convenience.  When ``return_status`` is ``True`` the Docling
+    ``ConversionStatus`` is returned alongside the mapping so callers can
+    programmatically inspect the result.
     """
 
     converter = _get_docling_converter()
     result = converter.convert(input_path)
+    status = getattr(result, "status", None)
     doc = result.document
 
     written: Dict[OutputFormat, Path] = {}
@@ -121,6 +127,18 @@ def convert_files(
             out_path.write_text(content, encoding="utf-8")
         written[fmt] = out_path
 
+    paths = ", ".join(str(p) for p in written.values())
+    if status is not None:
+        status_name = getattr(status, "name", str(status))
+        style = "green" if str(status_name).upper() == "SUCCESS" else "yellow"
+        _console.print(
+            f"[{style}]Converted {input_path} -> {paths} ({status_name})[/]"
+        )
+    else:
+        _console.print(f"Converted {input_path} -> {paths}")
+
+    if return_status:
+        return written, status
     return written
 
 

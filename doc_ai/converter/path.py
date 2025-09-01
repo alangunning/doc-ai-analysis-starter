@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Dict, Iterable, Tuple
 
 from docling.exceptions import ConversionError
 
@@ -56,10 +56,18 @@ def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
 
 
-def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
-    """Convert a file or all files under a directory in-place."""
+def convert_path(
+    source: Path, formats: Iterable[OutputFormat]
+) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
+    """Convert a file or all files under a directory in-place.
+
+    Returns a mapping of each processed file to a tuple containing the
+    format-to-path mapping written for that file and Docling's
+    ``ConversionStatus``.
+    """
 
     output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
+    results: Dict[Path, Tuple[Dict[OutputFormat, Path], Any]] = {}
 
     def is_output_file(path: Path) -> bool:
         name = path.name.lower()
@@ -91,9 +99,10 @@ def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
             save_metadata(file, meta)
             return
         try:
-            convert_files(file, outputs)
+            written, status = convert_files(file, outputs, return_status=True)
         except ConversionError:
             return
+        results[file] = (written, status)
         mark_step(
             meta,
             "conversion",
@@ -107,3 +116,5 @@ def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
         for file in source.rglob("*"):
             if file.is_file():
                 handle_file(file)
+
+    return results
