@@ -17,14 +17,17 @@ from openai import OpenAI
 DEFAULT_CHUNK_SIZE = 64 * 1024 * 1024  # 64 MB per upload part
 
 
-def _open_file(file: Union[str, Path, BinaryIO]):
-    """Return a binary file handle for ``file``.
+def _open_file(file: Union[str, Path, BinaryIO]) -> tuple[BinaryIO, bool]:
+    """Return ``(fh, should_close)`` for ``file``.
 
-    ``file`` may be a path or an existing binary file object.
+    ``file`` may be a path or an existing binary file object. When the caller
+    provides a file-like object we leave closing to the caller by returning
+    ``should_close=False``.  When a path is supplied we open the file and
+    indicate it should be closed after use.
     """
     if hasattr(file, "read"):
-        return file  # already a file-like object
-    return open(Path(file), "rb")
+        return file, False  # already a file-like object
+    return open(Path(file), "rb"), True
 
 
 def upload_file(
@@ -63,8 +66,12 @@ def upload_file(
         size = file.tell()
         file.seek(pos)
 
-    with _open_file(file) as fh:  # type: ignore[arg-type]
+    fh, should_close = _open_file(file)
+    try:
         response = client.files.create(file=fh, purpose=purpose)
+    finally:
+        if should_close:
+            fh.close()
     if progress and size is not None:
         progress(size)
     return response.id
@@ -143,12 +150,14 @@ def upload_large_file(
         filename = path.name
         size = path.stat().st_size
         fh = open(path, "rb")
+        should_close = True
     else:
         fh = file  # type: ignore[assignment]
         filename = Path(getattr(file, "name", "upload.bin")).name
         fh.seek(0, 2)
         size = fh.tell()
         fh.seek(0)
+        should_close = False
 
     mime = mime_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
@@ -170,7 +179,8 @@ def upload_large_file(
             if progress:
                 progress(len(chunk))
     finally:
-        fh.close()
+        if should_close:
+            fh.close()
 
     completed = client.uploads.complete(upload.id, part_ids=part_ids)
     return completed.file.id

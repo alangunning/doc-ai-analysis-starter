@@ -1,3 +1,4 @@
+import io
 import types
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -88,3 +89,36 @@ def test_upload_large_file_reports_progress(tmp_path):
     )
 
     assert seen == [4, 4, 2]
+
+
+def test_upload_file_keeps_provided_handle_open():
+    fh = io.BytesIO(b"data")
+    mock_client = MagicMock()
+    mock_client.files.create.return_value = types.SimpleNamespace(id="file-1")
+
+    upload_file(mock_client, fh)
+
+    assert not fh.closed
+    mock_client.files.create.assert_called_once()
+
+
+def test_upload_file_via_uploads_keeps_handle_open():
+    fh = io.BytesIO(b"0123456789")
+    fh.name = "big.bin"
+    mock_client = MagicMock()
+    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.parts.create.side_effect = [
+        types.SimpleNamespace(id="part1"),
+        types.SimpleNamespace(id="part2"),
+        types.SimpleNamespace(id="part3"),
+    ]
+    mock_client.uploads.complete.return_value = types.SimpleNamespace(
+        file=types.SimpleNamespace(id="file-xyz")
+    )
+
+    upload_file(mock_client, fh, use_upload=True, chunk_size=4)
+
+    assert not fh.closed
+    mock_client.uploads.complete.assert_called_once_with(
+        "upl-1", part_ids=["part1", "part2", "part3"]
+    )
