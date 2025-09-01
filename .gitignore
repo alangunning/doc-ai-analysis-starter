@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+*.egg-info/
 docs/node_modules/
 docs/.docusaurus/
 docs/build/*
