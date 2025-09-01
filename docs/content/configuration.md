@@ -7,6 +7,14 @@ sidebar_position: 6
 
 Doc AI Starter uses environment variables to control models and GitHub Actions. Copy `.env.example` to `.env` and edit as needed. Variables in your shell override values in the file.
 
+## API Keys and Endpoints
+
+Set `GITHUB_TOKEN` with the **Models:read** scope to access GitHub Models at
+`https://models.github.ai/inference`. The validation step requires OpenAI's
+file inputs, so provide `OPENAI_API_KEY` and, if needed,
+`VALIDATE_BASE_MODEL_URL=https://api.openai.com/v1` (this is the default for the
+CLI). Other steps can continue using `BASE_MODEL_URL` for the GitHub provider.
+
 ## Workflow Toggles
 
 Each GitHub Action can be enabled or disabled individually. Set the variable to `true` or `false`:
