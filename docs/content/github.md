@@ -25,10 +25,10 @@ Merge a pull request using the GitHub CLI.
 ### `validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None)`
 Validate a rendered file against its source document and return the model's JSON verdict.
 
-The helper uploads both the original document and its rendered output with
-`client.files.create` and then calls `client.responses.create` with
-`input_file` attachments. GitHub Models do not support file uploads, so the
-function automatically falls back to OpenAI's API at
+The helper delegates to `doc_ai.openai.create_response`, uploading any local
+paths (switching to the resumable `/v1/uploads` service for large files) and
+passing remote URLs directly to the Responses API. GitHub Models do not support
+file uploads, so the function automatically falls back to OpenAI's API at
 `https://api.openai.com/v1` (using the `OPENAI_API_KEY` token) whenever the base
 URL points to the GitHub provider or is left unset. This approach lets the model
 compare long documents without running into context limits. For cost‑sensitive

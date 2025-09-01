@@ -9,11 +9,14 @@ Doc AI Starter validates Docling's Markdown output against the original PDF usin
 
 ## Validation with OpenAI (PDF + Markdown)
 
-The snippet below uploads the PDF once and references it by `file_id` in a `responses.create` call. The model compares the PDF with the provided Markdown and returns a JSON verdict.
+The snippet below uploads the PDF once and references it by `file_id` using
+helpers from `doc_ai.openai`. The model compares the PDF with the provided
+Markdown and returns a JSON verdict.
 
 ```python
 from pathlib import Path
 from openai import OpenAI
+from doc_ai.openai import create_response, upload_file
 
 OPENAI_BASE = "https://api.openai.com/v1"
 
@@ -21,21 +24,17 @@ def validate_pdf_vs_md_openai(pdf_path, md_path, model="gpt-4o-mini"):
     client = OpenAI(base_url=OPENAI_BASE)
     md = Path(md_path).read_text(encoding="utf-8")
 
-    pdf_file = client.files.create(file=open(pdf_path, "rb"), purpose="user_data")
+    pdf_id = upload_file(client, pdf_path, purpose="user_data")
 
-    resp = client.responses.create(
+    resp = create_response(
+        client,
         model=model,
-        input=[{
-            "role": "user",
-            "content": [
-                {"type": "input_file", "file_id": pdf_file.id},
-                {"type": "input_text", "text": (
-                    'Compare the PDF to the Markdown. '
-                    'Return ONLY JSON: {"match": bool, "issues":[{"where": str, "type": str, "detail": str}]}.'
-                    "\n\n### Markdown (truncated):\n" + md[:120_000]
-                )},
-            ],
-        }],
+        file_ids=[pdf_id],
+        texts=[(
+            'Compare the PDF to the Markdown. '
+            'Return ONLY JSON: {"match": bool, "issues":[{"where": str, "type": str, "detail": str}]}.'
+            "\n\n### Markdown (truncated):\n" + md[:120_000]
+        )],
         temperature=0,
     )
     return resp.output_text
@@ -44,9 +43,9 @@ def validate_pdf_vs_md_openai(pdf_path, md_path, model="gpt-4o-mini"):
 For quick experiments you can inline the PDF as base64 instead of uploading it:
 
 ```python
-import base64
 from pathlib import Path
 from openai import OpenAI
+from doc_ai.openai import create_response
 
 OPENAI_BASE = "https://api.openai.com/v1"
 
@@ -54,24 +53,15 @@ def validate_pdf_vs_md_openai_inline(pdf_path, md_path, model="gpt-4o-mini"):
     client = OpenAI(base_url=OPENAI_BASE)
     md = Path(md_path).read_text(encoding="utf-8")
     data = Path(pdf_path).read_bytes()
-    b64 = base64.b64encode(data).decode("utf-8")
 
-    resp = client.responses.create(
+    resp = create_response(
+        client,
         model=model,
-        input=[{
-            "role": "user",
-            "content": [
-                {
-                    "type": "input_file",
-                    "filename": Path(pdf_path).name,
-                    "file_data": f"data:application/pdf;base64,{b64}",
-                },
-                {"type": "input_text", "text": (
-                    "Compare with the Markdown and return ONLY the JSON schema above.\n\n"
-                    + md[:120_000]
-                )},
-            ],
-        }],
+        file_bytes=[(Path(pdf_path).name, data)],
+        texts=[(
+            "Compare with the Markdown and return ONLY the JSON schema above.\n\n"
+            + md[:120_000]
+        )],
         temperature=0,
     )
     return resp.output_text

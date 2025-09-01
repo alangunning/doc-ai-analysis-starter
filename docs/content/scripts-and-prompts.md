@@ -42,13 +42,14 @@ python scripts/validate.py data/example/example.pdf data/example/example.pdf.con
 ```
 Override the model with `--model` or `VALIDATE_MODEL`.
 
-Behind the scenes the script uploads both files using `client.files.create` and
-invokes `client.responses.create` with `input_file` attachments. GitHub Models
-lack a file API, so the command automatically targets OpenAI's
-`https://api.openai.com/v1` endpoint and uses the `OPENAI_API_KEY` token. This
-avoids token‑overflow issues on long documents. To reduce cost you can point
-`--model` to a smaller option like `gpt-4o-mini`, or split the source into
-chunks and validate them separately.
+Behind the scenes the script relies on `doc_ai.openai.create_response` to
+upload local paths or reference remote URLs before calling the Responses API.
+Large inputs transparently switch from the standard `/v1/files` endpoint to the
+resumable `/v1/uploads` service. GitHub Models lack a file API, so the command
+automatically targets OpenAI's `https://api.openai.com/v1` endpoint and uses the
+`OPENAI_API_KEY` token. To reduce cost you can point `--model` to a smaller
+option like `gpt-4o-mini`, or split the source into chunks and validate them
+separately.
 
 ```mermaid
 sequenceDiagram
@@ -60,7 +61,7 @@ sequenceDiagram
     U->>V: raw & rendered paths
     V->>M: load_metadata()
     V->>G: validate_file()
-    G->>O: files.create + responses.create
+    G->>O: create_response (uploads as needed)
     O-->>G: verdict
     G-->>V: result
     V->>M: mark_step & save_metadata

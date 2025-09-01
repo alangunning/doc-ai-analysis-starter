@@ -58,12 +58,15 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
    ```
 
-   The validation script uploads both files with OpenAI's Responses API because
-   GitHub Models do not yet support file inputs. Set `OPENAI_API_KEY` and the
-   base URL to `https://api.openai.com/v1` to handle very long documents without
-   running into token limits. For a more cost‑efficient run, specify a smaller
-   model such as `gpt-4o-mini` with `--model`, or split oversized documents into
-   chunks and validate them individually.
+   The validation script relies on the reusable helpers in
+   `doc_ai.openai` to upload local files or reference remote URLs. Large
+   inputs automatically switch from the standard `/v1/files` endpoint to the
+   resumable `/v1/uploads` service before calling the Responses API. Set
+   `OPENAI_API_KEY` and the base URL to `https://api.openai.com/v1` to handle
+   very long documents without running into token limits. For a more
+   cost‑efficient run, specify a smaller model such as `gpt-4o-mini` with
+   `--model`, or split oversized documents into chunks and validate them
+   individually.
 
    Or run the whole pipeline in one go with the orchestrator CLI:
 
@@ -126,6 +129,7 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 - [CLI Scripts and Prompts](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/scripts-and-prompts) – run conversions and analyses locally
 - [Converter Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/converter) – programmatic file conversion
 - [GitHub Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/github) – helpers for GitHub Models
+- [OpenAI Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/openai) – reusable file and response helpers
 - [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
 - [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
 - [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
