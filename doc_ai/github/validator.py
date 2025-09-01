@@ -46,9 +46,9 @@ def validate_file(
     Returns the model's JSON verdict as a dictionary.
     """
 
-    spec, messages = _build_messages(
-        raw_path.read_bytes(), rendered_path.read_text(), fmt, prompt_path
-    )
+    raw_bytes = raw_path.read_bytes()
+    rendered_text = rendered_path.read_text()
+    spec, messages = _build_messages(raw_bytes, rendered_text, fmt, prompt_path)
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
         base_url=base_url
@@ -56,12 +56,30 @@ def validate_file(
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL,
     )
-    result = client.responses.create(
-        model=model or spec["model"],
-        **spec.get("modelParameters", {}),
-        input=messages,
-    )
-    text = result.output[0].content[0].get("text", "{}")
+    if hasattr(client, "responses"):
+        result = client.responses.create(
+            model=model or spec["model"],
+            **spec.get("modelParameters", {}),
+            input=messages,
+        )
+        text = result.output[0].content[0].get("text", "{}")
+    else:
+        fallback_messages = []
+        for msg in spec["messages"]:
+            role = msg.get("role")
+            content = msg.get("content", "").replace("{format}", fmt.value)
+            if role == "user":
+                pdf_b64 = base64.b64encode(raw_bytes).decode()
+                content = (
+                    f"{content}\n\nPDF (base64): {pdf_b64}\n\nRendered text:\n{rendered_text}"
+                )
+            fallback_messages.append({"role": role, "content": content})
+        completion = client.chat.completions.create(
+            model=model or spec["model"],
+            **spec.get("modelParameters", {}),
+            messages=fallback_messages,
+        )
+        text = completion.choices[0].message.content
     return json.loads(text)
 
 
