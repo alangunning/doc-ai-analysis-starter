@@ -18,20 +18,19 @@ from .prompts import DEFAULT_MODEL_BASE_URL
 load_dotenv()
 
 
-def _build_messages(raw_bytes: bytes, rendered_text: str, fmt: OutputFormat, prompt_path: Path) -> Dict:
+def _build_messages(raw_path: Path, rendered_text: str, fmt: OutputFormat, prompt_path: Path) -> Dict:
+    """Build OpenAI chat messages embedding the raw file and rendered text."""
     spec = yaml.safe_load(prompt_path.read_text())
     messages = [dict(m) for m in spec["messages"]]
+    raw_b64 = base64.b64encode(raw_path.read_bytes()).decode()
     for i, msg in enumerate(messages):
         if msg.get("role") == "user":
             text = msg.get("content", "").replace("{format}", fmt.value)
             messages[i]["content"] = [
                 {"type": "text", "text": text},
                 {
-                    "type": "document",
-                    "document": {
-                        "format": "pdf",
-                        "b64_content": base64.b64encode(raw_bytes).decode(),
-                    },
+                    "type": "file",
+                    "file": {"file_data": raw_b64, "filename": raw_path.name},
                 },
                 {"type": "text", "text": rendered_text},
             ]
@@ -52,9 +51,7 @@ def validate_file(
     Returns the model's JSON verdict as a dictionary.
     """
 
-    spec, messages = _build_messages(
-        raw_path.read_bytes(), rendered_path.read_text(), fmt, prompt_path
-    )
+    spec, messages = _build_messages(raw_path, rendered_path.read_text(), fmt, prompt_path)
     client = OpenAI(
         api_key=os.getenv("GITHUB_TOKEN"),
         base_url=base_url

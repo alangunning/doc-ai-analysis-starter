@@ -7,6 +7,7 @@ from typing import List, Optional
 import os
 import sys
 import shlex
+import re
 
 import typer
 from rich.console import Console
@@ -105,7 +106,16 @@ def validate_doc(
     )
     if not verdict.get("match", False):
         raise RuntimeError(f"Mismatch detected: {verdict}")
-    mark_step(meta, "validation")
+    mark_step(
+        meta,
+        "validation",
+        outputs=[rendered.name],
+        inputs={
+            "prompt": prompt.name,
+            "rendered": rendered.name,
+            "format": fmt.value,
+        },
+    )
     save_metadata(raw, meta)
 
 
@@ -118,25 +128,49 @@ def analyze_doc(
 ) -> None:
     prompt_name = prompt.name.replace(".prompt.yaml", "")
     step_name = "analysis"
-    meta = load_metadata(markdown_doc)
-    file_hash = compute_hash(markdown_doc)
-    if meta.blake2b == file_hash and is_step_done(meta, step_name):
+    raw_doc = markdown_doc
+    if ".converted" in markdown_doc.suffixes:
+        raw_doc = raw_doc.with_suffix("").with_suffix("")
+    meta = load_metadata(raw_doc)
+    md_hash = compute_hash(markdown_doc)
+    prev_hash = None
+    if meta.extra:
+        prev_hash = (
+            meta.extra.get("inputs", {})
+            .get(step_name, {})
+            .get("markdown_blake2b")
+        )
+    if is_step_done(meta, step_name) and prev_hash == md_hash:
         return
-    if meta.blake2b != file_hash:
-        meta.blake2b = file_hash
-        meta.extra = {}
     result = run_prompt(
         prompt,
         markdown_doc.read_text(),
         model=model,
         base_url=base_url,
     )
-    out_path = (
-        output if output else markdown_doc.with_suffix(f".{prompt_name}.json")
-    )
+    result = result.strip()
+    fence = re.match(r"```(?:json)?\n([\s\S]*?)\n```", result)
+    if fence:
+        result = fence.group(1).strip()
+    if output:
+        out_path = output
+    else:
+        base_name = markdown_doc.name
+        for _ in markdown_doc.suffixes:
+            base_name = Path(base_name).stem
+        out_path = markdown_doc.with_name(f"{base_name}.{prompt_name}.json")
     out_path.write_text(result + "\n", encoding="utf-8")
-    mark_step(meta, step_name, outputs=[out_path.name])
-    save_metadata(markdown_doc, meta)
+    mark_step(
+        meta,
+        step_name,
+        outputs=[out_path.name],
+        inputs={
+            "prompt": prompt.name,
+            "markdown": markdown_doc.name,
+            "markdown_blake2b": md_hash,
+        },
+    )
+    save_metadata(raw_doc, meta)
 
 
 @app.command()
