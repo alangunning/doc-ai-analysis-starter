@@ -29,3 +29,37 @@ def test_validate_file_returns_json(tmp_path):
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     assert isinstance(kwargs["input"], list)
+
+
+def test_validate_file_handles_json_braces(tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "model": "validator-model",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": "Check {format} and keep {\"a\": 1}",
+                    }
+                ],
+            }
+        )
+    )
+
+    mock_response = MagicMock()
+    mock_response.output = [MagicMock(content=[{"text": "{\"ok\": true}"}])]
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
+        validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+
+    args, kwargs = mock_client.responses.create.call_args
+    user_text = kwargs["input"][0]["content"][0]["text"]
+    assert user_text == "Check text and keep {\"a\": 1}"

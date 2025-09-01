@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Union, Tuple, TYPE_CHECKING
 import json
 from contextlib import nullcontext
 
@@ -87,16 +87,24 @@ _SUFFIX_MAP: Dict[OutputFormat, str] = {
 }
 
 
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from docling.document_converter import ConversionStatus
+
+
 def convert_files(
-    input_path: Path, outputs: Dict[OutputFormat, Path]
-) -> Dict[OutputFormat, Path]:
+    input_path: Path,
+    outputs: Dict[OutputFormat, Path],
+    *,
+    with_status: bool = False,
+) -> Dict[OutputFormat, Path] | Tuple[Dict[OutputFormat, Path], "ConversionStatus"]:
     """Convert ``input_path`` to multiple formats.
 
     ``outputs`` maps each desired ``OutputFormat`` to the file path where the
     rendered content should be written.  The source document is converted only
     once, and the requested representations are emitted to their respective
     destinations.  The mapping of formats to the paths that were written is
-    returned for convenience.
+    returned for convenience.  When ``with_status`` is ``True`` the tuple of
+    written paths and Docling's ``ConversionStatus`` is returned instead.
     """
 
     converter = _get_docling_converter()
@@ -121,6 +129,8 @@ def convert_files(
             out_path.write_text(content, encoding="utf-8")
         written[fmt] = out_path
 
+    if with_status:
+        return written, result.status
     return written
 
 

@@ -13,6 +13,7 @@ dependencies = [
     "python-dotenv",
     "typer",
     "rich",
+    "click-repl",
 ]
 
 [project.scripts]
