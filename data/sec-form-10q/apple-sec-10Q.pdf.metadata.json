@@ -1,0 +1,32 @@
+{
+    "blake2b": "da458d48530722f88c02d1a0675818ffd1e55a9c55c00368bdd976789a4db81208f7a86af6f28f6525b00dc496e933f40ef5e2729bcc1a8f9e3a60c1498f687e",
+    "id": "96dc2d28-dba1-473e-822b-e2232824ab65",
+    "size": 271871,
+    "extra": {
+        "steps": {
+            "conversion": true
+        },
+        "outputs": {
+            "conversion": [
+                "apple-sec-10Q.pdf.converted.md",
+                "apple-sec-10Q.pdf.converted.html",
+                "apple-sec-10Q.pdf.converted.json",
+                "apple-sec-10Q.pdf.converted.txt",
+                "apple-sec-10Q.pdf.converted.doctags"
+            ]
+        },
+        "inputs": {
+            "conversion": {
+                "source": "data/sec-form-10q/apple-sec-10Q.pdf",
+                "formats": [
+                    "markdown",
+                    "html",
+                    "json",
+                    "text",
+                    "doctags"
+                ]
+            }
+        },
+        "filename": "apple-sec-10Q.pdf"
+    }
+}
