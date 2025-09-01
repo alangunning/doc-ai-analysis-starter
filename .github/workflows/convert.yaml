@@ -16,26 +16,26 @@ jobs:
       - name: Load env
         id: env
         uses: ./.github/actions/load-env
-      with:
-        enable-workflow: ENABLE_CONVERT_WORKFLOW
-    - name: Setup Python
-      if: steps.env.outputs.skip != 'true'
-      uses: ./.github/actions/setup-python
-      with:
-        packages: docling
-    - run: python scripts/convert.py data
-      if: steps.env.outputs.skip != 'true'
-    - name: Commit conversions
-      if: steps.env.outputs.skip != 'true'
-      uses: ./.github/actions/git-commit
-      with:
-        add: "git add data"
-        message: "docs: auto-convert documents"
-    - name: Trigger validate workflow
-      if: steps.env.outputs.skip != 'true'
-      uses: peter-evans/workflow-dispatch@v2
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        repository: ${{ github.repository }}
-        workflow: validate.yaml
-        ref: ${{ github.ref }}
+        with:
+          enable-workflow: ENABLE_CONVERT_WORKFLOW
+      - name: Setup Python
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/setup-python
+        with:
+          packages: docling
+      - run: python scripts/convert.py data
+        if: steps.env.outputs.skip != 'true'
+      - name: Commit conversions
+        if: steps.env.outputs.skip != 'true'
+        uses: ./.github/actions/git-commit
+        with:
+          add: "git add data"
+          message: "docs: auto-convert documents"
+      - name: Trigger validate workflow
+        if: steps.env.outputs.skip != 'true'
+        uses: peter-evans/workflow-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          workflow: validate.yaml
+          ref: ${{ github.ref }}
