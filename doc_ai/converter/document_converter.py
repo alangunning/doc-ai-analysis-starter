@@ -13,7 +13,24 @@ from pathlib import Path
 from typing import Dict, Union
 import json
 
-from docling.document_converter import DocumentConverter as _DoclingConverter
+# ``Docling`` pulls in heavy dependencies like ``torch`` which can slow down
+# startup considerably.  Import the converter lazily so simply importing this
+# module doesn't trigger those imports.  Tests patch ``_DoclingConverter`` so we
+# keep a module level reference that can be swapped out.
+_DoclingConverter = None
+
+
+def _get_docling_converter():
+    """Return an instance of ``Docling``'s ``DocumentConverter``."""
+
+    global _DoclingConverter
+    if _DoclingConverter is None:  # pragma: no cover - exercised via patching
+        from docling.document_converter import (  # type: ignore
+            DocumentConverter as _Docling,  # pylint: disable=C0415
+        )
+
+        _DoclingConverter = _Docling
+    return _DoclingConverter()
 
 # Supported high level output formats.
 class OutputFormat(str, Enum):
@@ -60,7 +77,7 @@ def convert_files(
     returned for convenience.
     """
 
-    converter = _DoclingConverter()
+    converter = _get_docling_converter()
     result = converter.convert(input_path)
     doc = result.document
 
