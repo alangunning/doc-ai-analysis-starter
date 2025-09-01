@@ -41,8 +41,10 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
 4. **Try it out**
 
-   Ensure the CLI has access to your GitHub Models token. Set
-   `GITHUB_TOKEN` in `.env` or pass it on the command line:
+   Ensure the CLI has access to your GitHub Models token. The
+   scripts call `load_dotenv()` so any `GITHUB_TOKEN` defined in
+   `.env` is loaded automatically. You can also supply it inline on
+   the command line:
 
    ```bash
    GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py --help
