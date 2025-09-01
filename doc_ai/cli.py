@@ -135,9 +135,12 @@ def analyze_doc(
     save_metadata(markdown_doc, meta)
 
 
-@app.callback()
-def show_banner() -> None:  # pragma: no cover - visual flair only
+@app.callback(invoke_without_command=True)
+def show_banner(ctx: typer.Context) -> None:  # pragma: no cover - visual flair only
     console.print(f"[bold green]{ASCII_ART}[/bold green]")
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
 
 
 @app.command()
