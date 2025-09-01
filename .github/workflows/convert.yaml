@@ -30,7 +30,7 @@ jobs:
         uses: ./.github/actions/git-commit
         with:
           add: "git add data"
-          message: "docs: auto-convert documents"
+          message: "workflow: auto convert documents"
       - name: Trigger validate workflow
         if: steps.env.outputs.skip != 'true'
         uses: actions/github-script@v7
