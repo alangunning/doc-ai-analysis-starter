@@ -53,8 +53,8 @@ def test_validate_file_returns_json(tmp_path):
     assert result == {"ok": True}
     mock_openai.assert_called_once()
     assert uploads == [
-        ("raw.pdf", "assistants", False),
-        ("rendered.txt", "assistants", False),
+        ("raw.pdf", "user_data", False),
+        ("rendered.txt", "user_data", False),
     ]
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
