@@ -1,13 +1,19 @@
+#!/usr/bin/env python3
 """CLI orchestrator for AI document analysis pipeline."""
 from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional
 import os
+import sys
 
 import typer
 from rich.console import Console
 from dotenv import load_dotenv
+
+# Ensure project root is on sys.path when running as a script.
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from doc_ai.converter import OutputFormat, convert_path, suffix_for_format
 from doc_ai.github import build_vector_store, run_prompt, validate_file
