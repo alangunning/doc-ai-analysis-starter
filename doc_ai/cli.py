@@ -155,9 +155,11 @@ def convert(
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
     if source.startswith(("http://", "https://")):
-        convert_path(source, fmts)
+        results = convert_path(source, fmts)
     else:
-        convert_path(Path(source), fmts)
+        results = convert_path(Path(source), fmts)
+    if not results:
+        console.print("No new files to process.")
 
 
 @app.command()

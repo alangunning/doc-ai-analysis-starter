@@ -48,4 +48,6 @@ if __name__ == "__main__":
     else:
         fmts = [OutputFormat.MARKDOWN]
 
-    convert_path(in_path, fmts)
+    results = convert_path(in_path, fmts)
+    if not results:
+        print("No new files to process.")
