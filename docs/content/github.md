@@ -7,6 +7,10 @@ sidebar_position: 4
 
 The `doc_ai.github` package provides helpers for working with GitHub and GitHub Models.
 
+## Authentication and Permissions
+
+GitHub Models require a token with the `Models:read` scope. When creating a fine-grained personal access token, choose **Read** access under **Account permissions → Models**. This setting is separate from repository permissions; without it, requests return `PermissionDeniedError: Error code 403` with `no_access` to the model.
+
 ## Key APIs
 
 ### `run_prompt(prompt_file, input_text, model=None, base_url=None)`
