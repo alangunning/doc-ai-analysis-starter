@@ -28,6 +28,12 @@ python scripts/validate.py data/example/example.pdf data/example/example.pdf.con
 ```
 Override the model with `--model` or `VALIDATE_MODEL`.
 
+Behind the scenes the script uploads both files using `client.files.create` and
+invokes `client.responses.create` with `input_file` attachments. This avoids
+token‑overflow issues on long documents. To reduce cost you can point
+`--model` to a smaller option like `openai/gpt-4o-mini`, or split the source
+into chunks and validate them separately.
+
 ## run_analysis.py
 Run a prompt definition against a Markdown document and save JSON output:
 

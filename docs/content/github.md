@@ -25,5 +25,12 @@ Merge a pull request using the GitHub CLI.
 ### `validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None)`
 Validate a rendered file against its source document and return the model's JSON verdict.
 
+The helper uploads both the original document and its rendered output with
+`client.files.create` and then calls `client.responses.create` with
+`input_file` attachments. This lets the model compare long documents without
+running into context limits. For cost‑sensitive jobs, specify a smaller model
+such as `gpt-4o-mini` or chunk the source document into smaller pieces and
+validate them individually.
+
 ### `build_vector_store(src_dir)`
 Generate vector embeddings for Markdown files in a directory and write `.embedding.json` files alongside each source.

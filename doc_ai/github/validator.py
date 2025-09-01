@@ -28,8 +28,12 @@ def _build_input(
     spec = yaml.safe_load(prompt_path.read_text())
     input_msgs = [dict(m) for m in spec["messages"]]
 
-    raw_file = client.files.create(file=raw_path.open("rb"), purpose="assistants")
-    rendered_file = client.files.create(file=rendered_path.open("rb"), purpose="assistants")
+    # Upload the raw and rendered files so the model can access them without
+    # hitting token limits on large documents.
+    with raw_path.open("rb") as f:
+        raw_file = client.files.create(file=f, purpose="assistants")
+    with rendered_path.open("rb") as f:
+        rendered_file = client.files.create(file=f, purpose="assistants")
 
     for msg in input_msgs:
         if msg.get("role") == "user":
@@ -53,6 +57,10 @@ def validate_file(
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
+    The files are uploaded via :meth:`client.files.create` and referenced in a
+    :meth:`client.responses.create` call using ``input_file`` attachments. This
+    approach avoids token overflows on large documents and works with models that
+    support file inputs (for example ``gpt-4o`` or the cheaper ``gpt-4o-mini``).
     Returns the model's JSON verdict as a dictionary.
     """
 

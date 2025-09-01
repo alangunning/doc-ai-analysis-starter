@@ -57,6 +57,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
    ```
 
+   The validation script uploads both files using GitHub's Responses API, so it
+   can handle very long documents without running into token limits. For a more
+   cost‑efficient run, specify a smaller model such as
+   `openai/gpt-4o-mini` with `--model`, or split oversized documents into
+   chunks and validate them individually.
+
    Or run the whole pipeline in one go with the orchestrator CLI:
 
    ```bash
