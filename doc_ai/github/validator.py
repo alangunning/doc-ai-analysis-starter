@@ -14,6 +14,8 @@ from openai import OpenAI
 from ..converter import OutputFormat
 from .prompts import DEFAULT_MODEL_BASE_URL
 
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+
 load_dotenv()
 
 
@@ -61,16 +63,22 @@ def validate_file(
     :meth:`client.responses.create` call using ``input_file`` attachments. This
     approach avoids token overflows on large documents and works with models that
     support file inputs (for example ``gpt-4o`` or the cheaper ``gpt-4o-mini``).
-    Returns the model's JSON verdict as a dictionary.
+    GitHub Models do not offer file uploads, so when the base URL points at the
+    GitHub provider (or is unspecified) the call is automatically routed to
+    ``https://api.openai.com/v1`` using the ``OPENAI_API_KEY`` token. Returns the
+    model's JSON verdict as a dictionary.
     """
 
-    client = OpenAI(
-        api_key=os.getenv("GITHUB_TOKEN"),
-        base_url=base_url
+    base = (
+        base_url
         or os.getenv("VALIDATE_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL,
+        or DEFAULT_MODEL_BASE_URL
     )
+    if not base or "models.github.ai" in base:
+        base = OPENAI_BASE_URL
+    api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
+    client = OpenAI(api_key=os.getenv(api_key_var), base_url=base)
     spec, input_msgs = _build_input(client, raw_path, rendered_path, fmt, prompt_path)
     result = client.responses.create(
         model=model or spec["model"],

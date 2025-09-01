@@ -51,6 +51,48 @@ def test_validate_file_returns_json(tmp_path):
     assert file_ids == ["file1", "file2"]
 
 
+def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    mock_response = MagicMock(output_text="{}")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+    mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
+        validate_file(
+            raw_path,
+            rendered_path,
+            OutputFormat.TEXT,
+            prompt_path,
+            base_url="https://models.github.ai/inference",
+        )
+
+    args, kwargs = mock_openai.call_args
+    assert kwargs["base_url"] == "https://api.openai.com/v1"
+    assert kwargs["api_key"] == "sk-test"
+
+
 def test_validate_doc_updates_metadata(tmp_path):
     raw = tmp_path / "raw.pdf"
     rendered = tmp_path / "raw.pdf.converted.md"

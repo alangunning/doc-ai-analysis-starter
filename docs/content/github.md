@@ -27,10 +27,13 @@ Validate a rendered file against its source document and return the model's JSON
 
 The helper uploads both the original document and its rendered output with
 `client.files.create` and then calls `client.responses.create` with
-`input_file` attachments. This lets the model compare long documents without
-running into context limits. For cost‑sensitive jobs, specify a smaller model
-such as `gpt-4o-mini` or chunk the source document into smaller pieces and
-validate them individually.
+`input_file` attachments. GitHub Models do not support file uploads, so the
+function automatically falls back to OpenAI's API at
+`https://api.openai.com/v1` (using the `OPENAI_API_KEY` token) whenever the base
+URL points to the GitHub provider or is left unset. This approach lets the model
+compare long documents without running into context limits. For cost‑sensitive
+jobs, specify a smaller model such as `gpt-4o-mini` or chunk the source document
+into smaller pieces and validate them individually.
 
 ### `build_vector_store(src_dir)`
 Generate vector embeddings for Markdown files in a directory and write `.embedding.json` files alongside each source.

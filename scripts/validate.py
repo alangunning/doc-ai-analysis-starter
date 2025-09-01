@@ -46,7 +46,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--base-model-url",
         default=os.getenv("VALIDATE_BASE_MODEL_URL")
-        or os.getenv("BASE_MODEL_URL"),
+        or os.getenv("BASE_MODEL_URL")
+        or "https://api.openai.com/v1",
         help="Model base URL override",
     )
     args = parser.parse_args()
