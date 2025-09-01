@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, Callable
 
 import yaml
 from dotenv import load_dotenv
@@ -13,6 +13,7 @@ from openai import OpenAI
 
 from ..converter import OutputFormat
 from ..openai import create_response
+from rich.progress import Progress
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
@@ -27,6 +28,7 @@ def validate_file(
     prompt_path: Path,
     model: str | None = None,
     base_url: str | None = None,
+    show_progress: bool = False,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -37,6 +39,12 @@ def validate_file(
     unspecified) the call is automatically routed to ``https://api.openai.com/v1``
     using the ``OPENAI_API_KEY`` token. Returns the model's JSON verdict as a
     dictionary.
+
+    Parameters
+    ----------
+    show_progress:
+        When ``True``, emit progress events for file uploads so callers can
+        display progress bars.
     """
 
     base = (
@@ -67,16 +75,32 @@ def validate_file(
         else:
             file_paths.append(Path(p))
 
-    result = create_response(
-        client,
-        model=model or spec["model"],
-        system=system_msgs,
-        texts=[user_text],
-        file_urls=file_urls or None,
-        file_paths=file_paths or None,
-        file_purpose="assistants",
-        **spec.get("modelParameters", {}),
-    )
+    progress_cb: Optional[Callable[[int], None]] = None
+    progress: Optional[Progress] = None
+    if show_progress and file_paths:
+        total = sum(p.stat().st_size for p in file_paths)
+        progress = Progress()
+        progress.start()
+        task = progress.add_task("Uploading", total=total)
+
+        def progress_cb(n: int) -> None:
+            progress.advance(task, n)
+
+    try:
+        result = create_response(
+            client,
+            model=model or spec["model"],
+            system=system_msgs,
+            texts=[user_text],
+            file_urls=file_urls or None,
+            file_paths=file_paths or None,
+            file_purpose="assistants",
+            progress=progress_cb,
+            **spec.get("modelParameters", {}),
+        )
+    finally:
+        if progress is not None:
+            progress.stop()
 
     text = result.output_text or "{}"
     return json.loads(text)

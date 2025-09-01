@@ -10,7 +10,7 @@ from __future__ import annotations
 import base64
 import mimetypes
 from pathlib import Path
-from typing import BinaryIO, Dict, List, Union
+from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
 from openai import OpenAI
 
@@ -35,12 +35,14 @@ def upload_file(
     use_upload: bool = False,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
+    progress: Optional[Callable[[int], None]] = None,
 ) -> str:
     """Upload ``file`` to OpenAI and return its ``file_id``.
 
     By default this uses the ``/v1/files`` endpoint.  For large files, set
     ``use_upload=True`` to leverage the resumable ``/v1/uploads`` API which
-    splits the file into parts of ``chunk_size`` bytes.
+    splits the file into parts of ``chunk_size`` bytes. When ``progress`` is
+    provided it is called with the number of bytes uploaded.
     """
     if use_upload:
         return upload_large_file(
@@ -49,10 +51,22 @@ def upload_file(
             purpose=purpose,
             chunk_size=chunk_size,
             mime_type=mime_type,
+            progress=progress,
         )
+
+    size = None
+    if isinstance(file, (str, Path)):
+        size = Path(file).stat().st_size
+    elif hasattr(file, "seek"):
+        pos = file.tell()
+        file.seek(0, 2)
+        size = file.tell()
+        file.seek(pos)
 
     with _open_file(file) as fh:  # type: ignore[arg-type]
         response = client.files.create(file=fh, purpose=purpose)
+    if progress and size is not None:
+        progress(size)
     return response.id
 
 
@@ -74,8 +88,12 @@ def input_file_from_path(
     use_upload: bool = False,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
+    progress: Optional[Callable[[int], None]] = None,
 ) -> Dict[str, str]:
-    """Upload ``path`` and return a file input payload referencing it."""
+    """Upload ``path`` and return a file input payload referencing it.
+
+    ``progress`` is forwarded to :func:`upload_file`.
+    """
     file_id = upload_file(
         client,
         path,
@@ -83,6 +101,7 @@ def input_file_from_path(
         use_upload=use_upload,
         chunk_size=chunk_size,
         mime_type=mime_type,
+        progress=progress,
     )
     return input_file_from_id(file_id)
 
@@ -109,12 +128,14 @@ def upload_large_file(
     *,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
+    progress: Optional[Callable[[int], None]] = None,
 ) -> str:
     """Upload a file using the resumable ``/v1/uploads`` API.
 
     The file is split into chunks of ``chunk_size`` bytes which are uploaded
     sequentially as Parts before completing the Upload.  Returns the resulting
-    ``file_id`` that can be used with other OpenAI APIs.
+    ``file_id`` that can be used with other OpenAI APIs. If ``progress`` is
+    provided it is invoked with the size of each chunk as it uploads.
     """
     # Determine filename and file size
     if isinstance(file, (str, Path)):
@@ -146,6 +167,8 @@ def upload_large_file(
                 break
             part = client.uploads.parts.create(upload.id, data=chunk)
             part_ids.append(part.id)
+            if progress:
+                progress(len(chunk))
     finally:
         fh.close()
 

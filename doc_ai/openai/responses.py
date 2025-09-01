@@ -1,7 +1,7 @@
 """Convenience helpers for creating Responses API requests."""
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
 from pathlib import Path
 
 from openai import OpenAI
@@ -42,6 +42,7 @@ def create_response(
     file_paths: Union[str, Path, Sequence[Union[str, Path]], None] = None,
     system: Union[str, Sequence[str], None] = None,
     file_purpose: str = "user_data",
+    progress: Optional[Callable[[int], None]] = None,
     **kwargs: Any,
 ) -> Any:
     """Call the Responses API with a mix of inputs.
@@ -69,6 +70,9 @@ def create_response(
         Optional system message(s) to prepend to the request.
     file_purpose:
         Purpose used when uploading files. Defaults to ``"user_data"``.
+    progress:
+        Optional callback invoked with the number of bytes uploaded. Useful for
+        displaying progress bars.
     """
 
     content: list[Dict[str, Any]] = []
@@ -88,6 +92,7 @@ def create_response(
             p,
             purpose=file_purpose,
             use_upload=use_upload,
+            progress=progress,
         )
         content.append(input_file_from_id(file_id))
 

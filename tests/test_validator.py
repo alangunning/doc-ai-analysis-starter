@@ -39,7 +39,7 @@ def test_validate_file_returns_json(tmp_path):
 
     uploads = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload):
+    def fake_upload_file(client, path, purpose, *, use_upload, progress=None):
         uploads.append((Path(path).name, purpose, use_upload))
         return f"{Path(path).name}-id"
 
@@ -89,7 +89,7 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
 
     called: list[bool] = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload):
+    def fake_upload_file(client, path, purpose, *, use_upload, progress=None):
         called.append(use_upload)
         return f"{Path(path).name}-id"
 

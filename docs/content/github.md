@@ -22,8 +22,9 @@ Run a pull request review prompt against the PR body text.
 ### `merge_pr(pr_number)`
 Merge a pull request using the GitHub CLI.
 
-### `validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None)`
-Validate a rendered file against its source document and return the model's JSON verdict.
+### `validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, show_progress=False)`
+Validate a rendered file against its source document and return the model's JSON verdict. Pass
+`show_progress=True` to emit upload progress callbacks for integration with the CLI's progress bars.
 
 The helper delegates to `doc_ai.openai.create_response`, uploading any local
 paths (switching to the resumable `/v1/uploads` service for large files) and

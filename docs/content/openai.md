@@ -62,6 +62,8 @@ prompt. Additional helpers include:
 - `upload_large_file` – chunked upload through `/v1/uploads`
 - `input_file_from_path`, `input_file_from_url`, `input_file_from_id`,
   `input_file_from_bytes` – build individual payload objects
+- `progress` callbacks – pass `progress=` to `create_response` or upload
+  helpers to monitor byte transfer
 
 Import these utilities from `doc_ai.openai` to reuse them in other
 projects.

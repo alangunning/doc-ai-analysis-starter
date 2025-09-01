@@ -61,3 +61,30 @@ def test_upload_file_via_uploads(tmp_path):
     mock_client.uploads.complete.assert_called_once_with(
         "upl-1", part_ids=["part1", "part2", "part3"]
     )
+
+
+def test_upload_large_file_reports_progress(tmp_path):
+    file_path = tmp_path / "big.bin"
+    file_path.write_bytes(b"0123456789")
+    mock_client = MagicMock()
+    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.parts.create.side_effect = [
+        types.SimpleNamespace(id="part1"),
+        types.SimpleNamespace(id="part2"),
+        types.SimpleNamespace(id="part3"),
+    ]
+    mock_client.uploads.complete.return_value = types.SimpleNamespace(
+        file=types.SimpleNamespace(id="file-xyz")
+    )
+
+    seen: list[int] = []
+
+    upload_file(
+        mock_client,
+        file_path,
+        use_upload=True,
+        chunk_size=4,
+        progress=lambda n: seen.append(n),
+    )
+
+    assert seen == [4, 4, 2]
