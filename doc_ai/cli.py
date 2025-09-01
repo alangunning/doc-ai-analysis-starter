@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 import os
 import sys
+import shlex
 
 import typer
 from rich.console import Console
@@ -39,6 +40,9 @@ ASCII_ART = r"""
 | |_| | |_| | |___   / ___ \ | |  | |___| |___ | |
 |____/ \___/ \____| /_/   \_\___|  \____|_____|___|
 """
+
+def _print_banner() -> None:  # pragma: no cover - visual flair only
+    console.print(f"[bold green]{ASCII_ART}[/bold green]")
 
 def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
@@ -133,14 +137,6 @@ def analyze_doc(
     out_path.write_text(result + "\n", encoding="utf-8")
     mark_step(meta, step_name)
     save_metadata(markdown_doc, meta)
-
-
-@app.callback(invoke_without_command=True)
-def show_banner(ctx: typer.Context) -> None:  # pragma: no cover - visual flair only
-    console.print(f"[bold green]{ASCII_ART}[/bold green]")
-    if ctx.invoked_subcommand is None:
-        typer.echo(ctx.get_help())
-        raise typer.Exit()
 
 
 @app.command()
@@ -252,5 +248,30 @@ def pipeline(
 __all__ = ["app"]
 
 
+def _interactive_shell() -> None:  # pragma: no cover - CLI utility
+    try:
+        _print_banner()
+        app(prog_name="cli.py", args=["--help"])
+    except SystemExit:
+        pass
+    while True:
+        try:
+            command = input("> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            break
+        if not command:
+            continue
+        if command.lower() in {"exit", "quit"}:
+            break
+        try:
+            app(prog_name="cli.py", args=shlex.split(command))
+        except SystemExit:
+            pass
+
+
 if __name__ == "__main__":
-    app()
+    if len(sys.argv) > 1:
+        _print_banner()
+        app()
+    else:
+        _interactive_shell()
