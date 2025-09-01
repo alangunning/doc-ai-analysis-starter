@@ -15,7 +15,18 @@ def test_validate_file_returns_json(tmp_path):
     raw_path.write_bytes(b"raw")
     rendered_path.write_text("text")
     prompt_path.write_text(
-        yaml.dump({"model": "validator-model", "messages": [{"role": "user", "content": "Check {format}"}]})
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
     )
 
     mock_response = MagicMock(output_text="{\"ok\": true}")
@@ -30,7 +41,7 @@ def test_validate_file_returns_json(tmp_path):
     mock_openai.assert_called_once()
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
-    user_msg = kwargs["input"][0]
+    user_msg = kwargs["input"][1]
     content = user_msg["content"]
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["file1", "file2"]
@@ -42,7 +53,17 @@ def test_validate_doc_updates_metadata(tmp_path):
     prompt = tmp_path / "prompt.yml"
     raw.write_bytes(b"pdf")
     rendered.write_text("md")
-    prompt.write_text(yaml.dump({"model": "validator", "messages": []}))
+    prompt.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator",
+                "modelParameters": {"temperature": 0},
+                "messages": [],
+            }
+        )
+    )
     with patch("doc_ai.cli.validate_file", return_value={"match": True}):
         validate_doc(raw, rendered, OutputFormat.MARKDOWN, prompt)
     assert not metadata_path(rendered).exists()
