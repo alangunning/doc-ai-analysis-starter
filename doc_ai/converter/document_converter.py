@@ -15,6 +15,13 @@ import json
 from contextlib import nullcontext
 
 from rich.console import Console
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TaskProgressColumn,
+    TextColumn,
+)
 
 # ``Docling`` pulls in heavy dependencies like ``torch`` which can slow down
 # startup considerably.  Import the converter lazily so simply importing this
@@ -127,27 +134,50 @@ def convert_files(
     """
 
     converter = _get_docling_converter()
-    result = converter.convert(input_path)
-    status = getattr(result, "status", None)
-    doc = result.document
 
     written: Dict[OutputFormat, Path] = {}
-    for fmt, out_path in outputs.items():
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        if fmt == OutputFormat.JSON:
-            # ``DoclingDocument`` doesn't expose an explicit JSON exporter; use
-            # the dictionary representation and serialize it ourselves.
-            content: Union[str, bytes] = json.dumps(
-                doc.export_to_dict(), ensure_ascii=False
-            )
-        else:
-            render_method = getattr(doc, _METHOD_MAP[fmt])
-            content = render_method()
-        if isinstance(content, bytes):
-            out_path.write_bytes(content)
-        else:
-            out_path.write_text(content, encoding="utf-8")
-        written[fmt] = out_path
+
+    def _write_outputs(doc: Any, progress_obj: Progress | None = None, task_id: int | None = None) -> None:
+        for fmt, out_path in outputs.items():
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            if fmt == OutputFormat.JSON:
+                # ``DoclingDocument`` doesn't expose an explicit JSON exporter; use
+                # the dictionary representation and serialize it ourselves.
+                content: Union[str, bytes] = json.dumps(
+                    doc.export_to_dict(), ensure_ascii=False
+                )
+            else:
+                render_method = getattr(doc, _METHOD_MAP[fmt])
+                content = render_method()
+            if isinstance(content, bytes):
+                out_path.write_bytes(content)
+            else:
+                out_path.write_text(content, encoding="utf-8")
+            written[fmt] = out_path
+            if progress_obj is not None and task_id is not None:
+                progress_obj.advance(task_id)
+
+    if _console.is_terminal:
+        total = len(outputs) + 1
+        with Progress(
+            SpinnerColumn(),
+            BarColumn(),
+            TaskProgressColumn(),
+            TextColumn("{task.description}"),
+            console=_console,
+            transient=True,
+        ) as progress:
+            task = progress.add_task(f"Converting {input_path}", total=total)
+            result = converter.convert(input_path)
+            progress.advance(task)
+            status = getattr(result, "status", None)
+            doc = result.document
+            _write_outputs(doc, progress, task)
+    else:
+        result = converter.convert(input_path)
+        status = getattr(result, "status", None)
+        doc = result.document
+        _write_outputs(doc)
 
     paths = ", ".join(str(p) for p in written.values())
     if status is not None:
