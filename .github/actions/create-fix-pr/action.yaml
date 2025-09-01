@@ -8,15 +8,15 @@ inputs:
   commit-message:
     description: Commit message for fixes.
     required: false
-    default: docs: fix document conversion
+    default: "workflow: auto fix document conversion"
   title:
     description: PR title.
     required: false
-    default: Fix document conversion
+    default: "workflow: Fix document conversion"
   body:
     description: PR body.
     required: false
-    default: Auto-corrected mismatched output.
+    default: "workflow: Auto-corrected mismatched output.""
 runs:
   using: composite
   steps:
