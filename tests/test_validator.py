@@ -54,6 +54,89 @@ def test_validate_file_returns_json(tmp_path):
     assert file_ids == ["file1", "file2"]
 
 
+def test_validate_file_upload_mode(monkeypatch, tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    called: list[bool] = []
+
+    def fake_upload_file(client, path, purpose, *, use_upload, **kwargs):
+        called.append(use_upload)
+        return f"{Path(path).name}-id"
+
+    mock_response = MagicMock(output_text="{}")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    monkeypatch.setenv("VALIDATE_FILE_MODE", "uploads")
+    monkeypatch.setattr("doc_ai.openai.files.upload_file", fake_upload_file)
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
+        validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+
+    assert called == [True, True]
+
+
+def test_validate_file_url_mode(monkeypatch, tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    mock_response = MagicMock(output_text="{}")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    monkeypatch.setenv("VALIDATE_FILE_MODE", "url")
+    monkeypatch.setenv("VALIDATE_FILE_URL_BASE", "https://example.com/raw")
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
+        validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+
+    assert mock_client.files.create.call_count == 0
+    args, kwargs = mock_client.responses.create.call_args
+    content = kwargs["input"][1]["content"]
+    file_urls = [part["file_url"] for part in content if part["type"] == "input_file"]
+    assert file_urls == [
+        "https://example.com/raw/raw.pdf",
+        "https://example.com/raw/rendered.txt",
+    ]
+
+
 def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     raw_path = tmp_path / "raw.pdf"
     rendered_path = tmp_path / "rendered.txt"

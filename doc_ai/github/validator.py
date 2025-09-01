@@ -15,6 +15,7 @@ from openai import OpenAI
 from rich.progress import Progress
 
 from ..converter import OutputFormat
+from ..openai import input_file_from_path, input_file_from_url
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
@@ -28,6 +29,10 @@ def _build_input(
     rendered_path: Path,
     fmt: OutputFormat,
     prompt_path: Path,
+    *,
+    use_upload: bool = False,
+    url_only: bool = False,
+    url_base: str | None = None,
     progress: Progress | None = None,
     task: int | None = None,
 ) -> Dict:
@@ -35,36 +40,46 @@ def _build_input(
     spec = yaml.safe_load(prompt_path.read_text())
     input_msgs = [dict(m) for m in spec["messages"]]
 
-    # Upload the raw and rendered files so the model can access them without
-    # hitting token limits on large documents. The OpenAI file endpoints only
-    # accept a limited set of extensions; markdown files for example are not
-    # supported. When the rendered document uses an unsupported suffix we upload
-    # it as a temporary ``.txt`` file so the request is accepted.
+    def _github_url(path: Path) -> str:
+        if url_base:
+            return f"{url_base}/{path.name}"
+        repo = os.getenv("GITHUB_REPOSITORY")
+        ref = os.getenv("GITHUB_SHA", "main")
+        try:
+            rel = path.resolve().relative_to(Path.cwd()).as_posix()
+        except ValueError:
+            rel = path.name
+        return f"https://raw.githubusercontent.com/{repo}/{ref}/{rel}"
 
-    def _upload(path: Path):
+    def _payload(path: Path):
+        if url_only:
+            return input_file_from_url(_github_url(path))
         if path.suffix.lower() == ".pdf":
-            with path.open("rb") as f:
-                file = client.files.create(file=f, purpose="assistants")
+            payload = input_file_from_path(
+                client, path, purpose="assistants", use_upload=use_upload
+            )
         else:
             with path.open("rb") as src, tempfile.NamedTemporaryFile(suffix=".txt") as tmp:
                 tmp.write(src.read())
                 tmp.flush()
                 tmp.seek(0)
-                file = client.files.create(file=tmp, purpose="assistants")
+                payload = input_file_from_path(
+                    client, tmp.name, purpose="assistants", use_upload=use_upload
+                )
         if progress and task is not None:
             progress.advance(task)
-        return file
+        return payload
 
-    raw_file = _upload(raw_path)
-    rendered_file = _upload(rendered_path)
+    raw_payload = _payload(raw_path)
+    rendered_payload = _payload(rendered_path)
 
     for msg in input_msgs:
         if msg.get("role") == "user":
             text = msg.get("content", "").replace("{format}", fmt.value)
             msg["content"] = [
                 {"type": "input_text", "text": text},
-                {"type": "input_file", "file_id": raw_file.id},
-                {"type": "input_file", "file_id": rendered_file.id},
+                raw_payload,
+                rendered_payload,
             ]
             break
     return spec, input_msgs
@@ -81,12 +96,15 @@ def validate_file(
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
-    The files are uploaded via :meth:`client.files.create` and referenced in a
-    :meth:`client.responses.create` call using ``input_file`` attachments. This
-    approach avoids token overflows on large documents and works with models that
-    support file inputs (for example ``gpt-4o`` or the cheaper ``gpt-4o-mini``).
-    GitHub Models do not offer file uploads, so when the base URL points at the
-    GitHub provider (or is unspecified) the call is automatically routed to
+    Depending on the ``VALIDATE_FILE_MODE`` environment variable the raw and
+    rendered files are either uploaded via the ``/v1/files`` endpoint
+    (``files``), streamed through the resumable ``/v1/uploads`` API
+    (``uploads``) or referenced directly by their GitHub ``raw`` URLs
+    (``url``). The resulting file inputs are then attached to a
+    :meth:`client.responses.create` call. This approach avoids token overflows
+    on large documents and works with models that support file inputs. GitHub
+    Models do not offer file uploads, so when the base URL points at the GitHub
+    provider (or is unspecified) the call is automatically routed to
     ``https://api.openai.com/v1`` using the ``OPENAI_API_KEY`` token. Returns the
     model's JSON verdict as a dictionary.
     """
@@ -101,10 +119,15 @@ def validate_file(
         base = OPENAI_BASE_URL
     api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
     client = OpenAI(api_key=os.getenv(api_key_var), base_url=base)
+    file_mode = os.getenv("VALIDATE_FILE_MODE", "files").lower()
+    use_upload = file_mode == "uploads"
+    url_only = file_mode == "url"
+    url_base = os.getenv("VALIDATE_FILE_URL_BASE")
+    total = 0 if url_only else 2
     cm = Progress() if show_progress else contextlib.nullcontext()
     with cm as progress:
         upload_task = (
-            progress.add_task("Uploading files", total=2) if show_progress else None
+            progress.add_task("Uploading files", total=total) if show_progress else None
         )
         spec, input_msgs = _build_input(
             client,
@@ -112,8 +135,11 @@ def validate_file(
             rendered_path,
             fmt,
             prompt_path,
-            progress if show_progress else None,
-            upload_task,
+            use_upload=use_upload,
+            url_only=url_only,
+            url_base=url_base,
+            progress=progress if show_progress else None,
+            task=upload_task,
         )
         request_task = (
             progress.add_task("Requesting validation", total=1) if show_progress else None
