@@ -16,7 +16,7 @@ The workflow runs automatically on every pull request. You can also trigger it a
 
 ## Customize the Model
 
-Set `PR_REVIEW_MODEL` to change the model used. For self-hosted endpoints, override `PR_REVIEW_BASE_MODEL_URL`.
+Set `PR_REVIEW_MODEL` to change the model used.
 
 ## Manual Runs
 
