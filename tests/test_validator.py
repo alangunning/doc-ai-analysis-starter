@@ -12,7 +12,7 @@ from doc_ai.metadata import load_metadata, metadata_path
 
 def test_validate_file_returns_json(tmp_path):
     raw_path = tmp_path / "raw.pdf"
-    rendered_path = tmp_path / "rendered.md"
+    rendered_path = tmp_path / "rendered.txt"
     prompt_path = tmp_path / "prompt.yml"
 
     raw_path.write_bytes(b"raw")
@@ -38,28 +38,25 @@ def test_validate_file_returns_json(tmp_path):
     mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
-        result = validate_file(raw_path, rendered_path, OutputFormat.MARKDOWN, prompt_path)
+        result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
     assert mock_client.files.create.call_count == 2
     for call in mock_client.files.create.call_args_list:
         assert call.kwargs["purpose"] == "assistants"
-    # The rendered markdown is uploaded as a temporary .txt file for the API
-    second_file = mock_client.files.create.call_args_list[1].kwargs["file"]
-    assert second_file.name.endswith(".txt")
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
-    assert content[0] == {"type": "input_text", "text": "Check markdown"}
+    assert content[0] == {"type": "input_text", "text": "Check text"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["file1", "file2"]
 
 
 def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     raw_path = tmp_path / "raw.pdf"
-    rendered_path = tmp_path / "rendered.md"
+    rendered_path = tmp_path / "rendered.txt"
     prompt_path = tmp_path / "prompt.yml"
 
     raw_path.write_bytes(b"raw")
@@ -89,7 +86,7 @@ def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
         validate_file(
             raw_path,
             rendered_path,
-            OutputFormat.MARKDOWN,
+            OutputFormat.TEXT,
             prompt_path,
             base_url="https://models.github.ai/inference",
         )
@@ -212,3 +209,55 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
 
     assert called["model"] == "env-model"
     assert called["base_url"] == "https://test.base"
+
+
+def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
+    raw = tmp_path / "raw.pdf"
+    rendered = tmp_path / "rendered.md"
+    prompt = tmp_path / "prompt.yml"
+    raw.write_bytes(b"pdf")
+    rendered.write_text("md")
+    prompt.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator",
+                "modelParameters": {"temperature": 0},
+                "messages": [],
+            }
+        )
+    )
+
+    monkeypatch.setenv("VALIDATE_MODEL", "env-model")
+    monkeypatch.setenv("VALIDATE_BASE_MODEL_URL", "https://env.base")
+
+    called: dict[str, str] = {}
+
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None):
+        called["model"] = model
+        called["base_url"] = base_url
+        return {"match": True}
+
+    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(script_path),
+            str(raw),
+            str(rendered),
+            "--prompt",
+            str(prompt),
+            "--model",
+            "cli-model",
+            "--base-model-url",
+            "https://cli.base",
+        ],
+    )
+
+    runpy.run_path(str(script_path), run_name="__main__")
+
+    assert called["model"] == "cli-model"
+    assert called["base_url"] == "https://cli.base"

@@ -7,6 +7,15 @@ sidebar_position: 6
 
 Doc AI Starter uses environment variables to control models and GitHub Actions. Copy `.env.example` to `.env` and edit as needed. Variables in your shell override values in the file.
 
+### Precedence
+
+When the same setting is defined in multiple places the resolution order is:
+
+1. Command-line flags
+2. Shell environment variables
+3. Values from `.env`
+4. Built-in defaults in code or prompt files
+
 ## API Keys and Endpoints
 
 Set `GITHUB_TOKEN` with the **Models:read** scope to access GitHub Models at

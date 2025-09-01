@@ -11,6 +11,8 @@ The repository ships with small command-line utilities that expose the core feat
 > access GitHub Models. Each script calls `load_dotenv()`, so a token in
 > `.env` is loaded automatically; alternatively, pass it inline when
 > invoking a command, e.g., `GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py`.
+> Command-line flags always take precedence over environment variables and
+> `.env` entries.
 
 ## convert.py
 Convert raw documents (PDF, Word, slides, etc.) into one or more formats:
