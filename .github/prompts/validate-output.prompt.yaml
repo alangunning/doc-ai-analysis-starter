@@ -1,6 +1,6 @@
 name: Validate Rendered Output
 description: Compare original documents with their rendered representation.
-model: openai/gpt-4o-mini
+model: gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
