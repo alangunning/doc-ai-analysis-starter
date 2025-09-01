@@ -7,6 +7,7 @@ from typing import List, Optional
 import os
 import sys
 import shlex
+import json
 
 import typer
 from rich.console import Console
@@ -40,6 +41,26 @@ ASCII_ART = r"""
 | |_| | |_| | |___   / ___ \ | |  | |___| |___ | |
 |____/ \___/ \____| /_/   \_\___|  \____|_____|___|
 """
+
+CONFIG_PATH = Path.home() / ".doc_ai_shell_config.json"
+GLOBAL_OPTION_COMMANDS = {
+    "help": "--help",
+    "install-completion": "--install-completion",
+    "show-completion": "--show-completion",
+}
+
+
+def _load_shell_config() -> dict[str, str]:
+    if CONFIG_PATH.exists():
+        try:
+            return json.loads(CONFIG_PATH.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_shell_config(cfg: dict[str, str]) -> None:
+    CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
 
 def _print_banner() -> None:  # pragma: no cover - visual flair only
     console.print(f"[bold green]{ASCII_ART}[/bold green]")
@@ -249,6 +270,7 @@ __all__ = ["app"]
 
 
 def _interactive_shell() -> None:  # pragma: no cover - CLI utility
+    cfg = _load_shell_config()
     try:
         _print_banner()
         app(prog_name="cli.py", args=["--help"])
@@ -264,7 +286,35 @@ def _interactive_shell() -> None:  # pragma: no cover - CLI utility
         if command.lower() in {"exit", "quit"}:
             break
         try:
-            app(prog_name="cli.py", args=shlex.split(command))
+            tokens = shlex.split(command)
+        except ValueError:
+            console.print("Invalid command")
+            continue
+        if not tokens:
+            continue
+        cmd = tokens[0].lower()
+        if cmd == "config":
+            if len(tokens) == 1 or tokens[1] == "show":
+                console.print(cfg)
+            elif len(tokens) >= 4 and tokens[1] == "set":
+                cfg[tokens[2].lower()] = tokens[3]
+                _save_shell_config(cfg)
+                console.print(f"Set {tokens[2]} = {tokens[3]}")
+            else:
+                console.print("Usage: config set <key> <value> | config show")
+            continue
+        if cmd in GLOBAL_OPTION_COMMANDS:
+            app(prog_name="cli.py", args=[GLOBAL_OPTION_COMMANDS[cmd]])
+            continue
+        resolved = []
+        for tok in tokens:
+            for key, value in cfg.items():
+                placeholder = f"[{key.upper()}]"
+                if placeholder in tok:
+                    tok = tok.replace(placeholder, value)
+            resolved.append(tok)
+        try:
+            app(prog_name="cli.py", args=resolved)
         except SystemExit:
             pass
 
