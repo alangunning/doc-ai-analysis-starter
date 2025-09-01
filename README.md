@@ -1,9 +1,9 @@
 
 # Doc AI Starter
 
-Doc AI Starter is a **showcase template** for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests.
+Doc AI Starter is a **showcase template** for building end‑to‑end document pipelines with GitHub's AI models. It helps developers new to these models structure `.prompt.yaml` files and apply them to advanced document analysis. The repository shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests—all within the GitHub ecosystem.
 
-The project is designed for developers who are new to document analysis. Everything runs inside the GitHub ecosystem so you can see the entire pipeline—from source files to pull‑request review—in one place.
+The project targets both beginners and experienced developers who are new to document analysis or GitHub's AI models. Everything runs inside the GitHub ecosystem so you can see the entire pipeline—from source files to pull‑request review—in one place.
 
 > **Note:** The repository stores small example documents directly in Git for clarity. For production use or large datasets, extend the workflows to handle big files with [Git LFS](https://git-lfs.com/) and back them with object storage such as Amazon S3.
 
@@ -104,7 +104,7 @@ data/                     # Sample documents and outputs
 docs/                     # Docusaurus documentation
 ```
 
-`data` is organized by document type. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
+`data` is organized by document type. Each folder includes a `<doc-type>.prompt.yaml` file that defines the prompt for GitHub's AI models. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
 
 Example structure:
 
