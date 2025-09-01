@@ -11,16 +11,16 @@ def test_run_prompt_uses_spec_and_input(tmp_path):
     )
 
     mock_response = MagicMock()
-    mock_response.output = [MagicMock(content=[{"text": "result"}])]
+    mock_response.choices = [MagicMock(message=MagicMock(content="result"))]
     mock_client = MagicMock()
-    mock_client.responses.create.return_value = mock_response
+    mock_client.chat.completions.create.return_value = mock_response
 
     with patch("doc_ai.github.prompts.OpenAI", return_value=mock_client) as mock_openai:
         output = run_prompt(prompt_file, "input")
 
     assert output == "result"
     mock_openai.assert_called_once()
-    args, kwargs = mock_client.responses.create.call_args
+    args, kwargs = mock_client.chat.completions.create.call_args
     assert kwargs["model"] == "test-model"
-    messages = kwargs["input"]
+    messages = kwargs["messages"]
     assert messages[0]["content"] == "Hello\n\ninput"

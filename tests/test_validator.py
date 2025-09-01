@@ -17,15 +17,17 @@ def test_validate_file_returns_json(tmp_path):
     )
 
     mock_response = MagicMock()
-    mock_response.output = [MagicMock(content=[{"text": "{\"ok\": true}"}])]
+    mock_response.choices = [
+        MagicMock(message=MagicMock(content="{\"ok\": true}"))
+    ]
     mock_client = MagicMock()
-    mock_client.responses.create.return_value = mock_response
+    mock_client.chat.completions.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
-    args, kwargs = mock_client.responses.create.call_args
+    args, kwargs = mock_client.chat.completions.create.call_args
     assert kwargs["model"] == "validator-model"
-    assert isinstance(kwargs["input"], list)
+    assert isinstance(kwargs["messages"], list)

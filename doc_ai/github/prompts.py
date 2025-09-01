@@ -12,7 +12,7 @@ from openai import OpenAI
 
 load_dotenv()
 
-DEFAULT_MODEL_BASE_URL = "https://models.github.ai"
+DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
 
 
 def run_prompt(
@@ -34,14 +34,14 @@ def run_prompt(
         api_key=os.getenv("GITHUB_TOKEN"),
         base_url=base_url
         or os.getenv("BASE_MODEL_URL")
-        or f"{DEFAULT_MODEL_BASE_URL}/v1",
+        or DEFAULT_MODEL_BASE_URL,
     )
-    response = client.responses.create(
+    response = client.chat.completions.create(
         model=model or spec["model"],
+        messages=messages,
         **spec.get("modelParameters", {}),
-        input=messages,
     )
-    return response.output[0].content[0].get("text", "")
+    return response.choices[0].message.content
 
 
 __all__ = ["run_prompt", "DEFAULT_MODEL_BASE_URL"]

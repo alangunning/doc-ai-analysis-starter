@@ -26,7 +26,7 @@ Set `DISABLE_ALL_WORKFLOWS=true` to skip every workflow regardless of the indivi
 
 ## Model Base URLs
 
-By default the helpers call GitHub's public models at `https://models.github.ai`. To use a different endpoint, set one of the following variables:
+By default the helpers call GitHub's public models at `https://models.github.ai/inference`. To use a different endpoint, set one of the following variables:
 
 | Variable | Purpose |
 | --- | --- |
@@ -39,7 +39,7 @@ By default the helpers call GitHub's public models at `https://models.github.ai`
 Example override:
 
 ```env
-BASE_MODEL_URL=https://models.mycompany.example
+BASE_MODEL_URL=https://models.mycompany.example/inference
 ```
 
 ## Model Defaults

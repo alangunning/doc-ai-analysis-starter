@@ -25,8 +25,14 @@ def _build_messages(raw_bytes: bytes, rendered_text: str, fmt: OutputFormat, pro
         if msg.get("role") == "user":
             text = msg.get("content", "").replace("{format}", fmt.value)
             messages[i]["content"] = [
-                {"type": "input_text", "text": text},
-                {"type": "document", "format": "pdf", "b64_content": base64.b64encode(raw_bytes).decode()},
+                {"type": "text", "text": text},
+                {
+                    "type": "document",
+                    "document": {
+                        "format": "pdf",
+                        "b64_content": base64.b64encode(raw_bytes).decode(),
+                    },
+                },
                 {"type": "text", "text": rendered_text},
             ]
             break
@@ -56,12 +62,12 @@ def validate_file(
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL,
     )
-    result = client.responses.create(
+    result = client.chat.completions.create(
         model=model or spec["model"],
+        messages=messages,
         **spec.get("modelParameters", {}),
-        input=messages,
     )
-    text = result.output[0].content[0].get("text", "{}")
+    text = result.choices[0].message.content or "{}"
     return json.loads(text)
 
 
