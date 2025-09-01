@@ -106,7 +106,7 @@ def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
             json.dumps({"file": str(md_file), "embedding": embedding}) + "\n",
             encoding="utf-8",
         )
-        mark_step(meta, "vector")
+        mark_step(meta, "vector", outputs=[out_file.name])
         save_metadata(md_file, meta)
 
 

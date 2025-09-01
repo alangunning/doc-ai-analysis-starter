@@ -131,7 +131,7 @@ def analyze_doc(
         output if output else markdown_doc.with_suffix(f".{prompt_name}.json")
     )
     out_path.write_text(result + "\n", encoding="utf-8")
-    mark_step(meta, step_name)
+    mark_step(meta, step_name, outputs=[out_path.name])
     save_metadata(markdown_doc, meta)
 
 

@@ -94,7 +94,11 @@ def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
             convert_files(file, outputs)
         except ConversionError:
             return
-        mark_step(meta, "conversion")
+        mark_step(
+            meta,
+            "conversion",
+            outputs=[str(p.name) for p in outputs.values()],
+        )
         save_metadata(file, meta)
 
     if source.is_file():
