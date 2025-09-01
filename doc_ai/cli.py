@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import List, Optional
 import os
 import sys
+import subprocess
+from typer.main import get_command
+import click
 
 import typer
 from rich.console import Console
@@ -252,6 +255,20 @@ def pipeline(
     build_vector_store(source)
 
 
+def _basic_repl() -> None:  # pragma: no cover - requires interactive session
+    while True:
+        try:
+            command = input("doc-ai> ")
+        except EOFError:
+            break
+        if command.strip() in {"exit", "quit"}:
+            break
+        try:
+            app(command.split())
+        except SystemExit:
+            continue
+
+
 __all__ = ["app"]
 
 
@@ -261,9 +278,28 @@ if __name__ == "__main__":
         app()
     else:  # pragma: no cover - requires interactive session
         if click_repl_repl is None:
-            console.print(
-                "[yellow]click-repl not installed; run with arguments or install optional 'click-repl' extra for REPL.[/yellow]"
-            )
-            app()
+            console.print("[yellow]Installing click-repl for interactive shell...[/yellow]")
+            try:
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "click-repl", "--quiet"],
+                    check=True,
+                )
+                from click_repl import repl as click_repl_repl
+            except subprocess.CalledProcessError:
+                click_repl_repl = None
+        if click_repl_repl is not None:
+            try:
+                if getattr(click.Context.protected_args, "fset", None) is None:
+                    click.Context.protected_args = property(
+                        click.Context.protected_args.fget,
+                        lambda self, value: object.__setattr__(self, "protected_args", value),
+                    )
+                cli = get_command(app)
+                ctx = click.Context(cli, resilient_parsing=True)
+                click_repl_repl(ctx)
+            except Exception:
+                console.print("[yellow]click-repl failed; using basic REPL instead.[/yellow]")
+                _basic_repl()
         else:
-            click_repl_repl(app)
+            console.print("[yellow]click-repl unavailable; using basic REPL.[/yellow]")
+            _basic_repl()

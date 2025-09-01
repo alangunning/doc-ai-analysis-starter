@@ -23,7 +23,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    pip install -e .
    ```
 
-   For an interactive shell, install the optional `repl` extras:
+   Running the CLI without arguments opens an interactive shell. If the
+   `click-repl` dependency is missing, it will be installed automatically.
+   To preinstall it manually, install the optional `repl` extras:
 
    ```bash
    pip install -e .[repl]
