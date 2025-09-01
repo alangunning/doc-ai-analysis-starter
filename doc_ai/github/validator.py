@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
+from typing import Callable, Dict, List, Optional
 
+import requests
 import yaml
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -67,13 +68,24 @@ def validate_file(
         s = str(value)
         return s.startswith("http://") or s.startswith("https://")
 
+    texts: List[str] = [user_text]
     file_urls: List[str] = []
     file_paths: List[Path] = []
     for p in (raw_path, rendered_path):
         if _is_url(p):
-            file_urls.append(str(p))
+            s = str(p)
+            if s.lower().endswith(".pdf"):
+                file_urls.append(s)
+            else:
+                resp = requests.get(s)
+                resp.raise_for_status()
+                texts.append(resp.text)
         else:
-            file_paths.append(Path(p))
+            path = Path(p)
+            if path.suffix.lower() == ".pdf":
+                file_paths.append(path)
+            else:
+                texts.append(path.read_text(encoding="utf-8"))
 
     progress_cb: Optional[Callable[[int], None]] = None
     progress: Optional[Progress] = None
@@ -91,7 +103,7 @@ def validate_file(
             client,
             model=model or spec["model"],
             system=system_msgs,
-            texts=[user_text],
+            texts=texts,
             file_urls=file_urls or None,
             file_paths=file_paths or None,
             progress=progress_cb,

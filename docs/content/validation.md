@@ -5,7 +5,7 @@ sidebar_position: 7
 
 # PDF vs Markdown Validation
 
-Doc AI Starter validates Docling's Markdown output against the original PDF using OpenAI's file inputs. GitHub Models do not expose file uploads, so this step always targets OpenAI's API while the rest of the pipeline can continue using GitHub Models for text‑only prompts and embeddings.
+Doc AI Starter validates Docling's Markdown output against the original PDF using OpenAI's file inputs. The Responses API currently accepts PDF (and image) attachments, so the Markdown is supplied as plain text. GitHub Models do not expose file uploads, so this step always targets OpenAI's API while the rest of the pipeline can continue using GitHub Models for text‑only prompts and embeddings.
 
 ## Validation with OpenAI (PDF + Markdown)
 

@@ -27,10 +27,12 @@ Validate a rendered file against its source document and return the model's JSON
 `show_progress=True` to emit upload progress callbacks for integration with the CLI's progress bars.
 
 Uploaded files default to `purpose="user_data"`; set `OPENAI_FILE_PURPOSE`
-to override this value.
+to override this value. The Responses API only accepts PDFs (and images) as
+`input_file` attachments, so non‑PDF documents are read as plain text and sent
+as additional `input_text` entries.
 
 The helper delegates to `doc_ai.openai.create_response`, uploading any local
-paths (switching to the resumable `/v1/uploads` service for large files) and
+PDFs (switching to the resumable `/v1/uploads` service for large files) and
 passing remote URLs directly to the Responses API. GitHub Models do not support
 file uploads, so the function automatically falls back to OpenAI's API at
 `https://api.openai.com/v1` (using the `OPENAI_API_KEY` token) whenever the base

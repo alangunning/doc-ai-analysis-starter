@@ -59,12 +59,13 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ```
 
    The validation script relies on the reusable helpers in
-   `doc_ai.openai` to upload local files or reference remote URLs. Large
-   inputs automatically switch from the standard `/v1/files` endpoint to the
-   resumable `/v1/uploads` service before calling the Responses API. Use
-   `OPENAI_FILE_PURPOSE` to change the upload purpose or set
-   `OPENAI_USE_UPLOAD=1` to force the resumable service. Set `OPENAI_API_KEY`
-   and the base URL to `https://api.openai.com/v1` to handle
+   `doc_ai.openai` to upload local files or reference remote URLs. Only PDFs
+   (and images) can be attached as `input_file` entries; other formats like
+   Markdown are read as plain text. Large inputs automatically switch from the
+   standard `/v1/files` endpoint to the resumable `/v1/uploads` service before
+   calling the Responses API. Use `OPENAI_FILE_PURPOSE` to change the upload
+   purpose or set `OPENAI_USE_UPLOAD=1` to force the resumable service. Set
+   `OPENAI_API_KEY` and the base URL to `https://api.openai.com/v1` to handle
    very long documents without running into token limits. For a more
    cost‑efficient run, specify a smaller model such as `gpt-4o-mini` with
    `--model`, or split oversized documents into chunks and validate them

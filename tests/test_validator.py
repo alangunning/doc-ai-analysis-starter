@@ -51,17 +51,15 @@ def test_validate_file_returns_json(tmp_path):
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
-    assert uploads == [
-        ("raw.pdf", "user_data"),
-        ("rendered.txt", "user_data"),
-    ]
+    assert uploads == [("raw.pdf", "user_data")]
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
     assert content[0] == {"type": "input_text", "text": "Check text"}
+    assert content[1] == {"type": "input_text", "text": "text"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
-    assert file_ids == ["raw.pdf-id", "rendered.txt-id"]
+    assert file_ids == ["raw.pdf-id"]
 
 
 def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
@@ -107,7 +105,7 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
-    assert called == [True, True]
+    assert called == [True]
 
 
 def test_validate_file_env_purpose(monkeypatch, tmp_path):
@@ -148,10 +146,7 @@ def test_validate_file_env_purpose(monkeypatch, tmp_path):
     ):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
-    assert uploads == [
-        ("raw.pdf", "assistants"),
-        ("rendered.txt", "assistants"),
-    ]
+    assert uploads == [("raw.pdf", "assistants")]
 
 
 def test_validate_file_with_urls(tmp_path):
@@ -179,14 +174,19 @@ def test_validate_file_with_urls(tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), \
-         patch("doc_ai.openai.responses.upload_file") as up:
+         patch("doc_ai.openai.responses.upload_file") as up, \
+         patch("requests.get") as fake_get:
+        fake_get.return_value.text = "rendered"
+        fake_get.return_value.raise_for_status = lambda: None
         validate_file(raw_url, rendered_url, OutputFormat.TEXT, prompt_path)
 
     up.assert_not_called()
     args, kwargs = mock_client.responses.create.call_args
     content = kwargs["input"][1]["content"]
     file_urls = [part["file_url"] for part in content if part["type"] == "input_file"]
-    assert file_urls == [raw_url, rendered_url]
+    assert file_urls == [raw_url]
+    texts = [part["text"] for part in content if part["type"] == "input_text"]
+    assert "rendered" in texts
 
 
 def test_validate_file_forces_openai_base(monkeypatch, tmp_path):

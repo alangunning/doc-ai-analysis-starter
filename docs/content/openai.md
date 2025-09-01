@@ -28,6 +28,10 @@ local paths. Paths are uploaded automatically via `upload_file`, which
 switches between the standard `/v1/files` endpoint and the resumable
 `/v1/uploads` service based on file size.
 
+> **Note:** The Responses API only accepts PDFs (and images) as `input_file`
+> attachments. Other file types should be provided as plain text or uploaded
+> for retrieval via separate tools.
+
 ```python
 from openai import OpenAI
 from doc_ai.openai import create_response
