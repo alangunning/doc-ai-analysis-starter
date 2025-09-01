@@ -12,7 +12,7 @@ from doc_ai.metadata import load_metadata, metadata_path
 
 def test_validate_file_returns_json(tmp_path):
     raw_path = tmp_path / "raw.pdf"
-    rendered_path = tmp_path / "rendered.txt"
+    rendered_path = tmp_path / "rendered.md"
     prompt_path = tmp_path / "prompt.yml"
 
     raw_path.write_bytes(b"raw")
@@ -38,25 +38,28 @@ def test_validate_file_returns_json(tmp_path):
     mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
-        result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+        result = validate_file(raw_path, rendered_path, OutputFormat.MARKDOWN, prompt_path)
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
     assert mock_client.files.create.call_count == 2
     for call in mock_client.files.create.call_args_list:
         assert call.kwargs["purpose"] == "assistants"
+    # The rendered markdown is uploaded as a temporary .txt file for the API
+    second_file = mock_client.files.create.call_args_list[1].kwargs["file"]
+    assert second_file.name.endswith(".txt")
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
-    assert content[0] == {"type": "input_text", "text": "Check text"}
+    assert content[0] == {"type": "input_text", "text": "Check markdown"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["file1", "file2"]
 
 
 def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     raw_path = tmp_path / "raw.pdf"
-    rendered_path = tmp_path / "rendered.txt"
+    rendered_path = tmp_path / "rendered.md"
     prompt_path = tmp_path / "prompt.yml"
 
     raw_path.write_bytes(b"raw")
@@ -86,7 +89,7 @@ def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
         validate_file(
             raw_path,
             rendered_path,
-            OutputFormat.TEXT,
+            OutputFormat.MARKDOWN,
             prompt_path,
             base_url="https://models.github.ai/inference",
         )
