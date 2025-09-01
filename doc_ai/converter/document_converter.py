@@ -29,6 +29,25 @@ _CACHE_MARKER = Path.home() / ".cache" / "doc_ai" / "docling_ready"
 _console = Console()
 
 
+def _ensure_models_downloaded() -> None:
+    """Pre-fetch Docling model assets with progress and caching."""
+
+    try:
+        from huggingface_hub.utils import enable_progress_bars
+
+        enable_progress_bars()
+
+        import docling.models.utils.hf_model_download as dl_utils
+
+        dl_utils.disable_progress_bars = lambda: None  # type: ignore[assignment]
+
+        from docling.utils.model_downloader import download_models
+
+        download_models(progress=True)
+    except Exception as exc:  # pragma: no cover - network/availability issues
+        _console.print(f"[yellow]Model pre-download failed: {exc}[/yellow]")
+
+
 def _get_docling_converter():
     """Return a cached instance of Docling's ``DocumentConverter``."""
 
@@ -37,6 +56,9 @@ def _get_docling_converter():
         return _converter_instance
 
     show_status = not _CACHE_MARKER.exists()
+    if show_status:
+        _ensure_models_downloaded()
+
     status = (
         _console.status("Loading Docling (first run may download models)...")
         if show_status

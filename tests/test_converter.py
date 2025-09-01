@@ -13,7 +13,10 @@ def test_convert_files_writes_outputs(tmp_path):
         OutputFormat.JSON: tmp_path / "out.json",
     }
 
-    with patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter:
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+    ):
         from doc_ai.converter import document_converter as dc
         dc._converter_instance = None
         class DummyDoc:
@@ -43,7 +46,10 @@ def test_convert_files_return_status_optional(tmp_path):
 
     outputs = {OutputFormat.TEXT: tmp_path / "out.txt"}
 
-    with patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter:
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+    ):
         from doc_ai.converter import document_converter as dc
         dc._converter_instance = None
 
