@@ -16,7 +16,7 @@ inputs:
   body:
     description: PR body.
     required: false
-    default: "workflow: Auto-corrected mismatched output.""
+    default: "workflow: Auto-corrected mismatched output."
 runs:
   using: composite
   steps:
