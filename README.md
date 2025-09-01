@@ -34,50 +34,10 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
 3. **Configure**
 
-   Copy `.env.example` to `.env` and adjust variables as needed. Environment variables from the runtime override values in the file. Set `DISABLE_ALL_WORKFLOWS=true` to skip automation or toggle individual workflows with `ENABLE_*` variables.
-
-   ### Workflow Toggles
-
-   | Variable | Workflow |
-   | --- | --- |
-   | `ENABLE_CONVERT_WORKFLOW` | Convert documents |
-   | `ENABLE_VALIDATE_WORKFLOW` | Validate outputs |
-   | `ENABLE_PROMPT_ANALYSIS_WORKFLOW` | Run analysis prompts |
-   | `ENABLE_VECTOR_WORKFLOW` | Generate vector embeddings |
-   | `ENABLE_PR_REVIEW_WORKFLOW` | Review pull requests |
-   | `ENABLE_DOCS_WORKFLOW` | Build documentation site |
-   | `ENABLE_AUTO_MERGE_WORKFLOW` | Auto merge pull requests |
-   | `ENABLE_LINT_WORKFLOW` | Run lint checks |
-
-   Example `.env` snippet:
-
-   ```env
-   # run convert and PR review workflows
-   ENABLE_CONVERT_WORKFLOW=true
-   ENABLE_PR_REVIEW_WORKFLOW=true
-
-   # skip validation and docs workflows
-   ENABLE_VALIDATE_WORKFLOW=false
-   ENABLE_DOCS_WORKFLOW=false
-   ```
-
-   ### Model Base URL
-
-   The helpers default to GitHub's public models at `https://models.github.ai`. To use a different endpoint, set `BASE_MODEL_URL` or a workflow-specific variable:
-
-   | Variable | Purpose |
-   | --- | --- |
-   | `BASE_MODEL_URL` | Default for all modules |
-   | `ANALYZE_BASE_MODEL_URL` | Analysis prompts |
-   | `VALIDATE_BASE_MODEL_URL` | Output validation |
-   | `PR_REVIEW_BASE_MODEL_URL` | Pull request reviews |
-   | `VECTOR_BASE_MODEL_URL` | Embedding generation |
-
-   Example override:
-
-   ```env
-   BASE_MODEL_URL=https://models.mycompany.example
-   ```
+   Copy `.env.example` to `.env` and adjust variables as needed. Environment
+   variables from the runtime override values in the file. See the
+   [Configuration guide](docs/content/configuration.md) for details on
+   workflow toggles and model settings.
 
 4. **Try it out**
 
@@ -150,6 +110,8 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 - [Converter Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/converter) – programmatic file conversion
 - [GitHub Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/github) – helpers for GitHub Models
 - [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
+- [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
+- [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
 
 ## Automated Workflows
 
@@ -166,7 +128,7 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | Auto Merge | `/merge` issue comment | Approve and merge a pull request after review |
 | Lint | Push/PR touching Python files | Run Ruff style checks |
 
-Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables in the [Workflow Toggles](#workflow-toggles) table.
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](docs/content/configuration.md).
 
 ```mermaid
 graph LR
