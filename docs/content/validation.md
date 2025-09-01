@@ -7,6 +7,8 @@ sidebar_position: 7
 
 Doc AI Starter validates Docling's Markdown output against the original PDF using OpenAI's file inputs. The Responses API currently accepts PDF (and image) attachments, so the Markdown is supplied as plain text. GitHub Models do not expose file uploads, so this step always targets OpenAI's API while the rest of the pipeline can continue using GitHub Models for text‑only prompts and embeddings.
 
+The validator runs **Stage B** adjudication only, relying on the model to flag mismatches. To keep results reproducible, each call follows a strict "cite‑then‑claim" rubric and returns structured JSON with evidence for every discrepancy.
+
 ## Validation with OpenAI (PDF + Markdown)
 
 The snippet below uploads the PDF once and references it by `file_id` using
@@ -34,7 +36,8 @@ def validate_pdf_vs_md_openai(pdf_path, md_path, model="gpt-4o-mini"):
         file_ids=[pdf_id],
         texts=[(
             'Compare the PDF to the Markdown. '
-            'Return ONLY JSON: {"match": bool, "issues":[{"where": str, "type": str, "detail": str}]}.'
+            'Return ONLY JSON: {"match": bool, "issues":[{"page": int, "pdf_quote": str, '
+            '"md_quote": str, "type": str, "confidence": float}]}.'
             "\n\n### Markdown (truncated):\n" + md[:120_000]
         )],
         temperature=0,
@@ -83,3 +86,13 @@ issues = sum((batch.issues for batch in batches), [])
 ```
 
 This pattern keeps every request within model limits while scaling to very large files.
+
+### Guardrails for reliable adjudication
+
+- Upload PDFs via `/v1/files` or, for multi‑gigabyte sources, the resumable `/v1/uploads` API.
+- Pass the Markdown rendering as plain text rather than a file attachment.
+- Keep every batch within ~100 pages and 32 MB; use page‑range chunks when necessary.
+- Ask the model to emit only JSON with `match` and an `issues` array of objects containing `page`, `pdf_quote`, `md_quote`, `type` (`number_mismatch`, `missing_text`, `extra_text`, `table_structure`, `heading_level`, or `other`), and `confidence` (0‑1).
+- Require the model to cite short snippets from both the PDF and Markdown for each issue to discourage hallucinations.
+
+These guardrails make Stage B validation self‑contained while remaining auditable and reproducible.
