@@ -2,6 +2,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from doc_ai.converter import OutputFormat, convert_files
+from doc_ai.converter import document_converter
 
 
 def test_convert_files_writes_outputs(tmp_path):
@@ -14,6 +15,7 @@ def test_convert_files_writes_outputs(tmp_path):
     }
 
     with patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter:
+        document_converter._converter_instance = None
         mock_doc = MagicMock()
         mock_doc.export_to_text.return_value = "plain"
         mock_doc.export_to_dict.return_value = {"a": 1}
@@ -24,3 +26,21 @@ def test_convert_files_writes_outputs(tmp_path):
     assert written == outputs
     assert outputs[OutputFormat.TEXT].read_text() == "plain"
     assert json.loads(outputs[OutputFormat.JSON].read_text()) == {"a": 1}
+
+
+def test_convert_files_returns_status(tmp_path):
+    input_file = tmp_path / "input.pdf"
+    input_file.write_bytes(b"pdf")
+    outputs = {OutputFormat.TEXT: tmp_path / "out.txt"}
+
+    with patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter:
+        document_converter._converter_instance = None
+        mock_doc = MagicMock()
+        mock_doc.export_to_text.return_value = "plain"
+        mock_result = MagicMock(document=mock_doc, status="ok")
+        MockConverter.return_value.convert.return_value = mock_result
+
+        written, status = convert_files(input_file, outputs, with_status=True)
+
+    assert written == outputs
+    assert status == "ok"

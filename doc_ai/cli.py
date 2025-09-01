@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List, Optional
 import os
 import sys
-import shlex
 
 import typer
 from rich.console import Console
@@ -152,7 +151,11 @@ def convert(
     """Convert files using Docling."""
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
-    convert_path(source, fmts)
+    results = convert_path(source, fmts, return_results=True)
+    for src, outputs, status in results:
+        console.print(f"[bold]{src}[/bold] - {status}")
+        for out in outputs.values():
+            console.print(f"  wrote {out}")
 
 
 @app.command()
@@ -248,30 +251,17 @@ def pipeline(
 __all__ = ["app"]
 
 
-def _interactive_shell() -> None:  # pragma: no cover - CLI utility
-    try:
-        _print_banner()
-        app(prog_name="cli.py", args=["--help"])
-    except SystemExit:
-        pass
-    while True:
-        try:
-            command = input("> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            break
-        if not command:
-            continue
-        if command.lower() in {"exit", "quit"}:
-            break
-        try:
-            app(prog_name="cli.py", args=shlex.split(command))
-        except SystemExit:
-            pass
-
-
 if __name__ == "__main__":
+    _print_banner()
     if len(sys.argv) > 1:
-        _print_banner()
         app()
-    else:
-        _interactive_shell()
+    else:  # pragma: no cover - requires interactive session
+        try:
+            from click_repl import repl as click_repl_repl
+        except ModuleNotFoundError as exc:  # pragma: no cover - import guard
+            console.print(
+                "[red]click-repl is required for the interactive shell."
+                " Install with `pip install click-repl`."
+            )
+            raise SystemExit(1) from exc
+        click_repl_repl(app)

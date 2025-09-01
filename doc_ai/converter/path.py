@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, List, Tuple, Dict, Optional, TYPE_CHECKING
 
 from docling.exceptions import ConversionError
 
@@ -56,14 +56,29 @@ def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
 
 
-def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
-    """Convert a file or all files under a directory in-place."""
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from docling.document_converter import ConversionStatus
+
+
+def convert_path(
+    source: Path,
+    formats: Iterable[OutputFormat],
+    *,
+    return_results: bool = False,
+) -> Optional[List[Tuple[Path, Dict[OutputFormat, Path], "ConversionStatus"]]]:
+    """Convert a file or all files under a directory in-place.
+
+    When ``return_results`` is ``True`` a list of tuples of the source file,
+    written paths and Docling's ``ConversionStatus`` is returned.
+    """
 
     output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
 
     def is_output_file(path: Path) -> bool:
         name = path.name.lower()
         return any(name.endswith(suf) for suf in output_suffixes)
+
+    results: List[Tuple[Path, Dict[OutputFormat, Path], "ConversionStatus"]] = []
 
     def handle_file(file: Path) -> None:
         """Convert ``file`` if it's not already a derived output and hasn't been processed."""
@@ -91,9 +106,12 @@ def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
             save_metadata(file, meta)
             return
         try:
-            convert_files(file, outputs)
+            result = convert_files(file, outputs, with_status=return_results)
         except ConversionError:
             return
+        if return_results:
+            written, status = result  # type: ignore[misc]
+            results.append((file, written, status))
         mark_step(
             meta,
             "conversion",
@@ -107,3 +125,7 @@ def convert_path(source: Path, formats: Iterable[OutputFormat]) -> None:
         for file in source.rglob("*"):
             if file.is_file():
                 handle_file(file)
+
+    if return_results:
+        return results
+    return None

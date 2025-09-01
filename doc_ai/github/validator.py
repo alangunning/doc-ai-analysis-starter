@@ -23,7 +23,7 @@ def _build_messages(raw_bytes: bytes, rendered_text: str, fmt: OutputFormat, pro
     messages = [dict(m) for m in spec["messages"]]
     for i, msg in enumerate(messages):
         if msg.get("role") == "user":
-            text = msg.get("content", "").format(format=fmt.value)
+            text = msg.get("content", "").replace("{format}", fmt.value)
             messages[i]["content"] = [
                 {"type": "input_text", "text": text},
                 {"type": "document", "format": "pdf", "b64_content": base64.b64encode(raw_bytes).decode()},
