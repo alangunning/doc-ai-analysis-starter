@@ -23,6 +23,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    pip install -e .
    ```
 
+   For an interactive shell, install the optional `repl` extras:
+
+   ```bash
+   pip install -e .[repl]
+   ```
+
    Optionally build the documentation site:
 
    ```bash

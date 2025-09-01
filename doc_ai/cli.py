@@ -10,7 +10,10 @@ import sys
 import typer
 from rich.console import Console
 from dotenv import load_dotenv
-from click_repl import repl as click_repl_repl
+try:
+    from click_repl import repl as click_repl_repl
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    click_repl_repl = None
 
 # Ensure project root is on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -257,4 +260,10 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         app()
     else:  # pragma: no cover - requires interactive session
-        click_repl_repl(app)
+        if click_repl_repl is None:
+            console.print(
+                "[yellow]click-repl not installed; run with arguments or install optional 'click-repl' extra for REPL.[/yellow]"
+            )
+            app()
+        else:
+            click_repl_repl(app)
