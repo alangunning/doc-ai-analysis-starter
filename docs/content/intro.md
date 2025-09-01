@@ -5,7 +5,11 @@ slug: /
 
 # Introduction
 
-Doc AI Starter helps you explore document-processing workflows powered by GitHub's AI models. The template includes:
+Doc AI Starter is a showcase template that helps you explore document-processing workflows powered by GitHub's AI models. It demonstrates how to convert documents, validate outputs, run analysis prompts, and review pull requests—all inside the GitHub ecosystem.
+
+> **Note:** Sample files are stored directly in the repository to keep the example self-contained. For production use or large datasets, move documents to Git LFS or an external object store such as Amazon S3.
+
+The template includes:
 
 - a Python package with helpers for conversion, validation, and analysis
 - CLI scripts that wrap the package functions

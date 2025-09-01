@@ -7,6 +7,8 @@ sidebar_position: 2
 
 The template's GitHub Actions coordinate the document pipeline from raw uploads to analysis results. Documents live under `data/`, grouped by form type, and each source file keeps converted siblings and metadata records. A typical layout looks like:
 
+> **Note:** Committing documents directly works for small examples. For larger datasets, move files to Git LFS or an external storage service such as Amazon S3 and update the workflows to pull from there.
+
 ```
 data/
   sec-form-8k/
