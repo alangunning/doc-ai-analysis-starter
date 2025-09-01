@@ -1,7 +1,11 @@
 
 # Doc AI Starter
 
-Doc AI Starter is a template for building end‑to‑end document pipelines with GitHub's AI models. It shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests.
+Doc AI Starter is a **showcase template** for building end‑to‑end document pipelines with GitHub's AI models. It helps developers new to these models structure `.prompt.yaml` files and apply them to advanced document analysis. The repository shows how to convert files, validate the output, run custom analysis prompts, generate embeddings, and review pull requests—all within the GitHub ecosystem.
+
+The project targets both beginners and experienced developers who are new to document analysis or GitHub's AI models. Everything runs inside the GitHub ecosystem so you can see the entire pipeline—from source files to pull‑request review—in one place.
+
+> **Note:** The repository stores small example documents directly in Git for clarity. For production use or large datasets, extend the workflows to handle big files with [Git LFS](https://git-lfs.com/) and back them with object storage such as Amazon S3.
 
 Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
 
@@ -100,7 +104,7 @@ data/                     # Sample documents and outputs
 docs/                     # Docusaurus documentation
 ```
 
-`data` is organized by document type. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
+`data` is organized by document type. Each folder includes a `<doc-type>.prompt.yaml` file that defines the prompt for GitHub's AI models. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
 
 Example structure:
 
@@ -197,6 +201,14 @@ graph TD
 ```
 
 For CLI usage and adding prompts, see `docs/content/scripts-and-prompts.md`.
+
+## Scaling Up
+
+This repository is optimized for clarity and small examples. To adapt the pipeline for larger or production workloads:
+
+- Store bulky documents and generated artifacts in Git LFS or an external object store (e.g., Amazon S3, Google Cloud Storage).
+- Adjust the workflows to upload and download data from that storage rather than committing large files directly.
+- Expand error handling, logging, and monitoring to fit your operational needs.
 
 ## License
 

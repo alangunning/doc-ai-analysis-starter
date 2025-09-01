@@ -56,6 +56,8 @@ python scripts/merge_pr.py 123
 
 # Adding Prompts
 
+Each `.prompt.yaml` defines model parameters and instructions for GitHub's AI models. Use the examples under `data/**` as starting points when crafting prompts for your own documents.
+
 1. Create a `.prompt.yaml` file next to the document (e.g., `data/acme-report/acme-report.prompt.yaml`).
 2. Commit the prompt and document; the Analysis workflow will run it automatically.
 

@@ -5,7 +5,9 @@ sidebar_position: 2
 
 # Workflow Overview
 
-The template's GitHub Actions coordinate the document pipeline from raw uploads to analysis results. Documents live under `data/`, grouped by form type, and each source file keeps converted siblings and metadata records. A typical layout looks like:
+The template's GitHub Actions coordinate the document pipeline from raw uploads to analysis results. Documents live under `data/`, grouped by form type. Each folder includes a `<doc-type>.prompt.yaml` file that defines the analysis instructions for GitHub's AI model, and each source file keeps converted siblings and metadata records. A typical layout looks like:
+
+> **Note:** Committing documents directly works for small examples. For larger datasets, move files to Git LFS or an external storage service such as Amazon S3 and update the workflows to pull from there.
 
 ```
 data/

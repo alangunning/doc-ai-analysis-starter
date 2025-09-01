@@ -5,11 +5,16 @@ slug: /
 
 # Introduction
 
-Doc AI Starter helps you explore document-processing workflows powered by GitHub's AI models. The template includes:
+Doc AI Starter is a showcase template for developers exploring GitHub's AI models. It illustrates how to structure `.prompt.yaml` files and apply the models to advanced document analysis. The pipeline demonstrates how to convert documents, validate outputs, run analysis prompts, and review pull requests—all inside the GitHub ecosystem.
+
+> **Note:** Sample files are stored directly in the repository to keep the example self-contained. For production use or large datasets, move documents to Git LFS or an external object store such as Amazon S3.
+
+The template includes:
 
 - a Python package with helpers for conversion, validation, and analysis
 - CLI scripts that wrap the package functions
 - GitHub Actions that automate each step of the pipeline, including AI-based PR review and optional auto-approve & merge
+- sample `.prompt.yaml` files that define prompts for GitHub's AI models
 - this Docusaurus site with additional guides and references
 
 ## Pipeline at a Glance
