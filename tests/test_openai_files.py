@@ -35,3 +35,29 @@ def test_upload_and_input_from_path(tmp_path):
 
     result = input_file_from_path(mock_client, file_path)
     assert result == {"type": "input_file", "file_id": "file-123"}
+
+
+def test_upload_file_via_uploads(tmp_path):
+    file_path = tmp_path / "big.bin"
+    file_path.write_bytes(b"0123456789")
+    mock_client = MagicMock()
+    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.parts.create.side_effect = [
+        types.SimpleNamespace(id="part1"),
+        types.SimpleNamespace(id="part2"),
+        types.SimpleNamespace(id="part3"),
+    ]
+    mock_client.uploads.complete.return_value = types.SimpleNamespace(
+        file=types.SimpleNamespace(id="file-xyz")
+    )
+
+    file_id = upload_file(mock_client, file_path, use_upload=True, chunk_size=4)
+    assert file_id == "file-xyz"
+
+    mock_client.uploads.create.assert_called_once_with(
+        purpose="user_data", filename="big.bin", bytes=10, mime_type="application/octet-stream"
+    )
+    assert mock_client.uploads.parts.create.call_count == 3
+    mock_client.uploads.complete.assert_called_once_with(
+        "upl-1", part_ids=["part1", "part2", "part3"]
+    )

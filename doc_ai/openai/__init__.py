@@ -7,6 +7,7 @@ requests to the Responses API.
 
 from .files import (
     upload_file,
+    upload_large_file,
     input_file_from_id,
     input_file_from_url,
     input_file_from_path,
@@ -16,6 +17,7 @@ from .responses import create_response, create_response_with_file_url
 
 __all__ = [
     "upload_file",
+    "upload_large_file",
     "input_file_from_id",
     "input_file_from_url",
     "input_file_from_path",
