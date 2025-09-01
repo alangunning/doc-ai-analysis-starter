@@ -37,9 +37,12 @@ Convenience wrapper for converting to a single format.  Returns the path
 that was written.
 
 ### `convert_path(source, formats)`
-Convert a file or directory of files in-place.  A mapping of each processed
-file to a tuple of written paths and the Docling ``ConversionStatus`` is
-returned.
+Convert a file or directory of files in-place. ``source`` may also be an
+HTTP(S) URL pointing at a single document, which will be downloaded before
+conversion. When a directory is provided, the converter walks through all
+supported files and skips those whose metadata already records a completed
+conversion. A mapping of each processed file to a tuple of written paths and
+the Docling ``ConversionStatus`` is returned.
 
 ### `suffix_for_format(fmt)`
 Return the default file suffix for an `OutputFormat` value.

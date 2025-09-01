@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
+from urllib.parse import urlparse
+import tempfile
+
+import requests
 
 from docling.exceptions import ConversionError
 
@@ -57,23 +61,43 @@ def _suffix(fmt: OutputFormat) -> str:
 
 
 def convert_path(
-    source: Path, formats: Iterable[OutputFormat]
+    source: Path | str, formats: Iterable[OutputFormat]
 ) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
     """Convert a file or all files under a directory in-place.
+
+    ``source`` may be a filesystem path or an HTTP(S) URL to a single file.
 
     Returns a mapping of each processed file to a tuple containing the
     format-to-path mapping written for that file and Docling's
     ``ConversionStatus``.
     """
 
+    source_url: str | None = None
+    if isinstance(source, str):
+        if source.startswith(("http://", "https://")):
+            source_url = source
+            resp = requests.get(source, timeout=30)
+            resp.raise_for_status()
+            tmp_dir = Path(tempfile.mkdtemp())
+            name = Path(urlparse(source).path).name or "downloaded"
+            source_path = tmp_dir / name
+            source_path.write_bytes(resp.content)
+        else:
+            source_path = Path(source)
+    else:
+        source_path = source
+
+    fmt_list = list(formats)
     output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
     results: Dict[Path, Tuple[Dict[OutputFormat, Path], Any]] = {}
 
     def is_output_file(path: Path) -> bool:
         name = path.name.lower()
+        if name.endswith(".metadata.json"):
+            return True
         return any(name.endswith(suf) for suf in output_suffixes)
 
-    def handle_file(file: Path) -> None:
+    def handle_file(file: Path, src_url: str | None = None) -> None:
         """Convert ``file`` if it's not already a derived output and hasn't been processed."""
 
         if is_output_file(file):
@@ -91,11 +115,14 @@ def convert_path(
 
         outputs = {
             fmt: file.with_name(file.name + _suffix(fmt))
-            for fmt in formats
+            for fmt in fmt_list
             if not (fmt == OutputFormat.MARKDOWN and file.suffix.lower() == ".md")
         }
+        inputs = {"source": str(file), "formats": [fmt.value for fmt in fmt_list]}
+        if src_url is not None:
+            inputs["source_url"] = src_url
         if not outputs:
-            mark_step(meta, "conversion")
+            mark_step(meta, "conversion", inputs=inputs)
             save_metadata(file, meta)
             return
         try:
@@ -107,13 +134,14 @@ def convert_path(
             meta,
             "conversion",
             outputs=[str(p.name) for p in outputs.values()],
+            inputs=inputs,
         )
         save_metadata(file, meta)
 
-    if source.is_file():
-        handle_file(source)
+    if source_path.is_file():
+        handle_file(source_path, source_url)
     else:
-        for file in source.rglob("*"):
+        for file in source_path.rglob("*"):
             if file.is_file():
                 handle_file(file)
 

@@ -141,7 +141,9 @@ def analyze_doc(
 
 @app.command()
 def convert(
-    source: Path = typer.Argument(..., help="Path to raw document or folder"),
+    source: str = typer.Argument(
+        ..., help="Path or URL to raw document or folder"
+    ),
     format: List[OutputFormat] = typer.Option(
         None,
         "--format",
@@ -152,7 +154,10 @@ def convert(
     """Convert files using Docling."""
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
-    convert_path(source, fmts)
+    if source.startswith(("http://", "https://")):
+        convert_path(source, fmts)
+    else:
+        convert_path(Path(source), fmts)
 
 
 @app.command()

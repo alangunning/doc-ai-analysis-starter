@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .dublin_core import DublinCoreDocument
 
 
 _DEF_STEP_KEY = "steps"
 _DEF_OUTPUT_KEY = "outputs"
+_DEF_INPUT_KEY = "inputs"
 
 
 def metadata_path(doc_path: Path) -> Path:
@@ -58,6 +59,7 @@ def mark_step(
     step: str,
     done: bool = True,
     outputs: Optional[List[str]] = None,
+    inputs: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Record completion state for ``step`` in ``meta``.
 
@@ -71,6 +73,10 @@ def mark_step(
         out_map = extra.get(_DEF_OUTPUT_KEY, {})
         out_map[step] = outputs
         extra[_DEF_OUTPUT_KEY] = out_map
+    if inputs is not None:
+        in_map = extra.get(_DEF_INPUT_KEY, {})
+        in_map[step] = inputs
+        extra[_DEF_INPUT_KEY] = in_map
     meta.extra = extra
 
 
