@@ -1,0 +1,32 @@
+{
+    "blake2b": "66d56445c22304a77c0aea9e0e489a3a0d44209d4fd423fcf2e8ea238ab7ff35555e58c95b2b3e6298b8414f57008b23cee95fe29cbffbbc2d97a49976424b7b",
+    "id": "e6357ba2-e66c-4a69-84bc-9169ac712b6c",
+    "size": 115085,
+    "extra": {
+        "steps": {
+            "conversion": true
+        },
+        "outputs": {
+            "conversion": [
+                "apple-sec-form4.pdf.converted.md",
+                "apple-sec-form4.pdf.converted.html",
+                "apple-sec-form4.pdf.converted.json",
+                "apple-sec-form4.pdf.converted.txt",
+                "apple-sec-form4.pdf.converted.doctags"
+            ]
+        },
+        "inputs": {
+            "conversion": {
+                "source": "data/sec-form-4/apple-sec-form4.pdf",
+                "formats": [
+                    "markdown",
+                    "html",
+                    "json",
+                    "text",
+                    "doctags"
+                ]
+            }
+        },
+        "filename": "apple-sec-form4.pdf"
+    }
+}
