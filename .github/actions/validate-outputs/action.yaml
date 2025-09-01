@@ -34,6 +34,10 @@ runs:
               done
             fi
             fmt=${file##*.}
+            case "$fmt" in
+              md) fmt=markdown ;;
+              txt) fmt=text ;;
+            esac
             python scripts/validate.py "$raw" "$file" --prompt .github/prompts/validate-output.prompt.yaml || (
               git checkout -- "$file"
               python scripts/convert.py "$raw" --format "$fmt"
