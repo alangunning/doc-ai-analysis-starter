@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict
+import tempfile
 
 import yaml
 from dotenv import load_dotenv
@@ -31,11 +32,23 @@ def _build_input(
     input_msgs = [dict(m) for m in spec["messages"]]
 
     # Upload the raw and rendered files so the model can access them without
-    # hitting token limits on large documents.
-    with raw_path.open("rb") as f:
-        raw_file = client.files.create(file=f, purpose="assistants")
-    with rendered_path.open("rb") as f:
-        rendered_file = client.files.create(file=f, purpose="assistants")
+    # hitting token limits on large documents. The OpenAI file endpoints only
+    # accept a limited set of extensions; markdown files for example are not
+    # supported. When the rendered document uses an unsupported suffix we upload
+    # it as a temporary ``.txt`` file so the request is accepted.
+
+    def _upload(path: Path):
+        if path.suffix.lower() == ".pdf":
+            with path.open("rb") as f:
+                return client.files.create(file=f, purpose="assistants")
+        with path.open("rb") as src, tempfile.NamedTemporaryFile(suffix=".txt") as tmp:
+            tmp.write(src.read())
+            tmp.flush()
+            tmp.seek(0)
+            return client.files.create(file=tmp, purpose="assistants")
+
+    raw_file = _upload(raw_path)
+    rendered_file = _upload(rendered_path)
 
     for msg in input_msgs:
         if msg.get("role") == "user":
