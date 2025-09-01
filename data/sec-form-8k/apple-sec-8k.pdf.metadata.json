@@ -1,0 +1,20 @@
+{
+    "blake2b": "7ed265cddbda36df40516e833f59901057eae0527a632244c8462dcdffc7e503aa4236e92b50d1e0009d3323f2f4f1871e0be26b28553392b9901815d03f1290",
+    "id": "90716acc-117a-4215-ae00-af70268019fa",
+    "size": 103272,
+    "extra": {
+        "steps": {
+            "conversion": true
+        },
+        "outputs": {
+            "conversion": [
+                "apple-sec-8k.pdf.converted.md",
+                "apple-sec-8k.pdf.converted.html",
+                "apple-sec-8k.pdf.converted.json",
+                "apple-sec-8k.pdf.converted.txt",
+                "apple-sec-8k.pdf.converted.doctags"
+            ]
+        },
+        "filename": "apple-sec-8k.pdf"
+    }
+}
