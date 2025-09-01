@@ -22,10 +22,17 @@ def test_validate_file_returns_json(tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
-        result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+        result = validate_file(
+            raw_path,
+            rendered_path,
+            OutputFormat.TEXT,
+            prompt_path,
+            request_metadata={"raw": raw_path.name, "rendered": rendered_path.name},
+        )
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     assert isinstance(kwargs["input"], list)
+    assert kwargs["metadata"] == {"raw": "raw.pdf", "rendered": "rendered.txt"}

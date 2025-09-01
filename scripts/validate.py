@@ -66,6 +66,7 @@ if __name__ == "__main__":
         args.prompt,
         model=args.model,
         base_url=args.base_model_url,
+        request_metadata={"raw": args.raw.name, "rendered": args.rendered.name},
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")

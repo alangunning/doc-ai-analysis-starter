@@ -6,7 +6,7 @@ import base64
 import json
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 from dotenv import load_dotenv
@@ -38,8 +38,10 @@ def validate_file(
     rendered_path: Path,
     fmt: OutputFormat,
     prompt_path: Path,
+    *,
     model: str | None = None,
     base_url: str | None = None,
+    request_metadata: Optional[Dict[str, str]] = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -60,6 +62,7 @@ def validate_file(
         model=model or spec["model"],
         **spec.get("modelParameters", {}),
         input=messages,
+        metadata=request_metadata,
     )
     text = result.output[0].content[0].get("text", "{}")
     return json.loads(text)

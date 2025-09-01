@@ -102,6 +102,7 @@ def validate_doc(
         prompt,
         model=model,
         base_url=base_url,
+        request_metadata={"raw": raw.name, "rendered": rendered.name},
     )
     if not verdict.get("match", False):
         raise RuntimeError(f"Mismatch detected: {verdict}")

@@ -18,7 +18,7 @@ Run a pull request review prompt against the PR body text.
 ### `merge_pr(pr_number)`
 Merge a pull request using the GitHub CLI.
 
-### `validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None)`
+### `validate_file(raw_path, rendered_path, fmt, prompt_path, *, model=None, base_url=None, request_metadata=None)`
 Validate a rendered file against its source document and return the model's JSON verdict.
 
 ### `build_vector_store(src_dir)`
