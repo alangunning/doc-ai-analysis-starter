@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 from typing import Dict
-import tempfile
 import contextlib
 
 import yaml
@@ -53,19 +52,11 @@ def _build_input(
 
     def _payload(path: Path):
         if url_only:
-            return input_file_from_url(_github_url(path))
-        if path.suffix.lower() == ".pdf":
+            payload = input_file_from_url(_github_url(path))
+        else:
             payload = input_file_from_path(
                 client, path, purpose="assistants", use_upload=use_upload
             )
-        else:
-            with path.open("rb") as src, tempfile.NamedTemporaryFile(suffix=".txt") as tmp:
-                tmp.write(src.read())
-                tmp.flush()
-                tmp.seek(0)
-                payload = input_file_from_path(
-                    client, tmp.name, purpose="assistants", use_upload=use_upload
-                )
         if progress and task is not None:
             progress.advance(task)
         return payload
