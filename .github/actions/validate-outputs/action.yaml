@@ -15,7 +15,7 @@ runs:
         before="${{ inputs.before }}"
         sha="${{ inputs.sha }}"
         if [[ -z "$before" ]]; then
-          before=$(git rev-parse "$sha^" 2>/dev/null || git hash-object -t tree /dev/null)
+          before=$(git rev-parse --verify "$sha^" 2>/dev/null || git hash-object -t tree /dev/null)
         fi
         git diff -z --name-only "$before" "$sha" -- \
           'data/**/*.md' 'data/**/*.html' 'data/**/*.json' 'data/**/*.txt' 'data/**/*.doctags' |
