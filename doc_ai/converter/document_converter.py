@@ -12,8 +12,47 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, Union
 import json
+from contextlib import nullcontext
 
-from docling.document_converter import DocumentConverter as _DoclingConverter
+from rich.console import Console
+
+# ``Docling`` pulls in heavy dependencies like ``torch`` which can slow down
+# startup considerably.  Import the converter lazily so simply importing this
+# module doesn't trigger those imports.  Tests patch ``_DoclingConverter`` so we
+# keep a module level reference that can be swapped out.  The instantiated
+# converter is cached to avoid repeated heavy initialisation during a single
+# process run.  A sentinel file in ``~/.cache/doc_ai`` records that the converter
+# has been loaded once so subsequent *local* runs can skip the progress message.
+_DoclingConverter = None
+_converter_instance = None
+_CACHE_MARKER = Path.home() / ".cache" / "doc_ai" / "docling_ready"
+_console = Console()
+
+
+def _get_docling_converter():
+    """Return a cached instance of Docling's ``DocumentConverter``."""
+
+    global _DoclingConverter, _converter_instance
+    if _converter_instance is not None:
+        return _converter_instance
+
+    show_status = not _CACHE_MARKER.exists()
+    status = (
+        _console.status("Loading Docling (first run may download models)...")
+        if show_status
+        else nullcontext()
+    )
+    with status:  # pragma: no cover - visual progress only
+        if _DoclingConverter is None:
+            from docling.document_converter import (  # type: ignore
+                DocumentConverter as _Docling,  # pylint: disable=C0415
+            )
+            _DoclingConverter = _Docling
+        _converter_instance = _DoclingConverter()
+    if show_status:
+        _CACHE_MARKER.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_MARKER.touch()
+    return _converter_instance
 
 # Supported high level output formats.
 class OutputFormat(str, Enum):
@@ -60,7 +99,7 @@ def convert_files(
     returned for convenience.
     """
 
-    converter = _DoclingConverter()
+    converter = _get_docling_converter()
     result = converter.convert(input_path)
     doc = result.document
 
