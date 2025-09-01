@@ -5,16 +5,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Dict
-import contextlib
+from typing import Dict, List
 
 import yaml
 from dotenv import load_dotenv
 from openai import OpenAI
-from rich.progress import Progress
 
 from ..converter import OutputFormat
-from ..openai import input_file_from_path, input_file_from_url
+from ..openai import create_response
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
@@ -22,82 +20,23 @@ OPENAI_BASE_URL = "https://api.openai.com/v1"
 load_dotenv()
 
 
-def _build_input(
-    client: OpenAI,
-    raw_path: Path,
-    rendered_path: Path,
-    fmt: OutputFormat,
-    prompt_path: Path,
-    *,
-    use_upload: bool = False,
-    url_only: bool = False,
-    url_base: str | None = None,
-    progress: Progress | None = None,
-    task: int | None = None,
-) -> Dict:
-    """Build response ``input`` attaching raw and rendered documents."""
-    spec = yaml.safe_load(prompt_path.read_text())
-    input_msgs = [dict(m) for m in spec["messages"]]
-
-    def _github_url(path: Path) -> str:
-        if url_base:
-            return f"{url_base}/{path.name}"
-        repo = os.getenv("GITHUB_REPOSITORY")
-        ref = os.getenv("GITHUB_SHA", "main")
-        try:
-            rel = path.resolve().relative_to(Path.cwd()).as_posix()
-        except ValueError:
-            rel = path.name
-        return f"https://raw.githubusercontent.com/{repo}/{ref}/{rel}"
-
-    def _payload(path: Path):
-        if url_only:
-            payload = input_file_from_url(_github_url(path))
-        else:
-            payload = input_file_from_path(
-                client, path, purpose="assistants", use_upload=use_upload
-            )
-        if progress and task is not None:
-            progress.advance(task)
-        return payload
-
-    raw_payload = _payload(raw_path)
-    rendered_payload = _payload(rendered_path)
-
-    for msg in input_msgs:
-        if msg.get("role") == "user":
-            text = msg.get("content", "").replace("{format}", fmt.value)
-            msg["content"] = [
-                {"type": "input_text", "text": text},
-                raw_payload,
-                rendered_payload,
-            ]
-            break
-    return spec, input_msgs
-
-
 def validate_file(
-    raw_path: Path,
-    rendered_path: Path,
+    raw_path: Path | str,
+    rendered_path: Path | str,
     fmt: OutputFormat,
     prompt_path: Path,
     model: str | None = None,
     base_url: str | None = None,
-    show_progress: bool = False,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
-    Depending on the ``VALIDATE_FILE_MODE`` environment variable the raw and
-    rendered files are either uploaded via the ``/v1/files`` endpoint
-    (``files``), streamed through the resumable ``/v1/uploads`` API
-    (``uploads``) or referenced directly by their GitHub ``raw`` URLs
-    (``url``). The resulting file inputs are then attached to a
-    :meth:`client.responses.create` call. This approach avoids token overflows
-    on large documents and works with models that support file inputs. GitHub
-    Models do not offer file uploads, so when the base URL points at the GitHub
-    provider (or is unspecified) the call is automatically routed to
-    ``https://api.openai.com/v1`` using the ``OPENAI_API_KEY`` token. Returns the
-    model's JSON verdict as a dictionary.
+    The raw and rendered files may be local paths or remote URLs. Local files are
+    uploaded as needed using the most suitable OpenAI file API; remote URLs are
+    passed directly to the Responses API. GitHub Models do not offer file
+    uploads, so when the base URL points at the GitHub provider (or is
+    unspecified) the call is automatically routed to ``https://api.openai.com/v1``
+    using the ``OPENAI_API_KEY`` token. Returns the model's JSON verdict as a
+    dictionary.
     """
 
     base = (
@@ -110,38 +49,35 @@ def validate_file(
         base = OPENAI_BASE_URL
     api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
     client = OpenAI(api_key=os.getenv(api_key_var), base_url=base)
-    file_mode = os.getenv("VALIDATE_FILE_MODE", "files").lower()
-    use_upload = file_mode == "uploads"
-    url_only = file_mode == "url"
-    url_base = os.getenv("VALIDATE_FILE_URL_BASE")
-    total = 0 if url_only else 2
-    cm = Progress() if show_progress else contextlib.nullcontext()
-    with cm as progress:
-        upload_task = (
-            progress.add_task("Uploading files", total=total) if show_progress else None
-        )
-        spec, input_msgs = _build_input(
-            client,
-            raw_path,
-            rendered_path,
-            fmt,
-            prompt_path,
-            use_upload=use_upload,
-            url_only=url_only,
-            url_base=url_base,
-            progress=progress if show_progress else None,
-            task=upload_task,
-        )
-        request_task = (
-            progress.add_task("Requesting validation", total=1) if show_progress else None
-        )
-        result = client.responses.create(
-            model=model or spec["model"],
-            input=input_msgs,
-            **spec.get("modelParameters", {}),
-        )
-        if show_progress and request_task is not None:
-            progress.advance(request_task)
+
+    spec = yaml.safe_load(prompt_path.read_text())
+    system_msgs = [m["content"] for m in spec["messages"] if m.get("role") == "system"]
+    user_msgs: List[str] = [m["content"] for m in spec["messages"] if m.get("role") == "user"]
+    user_text = user_msgs[0].replace("{format}", fmt.value) if user_msgs else ""
+
+    def _is_url(value: Path | str) -> bool:
+        s = str(value)
+        return s.startswith("http://") or s.startswith("https://")
+
+    file_urls: List[str] = []
+    file_paths: List[Path] = []
+    for p in (raw_path, rendered_path):
+        if _is_url(p):
+            file_urls.append(str(p))
+        else:
+            file_paths.append(Path(p))
+
+    result = create_response(
+        client,
+        model=model or spec["model"],
+        system=system_msgs,
+        texts=[user_text],
+        file_urls=file_urls or None,
+        file_paths=file_paths or None,
+        file_purpose="assistants",
+        **spec.get("modelParameters", {}),
+    )
+
     text = result.output_text or "{}"
     return json.loads(text)
 

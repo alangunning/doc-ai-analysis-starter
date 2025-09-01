@@ -1,5 +1,8 @@
 from unittest.mock import MagicMock
 
+from pathlib import Path
+from unittest.mock import MagicMock
+
 from doc_ai.openai import (
     create_response,
     create_response_with_file_url,
@@ -49,6 +52,44 @@ def test_create_response_with_file_url_wrapper():
                     {"type": "input_file", "file_url": "https://example.com/file.pdf"},
                 ],
             }
+        ],
+    )
+
+
+def test_create_response_with_file_paths(monkeypatch, tmp_path):
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("hi")
+
+    calls = []
+
+    def fake_upload_file(client, path, purpose, *, use_upload):
+        calls.append(use_upload)
+        return "file-id"
+
+    monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
+    monkeypatch.setattr("doc_ai.openai.responses.DEFAULT_CHUNK_SIZE", 1)
+
+    client = MagicMock()
+    create_response(client, model="gpt-4.1", file_paths=[file_path])
+
+    assert calls == [True]
+    client.responses.create.assert_called_once()
+
+
+def test_create_response_with_system_message():
+    client = MagicMock()
+    create_response(
+        client,
+        model="gpt-4.1",
+        system="sys",
+        texts=["hello"],
+    )
+
+    client.responses.create.assert_called_once_with(
+        model="gpt-4.1",
+        input=[
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": [{"type": "input_text", "text": "hello"}]},
         ],
     )
 

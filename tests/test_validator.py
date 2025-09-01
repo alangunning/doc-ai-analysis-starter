@@ -3,6 +3,7 @@ import runpy
 import sys
 from pathlib import Path
 import yaml
+from unittest.mock import MagicMock, patch
 
 from doc_ai.converter import OutputFormat
 from doc_ai.github.validator import validate_file
@@ -35,26 +36,36 @@ def test_validate_file_returns_json(tmp_path):
     mock_response = MagicMock(output_text="{\"ok\": true}")
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
-    mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
+    uploads = []
+
+    def fake_upload_file(client, path, purpose, *, use_upload):
+        uploads.append((Path(path).name, purpose, use_upload))
+        return f"{Path(path).name}-id"
+
+    with patch(
+        "doc_ai.github.validator.OpenAI", return_value=mock_client
+    ) as mock_openai, patch(
+        "doc_ai.openai.responses.upload_file", side_effect=fake_upload_file
+    ):
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
-    assert mock_client.files.create.call_count == 2
-    for call in mock_client.files.create.call_args_list:
-        assert call.kwargs["purpose"] == "assistants"
+    assert uploads == [
+        ("raw.pdf", "assistants", False),
+        ("rendered.txt", "assistants", False),
+    ]
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
     assert content[0] == {"type": "input_text", "text": "Check text"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
-    assert file_ids == ["file1", "file2"]
+    assert file_ids == ["raw.pdf-id", "rendered.txt-id"]
 
 
-def test_validate_file_upload_mode(monkeypatch, tmp_path):
+def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
     raw_path = tmp_path / "raw.pdf"
     rendered_path = tmp_path / "rendered.txt"
     prompt_path = tmp_path / "prompt.yml"
@@ -78,16 +89,16 @@ def test_validate_file_upload_mode(monkeypatch, tmp_path):
 
     called: list[bool] = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload, **kwargs):
+    def fake_upload_file(client, path, purpose, *, use_upload):
         called.append(use_upload)
         return f"{Path(path).name}-id"
+
+    monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
+    monkeypatch.setattr("doc_ai.openai.responses.DEFAULT_CHUNK_SIZE", 1)
 
     mock_response = MagicMock(output_text="{}")
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
-
-    monkeypatch.setenv("VALIDATE_FILE_MODE", "uploads")
-    monkeypatch.setattr("doc_ai.openai.files.upload_file", fake_upload_file)
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
@@ -95,13 +106,11 @@ def test_validate_file_upload_mode(monkeypatch, tmp_path):
     assert called == [True, True]
 
 
-def test_validate_file_url_mode(monkeypatch, tmp_path):
-    raw_path = tmp_path / "raw.pdf"
-    rendered_path = tmp_path / "rendered.txt"
+def test_validate_file_with_urls(tmp_path):
+    raw_url = "https://example.com/raw.pdf"
+    rendered_url = "https://example.com/rendered.txt"
     prompt_path = tmp_path / "prompt.yml"
 
-    raw_path.write_bytes(b"raw")
-    rendered_path.write_text("text")
     prompt_path.write_text(
         yaml.dump(
             {
@@ -121,20 +130,15 @@ def test_validate_file_url_mode(monkeypatch, tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    monkeypatch.setenv("VALIDATE_FILE_MODE", "url")
-    monkeypatch.setenv("VALIDATE_FILE_URL_BASE", "https://example.com/raw")
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), \
+         patch("doc_ai.openai.responses.upload_file") as up:
+        validate_file(raw_url, rendered_url, OutputFormat.TEXT, prompt_path)
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client):
-        validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
-
-    assert mock_client.files.create.call_count == 0
+    up.assert_not_called()
     args, kwargs = mock_client.responses.create.call_args
     content = kwargs["input"][1]["content"]
     file_urls = [part["file_url"] for part in content if part["type"] == "input_file"]
-    assert file_urls == [
-        "https://example.com/raw/raw.pdf",
-        "https://example.com/raw/rendered.txt",
-    ]
+    assert file_urls == [raw_url, rendered_url]
 
 
 def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
@@ -163,9 +167,12 @@ def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     mock_response = MagicMock(output_text="{}")
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
-    mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
+    with patch(
+        "doc_ai.github.validator.OpenAI", return_value=mock_client
+    ) as mock_openai, patch(
+        "doc_ai.openai.responses.upload_file", return_value="file1"
+    ):
         validate_file(
             raw_path,
             rendered_path,
@@ -205,9 +212,12 @@ def test_validate_file_custom_base_uses_github_token(monkeypatch, tmp_path):
     mock_response = MagicMock(output_text="{}")
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
-    mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
+    with patch(
+        "doc_ai.github.validator.OpenAI", return_value=mock_client
+    ) as mock_openai, patch(
+        "doc_ai.openai.responses.upload_file", return_value="file1"
+    ):
         validate_file(
             raw_path,
             rendered_path,

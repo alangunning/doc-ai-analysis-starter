@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Iterable, Sequence, Tuple, Union
+from pathlib import Path
 
 from openai import OpenAI
 
 from .files import (
+    DEFAULT_CHUNK_SIZE,
     input_file_from_bytes,
     input_file_from_id,
     input_file_from_url,
+    upload_file,
 )
 
 
@@ -36,6 +39,10 @@ def create_response(
     file_urls: Union[str, Sequence[str], None] = None,
     file_ids: Union[str, Sequence[str], None] = None,
     file_bytes: Sequence[Tuple[str, bytes]] | None = None,
+    file_paths: Union[str, Path, Sequence[Union[str, Path]], None] = None,
+    system: Union[str, Sequence[str], None] = None,
+    file_purpose: str = "user_data",
+    **kwargs: Any,
 ) -> Any:
     """Call the Responses API with a mix of inputs.
 
@@ -54,6 +61,14 @@ def create_response(
     file_bytes:
         ``(filename, data)`` tuples for in-memory file contents to encode as
         ``file_data`` entries.
+    file_paths:
+        One or more local filesystem paths to upload before the request. Files
+        larger than ``DEFAULT_CHUNK_SIZE`` will use the resumable ``/v1/uploads``
+        API automatically.
+    system:
+        Optional system message(s) to prepend to the request.
+    file_purpose:
+        Purpose used when uploading files. Defaults to ``"user_data"``.
     """
 
     content: list[Dict[str, Any]] = []
@@ -65,11 +80,24 @@ def create_response(
         content.append(input_file_from_id(file_id))
     for filename, data in file_bytes or []:
         content.append(input_file_from_bytes(filename, data))
+    for path in _ensure_seq(file_paths):
+        p = Path(path)
+        use_upload = p.stat().st_size > DEFAULT_CHUNK_SIZE
+        file_id = upload_file(
+            client,
+            p,
+            purpose=file_purpose,
+            use_upload=use_upload,
+        )
+        content.append(input_file_from_id(file_id))
 
-    payload: Dict[str, Any] = {
-        "model": model,
-        "input": [{"role": "user", "content": content}],
-    }
+    messages: list[Dict[str, Any]] = []
+    for sys in _ensure_seq(system):
+        messages.append({"role": "system", "content": sys})
+    messages.append({"role": "user", "content": content})
+
+    payload: Dict[str, Any] = {"model": model, "input": messages}
+    payload.update(kwargs)
     return client.responses.create(**payload)
 
 
