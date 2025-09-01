@@ -18,25 +18,22 @@ def test_validate_file_returns_json(tmp_path):
         yaml.dump({"model": "validator-model", "messages": [{"role": "user", "content": "Check {format}"}]})
     )
 
-    mock_response = MagicMock()
-    mock_response.choices = [
-        MagicMock(message=MagicMock(content="{\"ok\": true}"))
-    ]
+    mock_response = MagicMock(output_text="{\"ok\": true}")
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.responses.create.return_value = mock_response
+    mock_client.files.create.side_effect = [MagicMock(id="file1"), MagicMock(id="file2")]
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client) as mock_openai:
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
     assert result == {"ok": True}
     mock_openai.assert_called_once()
-    args, kwargs = mock_client.chat.completions.create.call_args
+    args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
-    assert isinstance(kwargs["messages"], list)
-    user_msg = kwargs["messages"][0]
-    file_part = user_msg["content"][1]
-    assert file_part["type"] == "file"
-    assert file_part["file"]["filename"] == "raw.pdf"
+    user_msg = kwargs["input"][0]
+    content = user_msg["content"]
+    file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
+    assert file_ids == ["file1", "file2"]
 
 
 def test_validate_doc_updates_metadata(tmp_path):
