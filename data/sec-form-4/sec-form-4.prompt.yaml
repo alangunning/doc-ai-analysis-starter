@@ -1,6 +1,6 @@
 name: SEC Form 4 — Insider Transaction Extractor
 description: Extract high-value, investor-actionable details from SEC Form 4 filings.
-model: openai/gpt-4o-mini
+model: openai/o4-mini
 modelParameters:
   temperature: 0
 messages:

@@ -1,6 +1,6 @@
 name: SEC Form 8-K — Investor Extractor
 description: Extract high-value, investor-actionable events and metrics from SEC Form 8-K filings.
-model: openai/gpt-4o-mini
+model: openai/o4-mini
 modelParameters:
   temperature: 0
 messages:
