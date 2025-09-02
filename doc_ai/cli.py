@@ -120,7 +120,7 @@ def validate_doc(
     raw: Path,
     rendered: Path,
     fmt: OutputFormat | None = None,
-    prompt: Path = Path(".github/prompts/validate-output.prompt.yaml"),
+    prompt: Path | None = None,
     model: str | None = None,
     base_url: str | None = None,
     show_progress: bool = False,
@@ -148,11 +148,17 @@ def validate_doc(
             raise typer.BadParameter(
                 f"Unknown file extension '{rendered.suffix}'. Expected one of: {valid}"
             )
+    prompt_path = prompt
+    if prompt_path is None:
+        local_prompt = raw.with_name(f"{raw.stem}-validate.prompt.yaml")
+        prompt_path = local_prompt if local_prompt.exists() else Path(
+            ".github/prompts/validate-output.prompt.yaml"
+        )
     verdict = validate_file(
         raw,
         rendered,
         fmt,
-        prompt,
+        prompt_path,
         model=model,
         base_url=base_url,
         show_progress=show_progress,
@@ -166,7 +172,7 @@ def validate_doc(
         "validation",
         outputs=[rendered.name],
         inputs={
-            "prompt": prompt.name,
+            "prompt": prompt_path.name,
             "rendered": rendered.name,
             "format": fmt.value,
         },
@@ -259,10 +265,7 @@ def validate(
     raw: Optional[Path] = typer.Argument(None, help="Path to raw document"),
     rendered: Optional[Path] = typer.Argument(None, help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
-    prompt: Path = typer.Option(
-        Path(".github/prompts/validate-output.prompt.yaml"),
-        help="Prompt file",
-    ),
+    prompt: Optional[Path] = typer.Option(None, "--prompt", help="Prompt file"),
     model: Optional[str] = typer.Option(
         None, "--model", help="Model name override"
     ),
