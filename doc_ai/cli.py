@@ -59,6 +59,24 @@ def _suffix(fmt: OutputFormat) -> str:
     return f".converted{suffix_for_format(fmt)}"
 
 
+def _infer_format(path: Path) -> OutputFormat:
+    mapping = {
+        ".md": OutputFormat.MARKDOWN,
+        ".html": OutputFormat.HTML,
+        ".json": OutputFormat.JSON,
+        ".txt": OutputFormat.TEXT,
+        ".doctags": OutputFormat.DOCTAGS,
+        ".dogtags": OutputFormat.DOCTAGS,
+    }
+    try:
+        return mapping[path.suffix.lower()]
+    except KeyError as exc:
+        valid = ", ".join(mapping.keys())
+        raise typer.BadParameter(
+            f"Unknown file extension '{path.suffix}'. Expected one of: {valid}"
+        ) from exc
+
+
 def _parse_env_formats() -> List[OutputFormat] | None:
     """Return formats from OUTPUT_FORMATS env var if set."""
 
@@ -272,8 +290,9 @@ def convert(
 @app.command()
 def validate(
     raw: Path = typer.Argument(..., help="Path to raw document"),
-    rendered: Path = typer.Argument(..., help="Path to converted file"),
-    fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
+    rendered: Path | None = typer.Argument(
+        None, help="Path to converted file"),
+    fmt: Optional[OutputFormat] = typer.Option(None, "--format", "-f"),
     prompt: Optional[Path] = typer.Option(
         None,
         "--prompt",
@@ -309,10 +328,17 @@ def validate(
         fh = logging.FileHandler(log_path)
         fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
+
+    if rendered is None:
+        used_fmt = fmt or OutputFormat.MARKDOWN
+        rendered = raw.with_name(raw.name + _suffix(used_fmt))
+    else:
+        used_fmt = fmt or _infer_format(rendered)
+
     validate_doc(
         raw,
         rendered,
-        fmt,
+        used_fmt,
         prompt,
         model,
         base_model_url,
@@ -324,7 +350,10 @@ def validate(
 
 @app.command()
 def analyze(
-    markdown_doc: Path = typer.Argument(..., help="Markdown document"),
+    source: Path = typer.Argument(..., help="Raw or converted document"),
+    fmt: Optional[OutputFormat] = typer.Option(
+        None, "--format", "-f", help="Format of converted file"
+    ),
     prompt: Path | None = typer.Option(
         None,
         "--prompt",
@@ -343,7 +372,11 @@ def analyze(
         None, "--base-model-url", help="Model base URL override"
     ),
 ) -> None:
-    """Run an analysis prompt against a Markdown document."""
+    """Run an analysis prompt against a converted document."""
+    markdown_doc = source
+    if ".converted" not in "".join(markdown_doc.suffixes):
+        used_fmt = fmt or OutputFormat.MARKDOWN
+        markdown_doc = source.with_name(source.name + _suffix(used_fmt))
     analyze_doc(markdown_doc, prompt, output, model, base_model_url)
 
 

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.logging import RichHandler
 
-from doc_ai import OutputFormat
+from doc_ai import OutputFormat, suffix_for_format
 from doc_ai.github import validate_file
 from doc_ai.metadata import (
     compute_hash,
@@ -28,19 +28,26 @@ def infer_format(path: Path) -> OutputFormat:
         ".json": OutputFormat.JSON,
         ".txt": OutputFormat.TEXT,
         ".doctags": OutputFormat.DOCTAGS,
+        ".dogtags": OutputFormat.DOCTAGS,
     }
     try:
-        return mapping[path.suffix]
+        return mapping[path.suffix.lower()]
     except KeyError as exc:
         valid = ", ".join(mapping.keys())
-        raise SystemExit(f"Unknown file extension '{path.suffix}'. Expected one of: {valid}") from exc
+        raise SystemExit(
+            f"Unknown file extension '{path.suffix}'. Expected one of: {valid}"
+        ) from exc
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("raw", type=Path)
-    parser.add_argument("rendered", type=Path)
-    parser.add_argument("--format", choices=[f.value for f in OutputFormat])
+    parser.add_argument("rendered", type=Path, nargs="?")
+    parser.add_argument(
+        "--format",
+        choices=[f.value for f in OutputFormat],
+        help="Format of converted file (inferred from --rendered if omitted)",
+    )
     parser.add_argument(
         "--prompt",
         type=Path,
@@ -98,7 +105,16 @@ if __name__ == "__main__":
     if meta.blake2b != file_hash:
         meta.blake2b = file_hash
         meta.extra = {}
-    fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
+
+    if args.rendered is None:
+        fmt = OutputFormat(args.format) if args.format else OutputFormat.MARKDOWN
+        rendered = args.raw.with_name(
+            args.raw.name + f".converted{suffix_for_format(fmt)}"
+        )
+    else:
+        rendered = args.rendered
+        fmt = OutputFormat(args.format) if args.format else infer_format(rendered)
+
     prompt_path = args.prompt
     if prompt_path is None:
         doc_prompt = args.raw.with_name(f"{args.raw.stem}.validate.prompt.yaml")
@@ -113,7 +129,7 @@ if __name__ == "__main__":
             )
     verdict = validate_file(
         args.raw,
-        args.rendered,
+        rendered,
         fmt,
         prompt_path,
         model=args.model,
