@@ -104,3 +104,50 @@ def test_convert_files_passes_progress_flag(tmp_path):
         MockConverter.return_value.convert.assert_called_with(
             input_file, progress=True
         )
+
+
+def test_convert_files_handles_validation_error(tmp_path):
+    input_file = tmp_path / "input.pdf"
+    input_file.write_bytes(b"pdf")
+
+    outputs = {OutputFormat.TEXT: tmp_path / "out.txt"}
+
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+        patch("doc_ai.converter.document_converter.Progress") as MockProgress,
+    ):
+        from doc_ai.converter import document_converter as dc
+        dc._converter_instance = None
+        from rich.console import Console
+        dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
+        mock_progress = MockProgress.return_value.__enter__.return_value
+        mock_progress.add_task.return_value = 1
+
+        class DummyDoc:
+            def export_to_text(self):
+                return "plain"
+
+        class DummyResult:
+            document = DummyDoc()
+            status = "SUCCESS"
+
+        # Create a ValidationError instance to mimic Pydantic's error
+        from pydantic import BaseModel, ValidationError
+
+        class DummyModel(BaseModel):
+            x: int
+
+        try:
+            DummyModel(x="a")
+        except ValidationError as e:
+            val_err = e
+
+        MockConverter.return_value.convert.side_effect = [val_err, DummyResult()]
+
+        convert_files(input_file, outputs)
+
+        assert MockConverter.return_value.convert.call_args_list == [
+            ((input_file,), {"progress": True}),
+            ((input_file,), {}),
+        ]

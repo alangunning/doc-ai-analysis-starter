@@ -22,6 +22,11 @@ from rich.progress import (
     TaskProgressColumn,
     TextColumn,
 )
+try:  # Docling’s converter uses Pydantic which may raise ValidationError
+    from pydantic import ValidationError
+except Exception:  # pragma: no cover - Pydantic always available in tests
+    class ValidationError(Exception):
+        pass
 
 # ``Docling`` pulls in heavy dependencies like ``torch`` which can slow down
 # startup considerably.  Import the converter lazily so simply importing this
@@ -170,7 +175,7 @@ def convert_files(
             task = progress.add_task(f"Converting {input_path}", total=total)
             try:
                 result = converter.convert(input_path, progress=True)
-            except TypeError:  # older Docling versions
+            except (TypeError, ValidationError):  # older Docling versions
                 result = converter.convert(input_path)
             progress.advance(task)
             status = getattr(result, "status", None)
@@ -179,7 +184,7 @@ def convert_files(
     else:
         try:
             result = converter.convert(input_path, progress=False)
-        except TypeError:  # older Docling versions
+        except (TypeError, ValidationError):  # older Docling versions
             result = converter.convert(input_path)
         status = getattr(result, "status", None)
         doc = result.document
