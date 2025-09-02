@@ -1,8 +1,6 @@
 import io
-import io
 import types
-from pathlib import Path
-from unittest.mock import MagicMock, ANY
+from unittest.mock import MagicMock
 
 from doc_ai.openai import (
     upload_file,

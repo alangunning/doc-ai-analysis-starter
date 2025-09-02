@@ -82,7 +82,6 @@ def validate_file(
     file_urls: List[str] = []
     file_paths: List[Path] = []
     for p in (raw_path, rendered_path):
-        is_rendered = p == rendered_path
         if _is_url(p):
             s = str(p)
             if s.lower().endswith(".pdf"):
