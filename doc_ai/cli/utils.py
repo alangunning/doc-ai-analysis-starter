@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional, Callable
+from typing import Callable, List
 import logging
 import os
 import re
