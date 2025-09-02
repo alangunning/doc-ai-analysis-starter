@@ -54,3 +54,31 @@ def test_argument_path_completion(tmp_path):
         assert "file.txt" in opts
     finally:
         os.chdir(cwd)
+
+
+def test_cd_nested_completion(tmp_path):
+    child = tmp_path / "parent" / "child"
+    child.mkdir(parents=True)
+    cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        opts = get_completions(cli.app, "cd parent/", "")
+        assert "child/" in opts
+        assert all(not opt.startswith("parent/") for opt in opts)
+    finally:
+        os.chdir(cwd)
+
+
+def test_argument_nested_path_completion(tmp_path):
+    parent = tmp_path / "parent"
+    parent.mkdir()
+    file = parent / "file.txt"
+    file.write_text("x")
+    cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        opts = get_completions(cli.app, "convert parent/", "")
+        assert "file.txt" in opts
+        assert all(not opt.startswith("parent/") for opt in opts)
+    finally:
+        os.chdir(cwd)

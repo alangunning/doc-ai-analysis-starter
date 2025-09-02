@@ -65,6 +65,7 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     if buffer.endswith(" "):
         tokens.append("")
     suggestions: list[str] = []
+    incomplete: str | None = None
     if not tokens:
         suggestions = list(commands)
     elif tokens[0] == "cd":
@@ -73,7 +74,8 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     elif len(tokens) == 1:
         suggestions = [name for name in commands if name.startswith(tokens[0])]
         if not suggestions:
-            suggestions = _complete_path(tokens[0])
+            incomplete = tokens[0]
+            suggestions = _complete_path(incomplete)
     else:
         cmd = commands.get(tokens[0])
         if cmd:
@@ -83,7 +85,11 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
             if not suggestions:
                 suggestions = _complete_path(incomplete)
         else:
-            suggestions = _complete_path(tokens[-1])
+            incomplete = tokens[-1]
+            suggestions = _complete_path(incomplete)
+    if incomplete is not None and len(incomplete) > len(text):
+        prefix = incomplete[: len(incomplete) - len(text)]
+        suggestions = [s[len(prefix):] if s.startswith(prefix) else s for s in suggestions]
     return sorted(suggestions)
 
 
