@@ -7,7 +7,7 @@ import re
 import logging
 import os
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 
 import requests
 import yaml
@@ -78,7 +78,7 @@ def validate_file(
         s = str(value)
         return s.startswith("http://") or s.startswith("https://")
 
-    texts: List[Tuple[str, str]] = [(user_text, "text")]
+    texts: List[str] = [user_text]
     file_urls: List[str] = []
     file_paths: List[Path] = []
     for p in (raw_path, rendered_path):
@@ -90,15 +90,13 @@ def validate_file(
             else:
                 resp = requests.get(s)
                 resp.raise_for_status()
-                fmt_name = fmt.value if is_rendered else "text"
-                texts.append((resp.text, fmt_name))
+                texts.append(resp.text)
         else:
             path = Path(p)
             if path.suffix.lower() == ".pdf":
                 file_paths.append(path)
             else:
-                fmt_name = fmt.value if is_rendered else "text"
-                texts.append((path.read_text(encoding="utf-8"), fmt_name))
+                texts.append(path.read_text(encoding="utf-8"))
 
     progress_cb: Optional[Callable[[int], None]] = None
     progress: Optional[Progress] = None

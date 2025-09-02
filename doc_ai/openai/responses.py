@@ -1,7 +1,7 @@
 """Convenience helpers for creating Responses API requests."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 from pathlib import Path
 import json
 import logging
@@ -17,12 +17,9 @@ from .files import (
 )
 
 
-def input_text(text: str, fmt: str = "text") -> Dict[str, Any]:
-    """Create an ``input_text`` payload with an explicit format."""
-    payload: Dict[str, Any] = {"type": "input_text", "text": text}
-    if fmt:
-        payload["format"] = {"name": fmt}
-    return payload
+def input_text(text: str) -> Dict[str, Any]:
+    """Create a basic ``input_text`` payload."""
+    return {"type": "input_text", "text": text}
 
 
 def _ensure_seq(value: Union[Any, Sequence[Any], None]) -> Sequence[Any]:
@@ -39,12 +36,7 @@ def create_response(
     client: OpenAI,
     *,
     model: str,
-    texts: Union[
-        str,
-        Tuple[str, str],
-        Sequence[Union[str, Tuple[str, str]]],
-        None,
-    ] = None,
+    texts: Union[str, Sequence[str], None] = None,
     file_urls: Union[str, Sequence[str], None] = None,
     file_ids: Union[str, Sequence[str], None] = None,
     file_bytes: Sequence[Tuple[str, bytes]] | None = None,
@@ -91,11 +83,7 @@ def create_response(
 
     content: list[Dict[str, Any]] = []
     for text in _ensure_seq(texts):
-        if isinstance(text, tuple):
-            txt, fmt = text
-            content.append(input_text(txt, fmt))
-        else:
-            content.append(input_text(text))
+        content.append(input_text(text))
     for url in _ensure_seq(file_urls):
         content.append(input_file_from_url(url))
     for file_id in _ensure_seq(file_ids):

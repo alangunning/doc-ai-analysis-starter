@@ -65,12 +65,10 @@ def test_validate_file_returns_json(tmp_path):
     assert content[0] == {
         "type": "input_text",
         "text": "Check text",
-        "format": {"name": "text"},
     }
     assert content[1] == {
         "type": "input_text",
         "text": "text",
-        "format": {"name": "text"},
     }
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["raw.pdf-id"]
