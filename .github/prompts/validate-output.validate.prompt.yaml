@@ -28,9 +28,9 @@ modelParameters:
                 pdf_quote:
                   type: string
                 md_quote:
-                  oneOf:
-                    - type: string
-                    - type: 'null'
+                  type:
+                    - string
+                    - 'null'
                 suggested_md:
                   type: string
                 # Avoid hard page coupling; use soft location hints instead.
@@ -38,13 +38,13 @@ modelParameters:
                   type: string
                   description: "Short locator like a heading, section title, or nearby label/value pair."
                 pdf_page_hint:
-                  oneOf:
-                    - type: integer
-                    - type: 'null'
+                  type:
+                    - integer
+                    - 'null'
                 md_offset_hint:
-                  oneOf:
-                    - type: integer
-                    - type: 'null'
+                  type:
+                    - integer
+                    - 'null'
                 confidence:
                   type: number
                   minimum: 0
