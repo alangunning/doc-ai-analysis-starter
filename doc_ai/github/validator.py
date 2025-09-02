@@ -83,11 +83,10 @@ def validate_file(
     file_paths: List[Path] = []
     for p in (raw_path, rendered_path):
         if _is_url(p):
-            s = str(p)
-            if s.lower().endswith(".pdf"):
-                file_urls.append(s)
+            if str(p).lower().endswith(".pdf"):
+                file_urls.append(str(p))
             else:
-                resp = requests.get(s)
+                resp = requests.get(str(p))
                 resp.raise_for_status()
                 texts.append(resp.text)
         else:

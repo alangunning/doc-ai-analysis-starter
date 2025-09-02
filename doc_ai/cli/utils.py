@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, List
+from typing import Callable
 import logging
 import os
 import re
@@ -48,12 +48,12 @@ def infer_format(path: Path) -> OutputFormat:
         ) from exc
 
 
-def parse_env_formats() -> List[OutputFormat] | None:
+def parse_env_formats() -> list[OutputFormat] | None:
     """Return formats from OUTPUT_FORMATS env var if set."""
     env_val = os.getenv("OUTPUT_FORMATS")
     if not env_val:
         return None
-    formats: List[OutputFormat] = []
+    formats: list[OutputFormat] = []
     for val in env_val.split(","):
         try:
             formats.append(OutputFormat(val.strip()))
@@ -114,7 +114,7 @@ def validate_doc(
         else:
             prompt_path = Path(
                 ".github/prompts/validate-output.validate.prompt.yaml"
-    )
+            )
     verdict = validate_file_func(
         raw,
         rendered,

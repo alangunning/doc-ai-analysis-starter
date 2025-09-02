@@ -1,4 +1,7 @@
+import os
+
 from typer.testing import CliRunner
+
 from doc_ai.cli import app
 
 
@@ -7,6 +10,8 @@ def test_global_help_lists_commands():
     result = runner.invoke(app, ["--help"])
     assert "Usage:" in result.stdout
     assert "convert" in result.stdout
+    assert "config" in result.stdout
+    assert "--install-completion" not in result.stdout
 
 
 def test_validate_help_flag_shows_options():
@@ -15,3 +20,10 @@ def test_validate_help_flag_shows_options():
     assert "--log-file" in result.stdout
     assert "--verbose" in result.stdout
     assert result.exit_code == 0
+
+
+def test_config_sets_env():
+    runner = CliRunner()
+    result = runner.invoke(app, ["config", "--set", "TEST_VAR=value"])
+    assert result.exit_code == 0
+    assert os.getenv("TEST_VAR") == "value"

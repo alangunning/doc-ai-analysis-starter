@@ -1,5 +1,5 @@
 import io
-import types
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from doc_ai.openai import (
@@ -27,7 +27,7 @@ def test_upload_and_input_from_path(tmp_path):
     file_path = tmp_path / "file.pdf"
     file_path.write_text("content")
     mock_client = MagicMock()
-    mock_client.files.create.return_value = types.SimpleNamespace(id="file-123")
+    mock_client.files.create.return_value = SimpleNamespace(id="file-123")
 
     file_id = upload_file(mock_client, file_path)
     assert file_id == "file-123"
@@ -41,14 +41,14 @@ def test_upload_file_via_uploads(tmp_path):
     file_path = tmp_path / "big.bin"
     file_path.write_bytes(b"0123456789")
     mock_client = MagicMock()
-    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.create.return_value = SimpleNamespace(id="upl-1")
     mock_client.uploads.parts.create.side_effect = [
-        types.SimpleNamespace(id="part1"),
-        types.SimpleNamespace(id="part2"),
-        types.SimpleNamespace(id="part3"),
+        SimpleNamespace(id="part1"),
+        SimpleNamespace(id="part2"),
+        SimpleNamespace(id="part3"),
     ]
-    mock_client.uploads.complete.return_value = types.SimpleNamespace(
-        file=types.SimpleNamespace(id="file-xyz")
+    mock_client.uploads.complete.return_value = SimpleNamespace(
+        file=SimpleNamespace(id="file-xyz")
     )
 
     file_id = upload_file(mock_client, file_path, use_upload=True, chunk_size=4)
@@ -67,14 +67,14 @@ def test_upload_large_file_reports_progress(tmp_path):
     file_path = tmp_path / "big.bin"
     file_path.write_bytes(b"0123456789")
     mock_client = MagicMock()
-    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.create.return_value = SimpleNamespace(id="upl-1")
     mock_client.uploads.parts.create.side_effect = [
-        types.SimpleNamespace(id="part1"),
-        types.SimpleNamespace(id="part2"),
-        types.SimpleNamespace(id="part3"),
+        SimpleNamespace(id="part1"),
+        SimpleNamespace(id="part2"),
+        SimpleNamespace(id="part3"),
     ]
-    mock_client.uploads.complete.return_value = types.SimpleNamespace(
-        file=types.SimpleNamespace(id="file-xyz")
+    mock_client.uploads.complete.return_value = SimpleNamespace(
+        file=SimpleNamespace(id="file-xyz")
     )
 
     seen: list[int] = []
@@ -93,7 +93,7 @@ def test_upload_large_file_reports_progress(tmp_path):
 def test_upload_file_keeps_provided_handle_open():
     fh = io.BytesIO(b"data")
     mock_client = MagicMock()
-    mock_client.files.create.return_value = types.SimpleNamespace(id="file-1")
+    mock_client.files.create.return_value = SimpleNamespace(id="file-1")
 
     upload_file(mock_client, fh)
 
@@ -105,14 +105,14 @@ def test_upload_file_via_uploads_keeps_handle_open():
     fh = io.BytesIO(b"0123456789")
     fh.name = "big.bin"
     mock_client = MagicMock()
-    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
+    mock_client.uploads.create.return_value = SimpleNamespace(id="upl-1")
     mock_client.uploads.parts.create.side_effect = [
-        types.SimpleNamespace(id="part1"),
-        types.SimpleNamespace(id="part2"),
-        types.SimpleNamespace(id="part3"),
+        SimpleNamespace(id="part1"),
+        SimpleNamespace(id="part2"),
+        SimpleNamespace(id="part3"),
     ]
-    mock_client.uploads.complete.return_value = types.SimpleNamespace(
-        file=types.SimpleNamespace(id="file-xyz")
+    mock_client.uploads.complete.return_value = SimpleNamespace(
+        file=SimpleNamespace(id="file-xyz")
     )
 
     upload_file(mock_client, fh, use_upload=True, chunk_size=4)
@@ -127,7 +127,7 @@ def test_upload_file_env_purpose(monkeypatch, tmp_path):
     file_path = tmp_path / "file.pdf"
     file_path.write_text("content")
     mock_client = MagicMock()
-    mock_client.files.create.return_value = types.SimpleNamespace(id="file-123")
+    mock_client.files.create.return_value = SimpleNamespace(id="file-123")
 
     monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
     upload_file(mock_client, file_path)
@@ -140,10 +140,10 @@ def test_upload_file_env_force_upload(monkeypatch, tmp_path):
     file_path = tmp_path / "file.bin"
     file_path.write_bytes(b"1234")
     mock_client = MagicMock()
-    mock_client.uploads.create.return_value = types.SimpleNamespace(id="upl-1")
-    mock_client.uploads.parts.create.return_value = types.SimpleNamespace(id="part1")
-    mock_client.uploads.complete.return_value = types.SimpleNamespace(
-        file=types.SimpleNamespace(id="file-x")
+    mock_client.uploads.create.return_value = SimpleNamespace(id="upl-1")
+    mock_client.uploads.parts.create.return_value = SimpleNamespace(id="part1")
+    mock_client.uploads.complete.return_value = SimpleNamespace(
+        file=SimpleNamespace(id="file-x")
     )
 
     monkeypatch.setenv("OPENAI_USE_UPLOAD", "1")

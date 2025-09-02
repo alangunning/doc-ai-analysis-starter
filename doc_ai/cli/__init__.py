@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 import os
 import sys
 import shlex
@@ -35,6 +35,7 @@ load_dotenv()
 console = Console()
 app = typer.Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
+    add_completion=False,
 )
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
@@ -49,10 +50,10 @@ def _main_callback(
 
 
 ASCII_ART = r"""
- ____   ___   ____      _      ___ 
+ ____   ___   ____      _      ___
 |  _ \ / _ \ / ___|    / \    |_ _|
-| | | | | | | |       / _ \    | | 
-| |_| | |_| | |___   / ___ \   | | 
+| | | | | | | |       / _ \    | |
+| |_| | |_| | |___   / ___ \   | |
 |____/ \___/ \____| /_/   \_\ |___|
 """
 
@@ -62,14 +63,27 @@ def _print_banner() -> None:  # pragma: no cover - visual flair only
 
 
 @app.command()
-def settings(
+def config(
     verbose: bool = typer.Option(
         None, "--verbose/--no-verbose", help="Toggle verbose error output"
-    )
+    ),
+    set_vars: list[str] = typer.Option(
+        None,
+        "--set",
+        help="Set VAR=VALUE pairs to update environment configuration",
+        metavar="VAR=VALUE",
+    ),
 ) -> None:
-    """Show or update runtime settings."""
+    """Show or update runtime configuration."""
     if verbose is not None:
         SETTINGS["verbose"] = verbose
+    if set_vars:
+        for item in set_vars:
+            try:
+                key, value = item.split("=", 1)
+            except ValueError as exc:  # pragma: no cover - handled by typer
+                raise typer.BadParameter("Use VAR=VALUE syntax") from exc
+            os.environ[key] = value
     console.print("Current settings:")
     console.print(f"  verbose: {SETTINGS['verbose']}")
     defaults = load_env_defaults()
@@ -85,7 +99,7 @@ def convert(
     source: str = typer.Argument(
         ..., help="Path or URL to raw document or folder"
     ),
-    format: List[OutputFormat] = typer.Option(
+    format: list[OutputFormat] = typer.Option(
         None,
         "--format",
         "-f",
@@ -213,7 +227,7 @@ def pipeline(
         Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
         help="Analysis prompt file",
     ),
-    format: List[OutputFormat] = typer.Option(
+    format: list[OutputFormat] = typer.Option(
         None,
         "--format",
         "-f",
