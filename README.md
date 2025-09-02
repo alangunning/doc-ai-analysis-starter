@@ -86,6 +86,11 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai pipeline data/sec-form-8k/
    ```
 
+   Run the CLI without arguments to enter an interactive shell with
+   tab-completion for commands and options.
+   The shell helper lives in ``doc_ai.cli.interactive`` so it can be reused in
+   other Typer-based projects.
+
 ## Directory Overview
 
 ```

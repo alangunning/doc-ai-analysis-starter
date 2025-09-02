@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 import os
 import sys
-import shlex
 import traceback
 import warnings
 import logging
@@ -14,6 +13,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv
+from .interactive import interactive_shell
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -266,43 +266,6 @@ def pipeline(
 __all__ = ["app", "analyze_doc", "validate_doc", "convert_path", "validate_file", "run_prompt", "main"]
 
 
-def _interactive_shell() -> None:  # pragma: no cover - CLI utility
-    try:
-        _print_banner()
-        app(prog_name="cli.py", args=["--help"])
-    except SystemExit:
-        pass
-    while True:
-        try:
-            command = input("> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            break
-        if not command:
-            continue
-        if command.lower() in {"exit", "quit"}:
-            break
-        if command.startswith("cd"):
-            parts = command.split(maxsplit=1)
-            target = Path(parts[1]).expanduser() if len(parts) > 1 else Path.home()
-            try:
-                os.chdir(target)
-            except OSError as exc:
-                console.print(f"[red]{exc}[/red]")
-            continue
-        full_cmd = command
-        if SETTINGS["verbose"]:
-            full_cmd += " --verbose"
-        try:
-            app(prog_name="cli.py", args=shlex.split(full_cmd))
-        except SystemExit:
-            pass
-        except Exception as exc:  # pragma: no cover - runtime error display
-            if SETTINGS["verbose"]:
-                traceback.print_exc()
-            else:
-                console.print(f"[red]{exc}[/red]")
-
-
 def main() -> None:
     """Entry point for running the CLI as a script."""
     if len(sys.argv) > 1:
@@ -318,4 +281,9 @@ def main() -> None:
             else:
                 console.print(f"[red]{exc}[/red]")
     else:
-        _interactive_shell()
+        interactive_shell(
+            app,
+            console=console,
+            print_banner=_print_banner,
+            verbose=SETTINGS["verbose"],
+        )
