@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 import runpy
 import sys
 from pathlib import Path
+import os
 import yaml
 import pytest
 
@@ -40,15 +41,17 @@ def test_validate_file_returns_json(tmp_path):
     uploads = []
 
     def fake_upload_file(
-        client, path, purpose, *, use_upload=None, progress=None, logger=None
+        client, path, purpose=None, *, use_upload=None, progress=None, logger=None
     ):
+        if purpose is None:
+            purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
         uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
     with patch(
         "doc_ai.github.validator.OpenAI", return_value=mock_client
     ) as mock_openai, patch(
-        "doc_ai.openai.responses.upload_file", side_effect=fake_upload_file
+        "doc_ai.github.validator.upload_file", side_effect=fake_upload_file
     ):
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -92,7 +95,7 @@ def test_validate_file_strips_code_fences(tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.openai.responses.upload_file", return_value="file-id"
+        "doc_ai.github.validator.upload_file", return_value="file-id"
     ):
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -126,7 +129,7 @@ def test_validate_file_bad_json(tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.openai.responses.upload_file", return_value="file-id"
+        "doc_ai.github.validator.upload_file", return_value="file-id"
     ):
         with pytest.raises(ValueError, match="not valid JSON"):
             validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
@@ -159,15 +162,17 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
     import doc_ai.openai.files as files_mod
 
     def fake_upload_file(
-        client, path, purpose, *, use_upload=None, progress=None, logger=None
+        client, path, purpose=None, *, use_upload=None, progress=None, logger=None
     ):
+        if purpose is None:
+            purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
         if use_upload is None:
             size = Path(path).stat().st_size
             use_upload = size > files_mod.DEFAULT_CHUNK_SIZE
         called.append(use_upload)
         return f"{Path(path).name}-id"
 
-    monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
+    monkeypatch.setattr("doc_ai.github.validator.upload_file", fake_upload_file)
     monkeypatch.setattr(files_mod, "DEFAULT_CHUNK_SIZE", 1)
 
     mock_response = MagicMock(output_text="{}")
@@ -205,8 +210,10 @@ def test_validate_file_env_purpose(monkeypatch, tmp_path):
     uploads: list[tuple[str, str]] = []
 
     def fake_upload_file(
-        client, path, purpose, *, use_upload=None, progress=None, logger=None
+        client, path, purpose=None, *, use_upload=None, progress=None, logger=None
     ):
+        if purpose is None:
+            purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
         uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
@@ -216,7 +223,7 @@ def test_validate_file_env_purpose(monkeypatch, tmp_path):
 
     monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.openai.responses.upload_file", side_effect=fake_upload_file
+        "doc_ai.github.validator.upload_file", side_effect=fake_upload_file
     ):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -248,7 +255,7 @@ def test_validate_file_with_urls(tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), \
-         patch("doc_ai.openai.responses.upload_file") as up, \
+         patch("doc_ai.github.validator.upload_file") as up, \
          patch("requests.get") as fake_get:
         fake_get.return_value.text = "rendered"
         fake_get.return_value.raise_for_status = lambda: None
@@ -293,7 +300,7 @@ def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     with patch(
         "doc_ai.github.validator.OpenAI", return_value=mock_client
     ) as mock_openai, patch(
-        "doc_ai.openai.responses.upload_file", return_value="file1"
+        "doc_ai.github.validator.upload_file", return_value="file1"
     ):
         validate_file(
             raw_path,
@@ -338,7 +345,7 @@ def test_validate_file_custom_base_uses_github_token(monkeypatch, tmp_path):
     with patch(
         "doc_ai.github.validator.OpenAI", return_value=mock_client
     ) as mock_openai, patch(
-        "doc_ai.openai.responses.upload_file", return_value="file1"
+        "doc_ai.github.validator.upload_file", return_value="file1"
     ):
         validate_file(
             raw_path,

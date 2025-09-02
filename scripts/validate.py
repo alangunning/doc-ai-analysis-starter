@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+from rich.console import Console
+from rich.logging import RichHandler
 
 from doc_ai import OutputFormat
 from doc_ai.github import validate_file
@@ -72,13 +74,14 @@ if __name__ == "__main__":
         raise SystemExit(0)
     args = parser.parse_args()
 
+    console = Console()
     logger = None
     log_path = args.log_file
     if args.verbose or log_path is not None:
         logger = logging.getLogger("doc_ai.validate")
         logger.setLevel(logging.DEBUG)
         if args.verbose:
-            sh = logging.StreamHandler()
+            sh = RichHandler(console=console, show_time=False)
             sh.setLevel(logging.DEBUG)
             logger.addHandler(sh)
         if log_path is None:
@@ -105,6 +108,7 @@ if __name__ == "__main__":
         base_url=args.base_model_url,
         show_progress=True,
         logger=logger,
+        console=console,
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")

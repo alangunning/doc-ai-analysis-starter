@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from ..converter import OutputFormat
-from ..openai import create_response
+from ..openai import create_response, upload_file
+from rich.console import Console
 from rich.progress import Progress
 from .prompts import DEFAULT_MODEL_BASE_URL
 
@@ -33,6 +34,7 @@ def validate_file(
     base_url: str | None = None,
     show_progress: bool = False,
     logger: logging.Logger | None = None,
+    console: Console | None = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -51,6 +53,9 @@ def validate_file(
         display progress bars.
     logger:
         Optional logger to receive serialized request and response payloads.
+    console:
+        Optional :class:`rich.console.Console` used for rendering progress bars and
+        for rich logging handlers. A new console is created when omitted.
     """
 
     base = (
@@ -95,8 +100,9 @@ def validate_file(
     progress_cb: Optional[Callable[[int], None]] = None
     progress: Optional[Progress] = None
     upload_task = validate_task = None
+    file_ids: List[str] = []
     if show_progress:
-        progress = Progress()
+        progress = Progress(console=console or Console())
         progress.start()
         if file_paths:
             total = sum(p.stat().st_size for p in file_paths)
@@ -104,10 +110,23 @@ def validate_file(
 
             def progress_cb(n: int) -> None:  # pragma: no cover - callback
                 progress.advance(upload_task, n)
-        validate_task = progress.add_task("Validating", total=100)
 
     try:
-        if progress and validate_task is not None:
+        if file_paths:
+            for path in file_paths:
+                file_ids.append(
+                    upload_file(
+                        client,
+                        path,
+                        progress=progress_cb,
+                        logger=logger,
+                    )
+                )
+        if progress and upload_task is not None:
+            progress.update(upload_task, completed=sum(p.stat().st_size for p in file_paths))
+            progress.remove_task(upload_task)
+        if progress:
+            validate_task = progress.add_task("Validating", total=100)
             progress.advance(validate_task, 5)
         result = create_response(
             client,
@@ -115,8 +134,7 @@ def validate_file(
             system=system_msgs,
             texts=texts,
             file_urls=file_urls or None,
-            file_paths=file_paths or None,
-            progress=progress_cb,
+            file_ids=file_ids or None,
             logger=logger,
             **spec.get("modelParameters", {}),
         )

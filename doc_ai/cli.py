@@ -125,6 +125,7 @@ def validate_doc(
     base_url: str | None = None,
     show_progress: bool = False,
     logger: logging.Logger | None = None,
+    console: Console | None = None,
 ) -> None:
     meta = load_metadata(raw)
     file_hash = compute_hash(raw)
@@ -156,6 +157,7 @@ def validate_doc(
         base_url=base_url,
         show_progress=show_progress,
         logger=logger,
+        console=console,
     )
     if not verdict.get("match", False):
         raise RuntimeError(f"Mismatch detected: {verdict}")
@@ -284,11 +286,14 @@ def validate(
         raise typer.Exit()
     logger: logging.Logger | None = None
     log_path = log_file
+    console = Console()
     if verbose or log_path is not None:
         logger = logging.getLogger("doc_ai.validate")
         logger.setLevel(logging.DEBUG)
         if verbose:
-            sh = logging.StreamHandler()
+            from rich.logging import RichHandler
+
+            sh = RichHandler(console=console, show_time=False)
             sh.setLevel(logging.DEBUG)
             logger.addHandler(sh)
         if log_path is None:
@@ -306,6 +311,7 @@ def validate(
         base_model_url,
         show_progress=True,
         logger=logger,
+        console=console,
     )
 
 
