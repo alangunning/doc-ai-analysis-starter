@@ -9,6 +9,7 @@ import sys
 import shlex
 import re
 import traceback
+import warnings
 
 import typer
 from rich.console import Console
@@ -220,6 +221,8 @@ def convert(
     """Convert files using Docling."""
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
+    if not SETTINGS["verbose"]:
+        warnings.filterwarnings("ignore")
     if source.startswith(("http://", "https://")):
         results = convert_path(source, fmts)
     else:

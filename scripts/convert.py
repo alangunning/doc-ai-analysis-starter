@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import warnings
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,6 +26,12 @@ if __name__ == "__main__":
             "If omitted, the OUTPUT_FORMATS environment variable or Markdown is used."
         ),
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Emit verbose warnings and library output",
+    )
     args = parser.parse_args()
 
     in_path = Path(args.source)
@@ -40,6 +47,9 @@ if __name__ == "__main__":
                     f"Invalid output format '{val}'. Choose from: {valid}"
                 ) from exc
         return formats
+
+    if not args.verbose:
+        warnings.filterwarnings("ignore")
 
     if args.formats:
         fmts = parse_formats(args.formats)

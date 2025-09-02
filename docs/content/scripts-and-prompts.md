@@ -20,7 +20,7 @@ Convert raw documents (PDF, Word, slides, etc.) into one or more formats:
 ```bash
 python scripts/convert.py data/sample/sample.pdf --format markdown --format html
 ```
-Outputs are written next to the source. You can also set a comma-separated list in the `OUTPUT_FORMATS` environment variable (e.g., `OUTPUT_FORMATS=markdown,html`).
+Add `-v/--verbose` to surface library warnings. Outputs are written next to the source. You can also set a comma-separated list in the `OUTPUT_FORMATS` environment variable (e.g., `OUTPUT_FORMATS=markdown,html`).
 
 ```mermaid
 sequenceDiagram
