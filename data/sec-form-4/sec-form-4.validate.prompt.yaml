@@ -7,50 +7,49 @@ modelParameters:
   text:
     format:
       type: json_schema
-      json_schema:
-        name: Form4Validation
-        schema:
-          type: object
-          additionalProperties: false
-          properties:
-            match:
-              type: boolean
-            issues:
-              type: array
-              items:
-                type: object
-                additionalProperties: false
-                properties:
-                  type:
-                    type: string
-                    enum: [number_mismatch, missing_data, extra_data, table_error, code_invalid, checkbox_mismatch, other]
-                  description:
-                    type: string
-                  pdf_quote:
-                    type: string
-                  md_quote:
-                    oneOf:
-                      - type: string
-                      - type: 'null'
-                  suggested_md:
-                    type: string
-                  pdf_page:
-                    oneOf:
-                      - type: integer
-                      - type: 'null'
-                  loc:
-                    type: object
-                    additionalProperties: false
-                    properties:
-                      md_char_start:
-                        type: integer
-                      md_char_end:
-                        type: integer
-                    required: [md_char_start, md_char_end]
-                  confidence:
-                    type: number
-                required: [type, description, pdf_quote, md_quote, suggested_md, pdf_page, loc, confidence]
-          required: [match, issues]
+      name: Form4Validation
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          match:
+            type: boolean
+          issues:
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              properties:
+                type:
+                  type: string
+                  enum: [number_mismatch, missing_data, extra_data, table_error, code_invalid, checkbox_mismatch, other]
+                description:
+                  type: string
+                pdf_quote:
+                  type: string
+                md_quote:
+                  oneOf:
+                    - type: string
+                    - type: 'null'
+                suggested_md:
+                  type: string
+                pdf_page:
+                  oneOf:
+                    - type: integer
+                    - type: 'null'
+                loc:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    md_char_start:
+                      type: integer
+                    md_char_end:
+                      type: integer
+                  required: [md_char_start, md_char_end]
+                confidence:
+                  type: number
+              required: [type, description, pdf_quote, md_quote, suggested_md, pdf_page, loc, confidence]
+        required: [match, issues]
 messages:
   - role: system
     content: |-
