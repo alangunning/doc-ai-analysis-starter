@@ -1,4 +1,5 @@
 import json
+import os
 from unittest.mock import patch
 
 from doc_ai.converter import OutputFormat, convert_files
@@ -67,3 +68,39 @@ def test_convert_files_return_status_optional(tmp_path):
 
     assert written == outputs
     assert outputs[OutputFormat.TEXT].read_text() == "plain"
+
+
+def test_convert_files_passes_progress_flag(tmp_path):
+    input_file = tmp_path / "input.pdf"
+    input_file.write_bytes(b"pdf")
+
+    outputs = {OutputFormat.TEXT: tmp_path / "out.txt"}
+
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+        patch("doc_ai.converter.document_converter.Progress") as MockProgress,
+    ):
+        from doc_ai.converter import document_converter as dc
+        dc._converter_instance = None
+        # Use an in-memory console to avoid writing to stdout
+        from rich.console import Console
+        dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
+        mock_progress = MockProgress.return_value.__enter__.return_value
+        mock_progress.add_task.return_value = 1
+
+        class DummyDoc:
+            def export_to_text(self):
+                return "plain"
+
+        class DummyResult:
+            document = DummyDoc()
+            status = "SUCCESS"
+
+        MockConverter.return_value.convert.return_value = DummyResult()
+
+        convert_files(input_file, outputs)
+
+        MockConverter.return_value.convert.assert_called_with(
+            input_file, progress=True
+        )

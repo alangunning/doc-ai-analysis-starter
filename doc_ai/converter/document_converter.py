@@ -168,13 +168,19 @@ def convert_files(
             transient=True,
         ) as progress:
             task = progress.add_task(f"Converting {input_path}", total=total)
-            result = converter.convert(input_path)
+            try:
+                result = converter.convert(input_path, progress=True)
+            except TypeError:  # older Docling versions
+                result = converter.convert(input_path)
             progress.advance(task)
             status = getattr(result, "status", None)
             doc = result.document
             _write_outputs(doc, progress, task)
     else:
-        result = converter.convert(input_path)
+        try:
+            result = converter.convert(input_path, progress=False)
+        except TypeError:  # older Docling versions
+            result = converter.convert(input_path)
         status = getattr(result, "status", None)
         doc = result.document
         _write_outputs(doc)
