@@ -11,7 +11,6 @@ import re
 import traceback
 import warnings
 import logging
-import click
 
 import typer
 from rich.console import Console
@@ -99,21 +98,6 @@ def settings(
     for var in env_vars:
         console.print(f"  {var}: {os.getenv(var, '')}")
 
-
-@app.command("help")
-def show_help(ctx: typer.Context, command: List[str] = typer.Argument(None)) -> None:
-    """Show help for a command."""
-    app_cmd = typer.main.get_command(app)
-    if command:
-        cmd = app_cmd
-        for name in command:
-            cmd = cmd.get_command(ctx, name)
-            if cmd is None:
-                raise typer.BadParameter(f"Unknown command: {' '.join(command)}")
-        sub_ctx = click.Context(cmd, info_name=" ".join(command))
-        typer.echo(cmd.get_help(sub_ctx))
-    else:
-        typer.echo(app_cmd.get_help(ctx))
 
 
 def validate_doc(
@@ -267,9 +251,8 @@ def convert(
 
 @app.command()
 def validate(
-    ctx: typer.Context,
-    raw: Optional[Path] = typer.Argument(None, help="Path to raw document"),
-    rendered: Optional[Path] = typer.Argument(None, help="Path to converted file"),
+    raw: Path = typer.Argument(..., help="Path to raw document"),
+    rendered: Path = typer.Argument(..., help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
     prompt: Optional[Path] = typer.Option(
         None,
@@ -288,15 +271,6 @@ def validate(
     ),
 ) -> None:
     """Validate converted output against the original file."""
-    if (
-        raw is None
-        or rendered is None
-        or str(raw) == "help"
-        or str(rendered) == "help"
-        or "help" in ctx.args
-    ):
-        typer.echo(ctx.get_help())
-        raise typer.Exit()
     logger: logging.Logger | None = None
     log_path = log_file
     console = Console()
@@ -418,6 +392,14 @@ def _interactive_shell() -> None:  # pragma: no cover - CLI utility
             continue
         if command.lower() in {"exit", "quit"}:
             break
+        if command.startswith("cd"):
+            parts = command.split(maxsplit=1)
+            target = Path(parts[1]).expanduser() if len(parts) > 1 else Path.home()
+            try:
+                os.chdir(target)
+            except OSError as exc:
+                console.print(f"[red]{exc}[/red]")
+            continue
         full_cmd = command
         if SETTINGS["verbose"]:
             full_cmd += " --verbose"

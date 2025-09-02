@@ -111,3 +111,18 @@ def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
     assert calls == ["assistants"]
     client.responses.create.assert_called_once()
 
+
+def test_create_response_passes_response_format():
+    client = MagicMock()
+    create_response(
+        client,
+        model="gpt-4.1",
+        texts=["hi"],
+        response_format={"type": "json_schema"},
+    )
+    client.responses.create.assert_called_once_with(
+        model="gpt-4.1",
+        input=[{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
+        response_format={"type": "json_schema"},
+    )
+
