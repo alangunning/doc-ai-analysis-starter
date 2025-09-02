@@ -1,6 +1,7 @@
 import argparse
 import os
 import logging
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -66,6 +67,9 @@ if __name__ == "__main__":
         type=Path,
         help="Write request/response details to this file",
     )
+    if len(sys.argv) > 1 and sys.argv[1] in {"help", "-h", "--help"}:
+        parser.print_help()
+        raise SystemExit(0)
     args = parser.parse_args()
 
     logger = None

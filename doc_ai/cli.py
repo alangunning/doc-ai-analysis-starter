@@ -10,6 +10,8 @@ import shlex
 import re
 import traceback
 import warnings
+import logging
+import click
 
 import typer
 from rich.console import Console
@@ -98,6 +100,22 @@ def settings(
         console.print(f"  {var}: {os.getenv(var, '')}")
 
 
+@app.command("help")
+def show_help(ctx: typer.Context, command: List[str] = typer.Argument(None)) -> None:
+    """Show help for a command."""
+    app_cmd = typer.main.get_command(app)
+    if command:
+        cmd = app_cmd
+        for name in command:
+            cmd = cmd.get_command(ctx, name)
+            if cmd is None:
+                raise typer.BadParameter(f"Unknown command: {' '.join(command)}")
+        sub_ctx = click.Context(cmd, info_name=" ".join(command))
+        typer.echo(cmd.get_help(sub_ctx))
+    else:
+        typer.echo(app_cmd.get_help(ctx))
+
+
 def validate_doc(
     raw: Path,
     rendered: Path,
@@ -106,6 +124,7 @@ def validate_doc(
     model: str | None = None,
     base_url: str | None = None,
     show_progress: bool = False,
+    logger: logging.Logger | None = None,
 ) -> None:
     meta = load_metadata(raw)
     file_hash = compute_hash(raw)
@@ -136,6 +155,7 @@ def validate_doc(
         model=model,
         base_url=base_url,
         show_progress=show_progress,
+        logger=logger,
     )
     if not verdict.get("match", False):
         raise RuntimeError(f"Mismatch detected: {verdict}")
@@ -233,8 +253,9 @@ def convert(
 
 @app.command()
 def validate(
-    raw: Path = typer.Argument(..., help="Path to raw document"),
-    rendered: Path = typer.Argument(..., help="Path to converted file"),
+    ctx: typer.Context,
+    raw: Optional[Path] = typer.Argument(None, help="Path to raw document"),
+    rendered: Optional[Path] = typer.Argument(None, help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
     prompt: Path = typer.Option(
         Path(".github/prompts/validate-output.prompt.yaml"),
@@ -246,9 +267,46 @@ def validate(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write request/response details to this file"
+    ),
 ) -> None:
     """Validate converted output against the original file."""
-    validate_doc(raw, rendered, fmt, prompt, model, base_model_url, show_progress=True)
+    if (
+        raw is None
+        or rendered is None
+        or str(raw) == "help"
+        or str(rendered) == "help"
+        or "help" in ctx.args
+    ):
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
+    logger: logging.Logger | None = None
+    log_path = log_file
+    if verbose or log_path is not None:
+        logger = logging.getLogger("doc_ai.validate")
+        logger.setLevel(logging.DEBUG)
+        if verbose:
+            sh = logging.StreamHandler()
+            sh.setLevel(logging.DEBUG)
+            logger.addHandler(sh)
+        if log_path is None:
+            log_path = raw.with_suffix(".validate.log")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        fh = logging.FileHandler(log_path)
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+    validate_doc(
+        raw,
+        rendered,
+        fmt,
+        prompt,
+        model,
+        base_model_url,
+        show_progress=True,
+        logger=logger,
+    )
 
 
 @app.command()
