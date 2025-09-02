@@ -150,10 +150,16 @@ def validate_doc(
             )
     prompt_path = prompt
     if prompt_path is None:
-        local_prompt = raw.with_name(f"{raw.stem}-validate.prompt.yaml")
-        prompt_path = local_prompt if local_prompt.exists() else Path(
-            ".github/prompts/validate-output.prompt.yaml"
-        )
+        doc_prompt = raw.with_name(f"{raw.stem}.validate.prompt.yaml")
+        dir_prompt = raw.with_name("validate.prompt.yaml")
+        if doc_prompt.exists():
+            prompt_path = doc_prompt
+        elif dir_prompt.exists():
+            prompt_path = dir_prompt
+        else:
+            prompt_path = Path(
+                ".github/prompts/validate-output.validate.prompt.yaml"
+            )
     verdict = validate_file(
         raw,
         rendered,
@@ -265,7 +271,11 @@ def validate(
     raw: Optional[Path] = typer.Argument(None, help="Path to raw document"),
     rendered: Optional[Path] = typer.Argument(None, help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format"),
-    prompt: Optional[Path] = typer.Option(None, "--prompt", help="Prompt file"),
+    prompt: Optional[Path] = typer.Option(
+        None,
+        "--prompt",
+        help="Prompt file (overrides auto-detected *.validate.prompt.yaml)",
+    ),
     model: Optional[str] = typer.Option(
         None, "--model", help="Model name override"
     ),
@@ -370,7 +380,9 @@ def pipeline(
     env_fmts = _parse_env_formats()
     fmts = format or env_fmts or [OutputFormat.MARKDOWN]
     convert_path(source, fmts)
-    validation_prompt = Path(".github/prompts/validate-output.prompt.yaml")
+    validation_prompt = Path(
+        ".github/prompts/validate-output.validate.prompt.yaml"
+    )
     for raw_file in source.rglob("*"):
         if not raw_file.is_file():
             continue
