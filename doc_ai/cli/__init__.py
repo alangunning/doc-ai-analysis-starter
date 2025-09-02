@@ -12,7 +12,7 @@ import logging
 import typer
 from rich.console import Console
 from rich.table import Table
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key, find_dotenv
 from .interactive import interactive_shell
 
 # Ensure project root is first on sys.path when running as a script.
@@ -78,12 +78,15 @@ def config(
     if verbose is not None:
         SETTINGS["verbose"] = verbose
     if set_vars:
+        env_path = Path(find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env")
+        env_path.touch(exist_ok=True)
         for item in set_vars:
             try:
                 key, value = item.split("=", 1)
             except ValueError as exc:  # pragma: no cover - handled by typer
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
             os.environ[key] = value
+            set_key(str(env_path), key, value, quote_mode="never")
     console.print("Current settings:")
     console.print(f"  verbose: {SETTINGS['verbose']}")
     defaults = load_env_defaults()

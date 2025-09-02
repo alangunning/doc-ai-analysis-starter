@@ -36,9 +36,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
    Copy `.env.example` to `.env` and adjust variables as needed. Environment
    variables from the runtime override values in the file and command-line
-   flags override both. See the
-   [Configuration guide](docs/content/configuration.md) for details on
-   workflow toggles and model settings.
+   flags override both. Use `doc-ai config --set VAR=VALUE` to update the `.env`
+   file from the CLI. See the [Configuration guide](docs/content/configuration.md)
+   for details on workflow toggles and model settings.
 
 4. **Try it out**
 
