@@ -89,16 +89,21 @@ def validate_file(
 
     progress_cb: Optional[Callable[[int], None]] = None
     progress: Optional[Progress] = None
-    if show_progress and file_paths:
-        total = sum(p.stat().st_size for p in file_paths)
+    upload_task = validate_task = None
+    if show_progress:
         progress = Progress()
         progress.start()
-        task = progress.add_task("Uploading", total=total)
+        if file_paths:
+            total = sum(p.stat().st_size for p in file_paths)
+            upload_task = progress.add_task("Uploading", total=total)
 
-        def progress_cb(n: int) -> None:
-            progress.advance(task, n)
+            def progress_cb(n: int) -> None:  # pragma: no cover - callback
+                progress.advance(upload_task, n)
+        validate_task = progress.add_task("Validating", total=100)
 
     try:
+        if progress and validate_task is not None:
+            progress.advance(validate_task, 5)
         result = create_response(
             client,
             model=model or spec["model"],
@@ -109,6 +114,8 @@ def validate_file(
             progress=progress_cb,
             **spec.get("modelParameters", {}),
         )
+        if progress and validate_task is not None:
+            progress.update(validate_task, completed=100)
     finally:
         if progress is not None:
             progress.stop()

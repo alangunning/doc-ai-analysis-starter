@@ -1,15 +1,15 @@
 name: Validate Rendered Output
-description: Compare original documents with their rendered representation.
+description: Ensure converted content faithfully reflects the original.
 model: gpt-4o-mini
 modelParameters:
   temperature: 0
 messages:
   - role: system
     content: |-
-      You verify that a converted document representation matches the original.
+      You check that numbers, figures, and tables in a converted document remain accurate.
   - role: user
     content: |-
-      Compare the provided PDF and {format} content.
+      Compare the PDF and {format} content. The structure or order may differ; focus only on whether the information is correct.
       Return ONLY JSON with this schema:
       {"match": bool,
        "issues": [
@@ -17,7 +17,7 @@ messages:
            "page": int,
            "pdf_quote": str,
            "md_quote": str,
-           "type": "number_mismatch"|"missing_text"|"extra_text"|"table_structure"|"heading_level"|"other",
+           "type": "number_mismatch"|"missing_data"|"extra_data"|"table_error"|"other",
            "confidence": float
          }
        ]

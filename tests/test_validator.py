@@ -365,7 +365,7 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
 
     called: dict[str, str] = {}
 
-    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None):
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs):
         called["model"] = model
         called["base_url"] = base_url
         return {"match": True}
@@ -409,7 +409,7 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
 
     called: dict[str, str] = {}
 
-    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None):
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs):
         called["model"] = model
         called["base_url"] = base_url
         return {"match": True}

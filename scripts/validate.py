@@ -71,6 +71,7 @@ if __name__ == "__main__":
         args.prompt,
         model=args.model,
         base_url=args.base_model_url,
+        show_progress=True,
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
