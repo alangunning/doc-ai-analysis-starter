@@ -19,11 +19,10 @@ from .files import (
 
 def input_text(text: str, fmt: str = "text") -> Dict[str, Any]:
     """Create an ``input_text`` payload with an explicit format."""
-
-    return {
-        "type": "input_text",
-        "text": {"value": text, "format": {"name": fmt}},
-    }
+    payload: Dict[str, Any] = {"type": "input_text", "text": text}
+    if fmt:
+        payload["format"] = {"name": fmt}
+    return payload
 
 
 def _ensure_seq(value: Union[Any, Sequence[Any], None]) -> Sequence[Any]:

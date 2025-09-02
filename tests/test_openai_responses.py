@@ -21,7 +21,8 @@ def test_create_response_with_mixed_inputs():
     expected_content = [
         {
             "type": "input_text",
-            "text": {"value": "what is in this file?", "format": {"name": "text"}},
+            "text": "what is in this file?",
+            "format": {"name": "text"},
         },
         {"type": "input_file", "file_url": "https://example.com/file.pdf"},
         {"type": "input_file", "file_id": "file-123"},
@@ -50,7 +51,8 @@ def test_create_response_with_file_url_wrapper():
                 "content": [
                     {
                         "type": "input_text",
-                        "text": {"value": "what is in this file?", "format": {"name": "text"}},
+                        "text": "what is in this file?",
+                        "format": {"name": "text"},
                     },
                     {"type": "input_file", "file_url": "https://example.com/file.pdf"},
                 ],
@@ -97,7 +99,8 @@ def test_create_response_with_system_message():
                 "content": [
                     {
                         "type": "input_text",
-                        "text": {"value": "hello", "format": {"name": "text"}},
+                        "text": "hello",
+                        "format": {"name": "text"},
                     }
                 ],
             },
@@ -142,7 +145,8 @@ def test_create_response_passes_response_format():
                 "content": [
                     {
                         "type": "input_text",
-                        "text": {"value": "hi", "format": {"name": "text"}},
+                        "text": "hi",
+                        "format": {"name": "text"},
                     }
                 ],
             }
