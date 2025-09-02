@@ -8,6 +8,8 @@ in-memory bytes.
 from __future__ import annotations
 
 import base64
+import json
+import logging
 import mimetypes
 from pathlib import Path
 import os
@@ -40,13 +42,15 @@ def upload_file(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
+    logger: Optional[logging.Logger] = None,
 ) -> str:
     """Upload ``file`` to OpenAI and return its ``file_id``.
 
     By default this uses the ``/v1/files`` endpoint.  For large files, set
     ``use_upload=True`` to leverage the resumable ``/v1/uploads`` API which
     splits the file into parts of ``chunk_size`` bytes. When ``progress`` is
-    provided it is called with the number of bytes uploaded.
+    provided it is called with the number of bytes uploaded. When ``logger`` is
+    supplied the request and response payloads are logged for debugging.
     """
     size = None
     if isinstance(file, (str, Path)):
@@ -67,6 +71,24 @@ def upload_file(
         else:
             use_upload = size is not None and size > chunk_size
 
+    if logger:
+        name = (
+            Path(file).name
+            if isinstance(file, (str, Path))
+            else Path(getattr(file, "name", "upload.bin")).name
+        )
+        logger.debug(
+            "File upload request: %s",
+            json.dumps(
+                {
+                    "filename": name,
+                    "purpose": purpose,
+                    "size": size,
+                    "use_upload": use_upload,
+                }
+            ),
+        )
+
     if use_upload:
         return upload_large_file(
             client,
@@ -75,11 +97,18 @@ def upload_file(
             chunk_size=chunk_size,
             mime_type=mime_type,
             progress=progress,
+            logger=logger,
         )
 
     fh, should_close = _open_file(file)
     try:
         response = client.files.create(file=fh, purpose=purpose)
+        if logger:
+            try:
+                body = json.dumps(response.model_dump(), indent=2)
+            except Exception:  # pragma: no cover - best effort
+                body = str(response)
+            logger.debug("File upload response: %s", body)
     finally:
         if should_close:
             fh.close()
@@ -107,10 +136,11 @@ def input_file_from_path(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
+    logger: Optional[logging.Logger] = None,
 ) -> Dict[str, str]:
     """Upload ``path`` and return a file input payload referencing it.
 
-    ``progress`` is forwarded to :func:`upload_file`.
+    ``progress`` and ``logger`` are forwarded to :func:`upload_file`.
     """
     file_id = upload_file(
         client,
@@ -120,6 +150,7 @@ def input_file_from_path(
         chunk_size=chunk_size,
         mime_type=mime_type,
         progress=progress,
+        logger=logger,
     )
     return input_file_from_id(file_id)
 
@@ -147,13 +178,16 @@ def upload_large_file(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     mime_type: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
+    logger: Optional[logging.Logger] = None,
 ) -> str:
     """Upload a file using the resumable ``/v1/uploads`` API.
 
     The file is split into chunks of ``chunk_size`` bytes which are uploaded
     sequentially as Parts before completing the Upload.  Returns the resulting
     ``file_id`` that can be used with other OpenAI APIs. If ``progress`` is
-    provided it is invoked with the size of each chunk as it uploads.
+    provided it is invoked with the size of each chunk as it uploads. When
+    ``logger`` is provided request and response payloads are recorded for
+    debugging.
     """
     if purpose is None:
         purpose = os.getenv("OPENAI_FILE_PURPOSE", "user_data")
@@ -175,12 +209,31 @@ def upload_large_file(
 
     mime = mime_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
 
+    if logger:
+        logger.debug(
+            "Upload create request: %s",
+            json.dumps(
+                {
+                    "filename": filename,
+                    "purpose": purpose,
+                    "bytes": size,
+                    "mime_type": mime,
+                }
+            ),
+        )
+
     upload = client.uploads.create(
         purpose=purpose,
         filename=filename,
         bytes=size,
         mime_type=mime,
     )
+    if logger:
+        try:
+            body = json.dumps(upload.model_dump(), indent=2)
+        except Exception:  # pragma: no cover - best effort
+            body = str(upload)
+        logger.debug("Upload create response: %s", body)
 
     part_ids: List[str] = []
     try:
@@ -190,6 +243,12 @@ def upload_large_file(
                 break
             part = client.uploads.parts.create(upload.id, data=chunk)
             part_ids.append(part.id)
+            if logger:
+                try:
+                    part_body = json.dumps(part.model_dump(), indent=2)
+                except Exception:  # pragma: no cover - best effort
+                    part_body = str(part)
+                logger.debug("Upload part response: %s", part_body)
             if progress:
                 progress(len(chunk))
     finally:
@@ -197,4 +256,10 @@ def upload_large_file(
             fh.close()
 
     completed = client.uploads.complete(upload.id, part_ids=part_ids)
+    if logger:
+        try:
+            comp_body = json.dumps(completed.model_dump(), indent=2)
+        except Exception:  # pragma: no cover - best effort
+            comp_body = str(completed)
+        logger.debug("Upload complete response: %s", comp_body)
     return completed.file.id

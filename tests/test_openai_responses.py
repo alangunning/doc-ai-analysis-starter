@@ -59,7 +59,9 @@ def test_create_response_with_file_paths(monkeypatch, tmp_path):
 
     calls = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
         calls.append(use_upload)
         return "file-id"
 
@@ -94,7 +96,9 @@ def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
 
     calls = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
         calls.append(purpose)
         return "file-id"
 

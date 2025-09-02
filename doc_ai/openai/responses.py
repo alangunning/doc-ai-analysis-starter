@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Tuple, Union
 from pathlib import Path
+import json
+import logging
 import os
 
 from openai import OpenAI
@@ -43,6 +45,7 @@ def create_response(
     system: Union[str, Sequence[str], None] = None,
     file_purpose: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
+    logger: Optional[logging.Logger] = None,
     **kwargs: Any,
 ) -> Any:
     """Call the Responses API with a mix of inputs.
@@ -73,6 +76,8 @@ def create_response(
     progress:
         Optional callback invoked with the number of bytes uploaded. Useful for
         displaying progress bars.
+    logger:
+        Optional logger for emitting request and response payloads.
     """
 
     file_purpose = file_purpose or os.getenv("OPENAI_FILE_PURPOSE", "user_data")
@@ -93,6 +98,7 @@ def create_response(
             p,
             purpose=file_purpose,
             progress=progress,
+            logger=logger,
         )
         content.append(input_file_from_id(file_id))
 
@@ -103,7 +109,19 @@ def create_response(
 
     payload: Dict[str, Any] = {"model": model, "input": messages}
     payload.update(kwargs)
-    return client.responses.create(**payload)
+    if logger:
+        logger.debug(
+            "Responses API request: %s",
+            json.dumps(payload, indent=2),
+        )
+    result = client.responses.create(**payload)
+    if logger:
+        try:
+            body = json.dumps(result.model_dump(), indent=2)
+        except Exception:  # pragma: no cover - best effort
+            body = str(result)
+        logger.debug("Responses API response: %s", body)
+    return result
 
 
 def create_response_with_file_url(
@@ -112,6 +130,7 @@ def create_response_with_file_url(
     model: str,
     file_url: str,
     prompt: str,
+    logger: Optional[logging.Logger] = None,
 ) -> Any:
     """Backward compatible wrapper for a single URL and prompt."""
 
@@ -120,4 +139,5 @@ def create_response_with_file_url(
         model=model,
         texts=[prompt],
         file_urls=[file_url],
+        logger=logger,
     )

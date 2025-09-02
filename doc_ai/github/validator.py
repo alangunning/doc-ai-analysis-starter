@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
@@ -30,6 +31,7 @@ def validate_file(
     model: str | None = None,
     base_url: str | None = None,
     show_progress: bool = False,
+    logger: logging.Logger | None = None,
 ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
@@ -46,6 +48,8 @@ def validate_file(
     show_progress:
         When ``True``, emit progress events for file uploads so callers can
         display progress bars.
+    logger:
+        Optional logger to receive serialized request and response payloads.
     """
 
     base = (
@@ -112,6 +116,7 @@ def validate_file(
             file_urls=file_urls or None,
             file_paths=file_paths or None,
             progress=progress_cb,
+            logger=logger,
             **spec.get("modelParameters", {}),
         )
         if progress and validate_task is not None:
@@ -121,6 +126,8 @@ def validate_file(
             progress.stop()
 
     text = (result.output_text or "").strip()
+    if logger:
+        logger.debug("Validation output_text: %s", text)
     if not text:
         raise ValueError("Model response contained no text")
     try:

@@ -1,5 +1,6 @@
 import argparse
 import os
+import logging
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -54,7 +55,34 @@ if __name__ == "__main__":
         or "https://api.openai.com/v1",
         help="Model base URL override",
     )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable debug logging",
+    )
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        help="Write request/response details to this file",
+    )
     args = parser.parse_args()
+
+    logger = None
+    log_path = args.log_file
+    if args.verbose or log_path is not None:
+        logger = logging.getLogger("doc_ai.validate")
+        logger.setLevel(logging.DEBUG)
+        if args.verbose:
+            sh = logging.StreamHandler()
+            sh.setLevel(logging.DEBUG)
+            logger.addHandler(sh)
+        if log_path is None:
+            log_path = args.raw.with_suffix(".validate.log")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        fh = logging.FileHandler(log_path)
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
 
     meta = load_metadata(args.raw)
     file_hash = compute_hash(args.raw)
@@ -72,6 +100,7 @@ if __name__ == "__main__":
         model=args.model,
         base_url=args.base_model_url,
         show_progress=True,
+        logger=logger,
     )
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")

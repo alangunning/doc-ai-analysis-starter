@@ -39,7 +39,9 @@ def test_validate_file_returns_json(tmp_path):
 
     uploads = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
         uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
@@ -122,7 +124,9 @@ def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
 
     import doc_ai.openai.files as files_mod
 
-    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
         if use_upload is None:
             size = Path(path).stat().st_size
             use_upload = size > files_mod.DEFAULT_CHUNK_SIZE
@@ -166,7 +170,9 @@ def test_validate_file_env_purpose(monkeypatch, tmp_path):
 
     uploads: list[tuple[str, str]] = []
 
-    def fake_upload_file(client, path, purpose, *, use_upload=None, progress=None):
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
         uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
