@@ -28,15 +28,15 @@ modelParameters:
                 pdf_quote:
                   type: string
                 md_quote:
-                  oneOf:
-                    - type: string
-                    - type: 'null'
+                  type:
+                    - string
+                    - 'null'
                 suggested_md:
                   type: string
                 pdf_page:
-                  oneOf:
-                    - type: integer
-                    - type: 'null'
+                  type:
+                    - integer
+                    - 'null'
                 loc:
                   type: object
                   additionalProperties: false
