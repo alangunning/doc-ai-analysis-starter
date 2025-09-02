@@ -12,8 +12,8 @@ import logging
 import typer
 from rich.console import Console
 from rich.table import Table
-from dotenv import load_dotenv
-from .interactive import interactive_shell
+from dotenv import load_dotenv, set_key, find_dotenv
+from .interactive import interactive_shell, get_completions
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -30,7 +30,8 @@ from .utils import (
     validate_doc,
 )
 
-load_dotenv()
+ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
+load_dotenv(ENV_FILE)
 
 console = Console()
 app = typer.Typer(
@@ -78,12 +79,15 @@ def config(
     if verbose is not None:
         SETTINGS["verbose"] = verbose
     if set_vars:
+        env_path = Path(ENV_FILE)
+        env_path.touch(exist_ok=True)
         for item in set_vars:
             try:
                 key, value = item.split("=", 1)
             except ValueError as exc:  # pragma: no cover - handled by typer
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
             os.environ[key] = value
+            set_key(str(env_path), key, value, quote_mode="never")
     console.print("Current settings:")
     console.print(f"  verbose: {SETTINGS['verbose']}")
     defaults = load_env_defaults()
@@ -263,7 +267,17 @@ def pipeline(
     build_vector_store(source)
 
 
-__all__ = ["app", "analyze_doc", "validate_doc", "convert_path", "validate_file", "run_prompt", "main"]
+__all__ = [
+    "app",
+    "analyze_doc",
+    "validate_doc",
+    "convert_path",
+    "validate_file",
+    "run_prompt",
+    "interactive_shell",
+    "get_completions",
+    "main",
+]
 
 
 def main() -> None:

@@ -22,8 +22,10 @@ def test_validate_help_flag_shows_options():
     assert result.exit_code == 0
 
 
-def test_config_sets_env():
+def test_config_sets_env(monkeypatch):
     runner = CliRunner()
-    result = runner.invoke(app, ["config", "--set", "TEST_VAR=value"])
-    assert result.exit_code == 0
-    assert os.getenv("TEST_VAR") == "value"
+    with runner.isolated_filesystem():
+        monkeypatch.setattr("doc_ai.cli.find_dotenv", lambda *a, **k: ".env")
+        result = runner.invoke(app, ["config", "--set", "TEST_VAR=value"])
+        assert result.exit_code == 0
+        assert os.getenv("TEST_VAR") == "value"

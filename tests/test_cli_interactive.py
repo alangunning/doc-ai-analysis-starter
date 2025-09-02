@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import os
 
 from doc_ai import cli
-from doc_ai.cli.interactive import interactive_shell, get_completions
+from doc_ai.cli import interactive_shell, get_completions
 
 
 def test_interactive_shell_cd(monkeypatch, tmp_path):
@@ -16,7 +16,7 @@ def test_interactive_shell_cd(monkeypatch, tmp_path):
 
     cwd = Path.cwd()
     try:
-        interactive_shell(app_mock, print_banner=lambda: None)
+        interactive_shell(app_mock, print_banner=lambda: None, prog_name="test")
         assert Path.cwd() == tmp_path
     finally:
         os.chdir(cwd)
