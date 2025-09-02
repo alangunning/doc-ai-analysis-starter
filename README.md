@@ -87,9 +87,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ```
 
    Run the CLI without arguments to enter an interactive shell with
-   tab-completion for commands and options.
-   The shell helper lives in ``doc_ai.cli.interactive`` so it can be reused in
-   other Typer-based projects.
+   tab-completion for commands and options. The shell helper is provided in
+   ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
+   reused in other Typer-based projects.
 
 ## Directory Overview
 

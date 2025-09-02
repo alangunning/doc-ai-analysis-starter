@@ -47,14 +47,29 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
 def interactive_shell(
     app: typer.Typer,
     *,
+    prog_name: str = "cli.py",
     console: Console | None = None,
     print_banner: Callable[[], None] | None = None,
     verbose: bool = False,
 ) -> None:
     """Run an interactive CLI loop for the given Typer application.
 
-    Provides readline-based tab completion for commands and options and supports
-    simple built-in commands like ``cd`` and ``exit``.
+    Parameters
+    ----------
+    app:
+        The Typer application to execute.
+    prog_name:
+        Program name used when invoking the app.
+    console:
+        Optional rich console for output.
+    print_banner:
+        Callback to print a startup banner before the shell prompt appears.
+    verbose:
+        If ``True``, include ``--verbose`` in executed commands and show full
+        tracebacks on errors.
+
+    The loop provides readline-based tab completion for commands and options and
+    supports simple built-in commands like ``cd`` and ``exit``.
     """
     console = console or Console()
     try:  # pragma: no cover - depends on system readline availability
@@ -74,7 +89,7 @@ def interactive_shell(
     if print_banner:
         try:
             print_banner()
-            app(prog_name="cli.py", args=["--help"])
+            app(prog_name=prog_name, args=["--help"])
         except SystemExit:
             pass
     while True:
@@ -98,7 +113,7 @@ def interactive_shell(
         if verbose:
             full_cmd += " --verbose"
         try:
-            app(prog_name="cli.py", args=shlex.split(full_cmd))
+            app(prog_name=prog_name, args=shlex.split(full_cmd))
         except SystemExit:
             pass
         except Exception as exc:  # pragma: no cover - runtime error display

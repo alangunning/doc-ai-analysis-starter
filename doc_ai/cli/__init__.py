@@ -13,7 +13,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
-from .interactive import interactive_shell
+from .interactive import interactive_shell, get_completions
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -266,7 +266,17 @@ def pipeline(
     build_vector_store(source)
 
 
-__all__ = ["app", "analyze_doc", "validate_doc", "convert_path", "validate_file", "run_prompt", "main"]
+__all__ = [
+    "app",
+    "analyze_doc",
+    "validate_doc",
+    "convert_path",
+    "validate_file",
+    "run_prompt",
+    "interactive_shell",
+    "get_completions",
+    "main",
+]
 
 
 def main() -> None:
