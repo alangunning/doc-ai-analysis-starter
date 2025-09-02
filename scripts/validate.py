@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prompt",
         type=Path,
-        help="Prompt file",
+        help="Prompt file (overrides auto-detected *.validate.prompt.yaml)",
     )
     parser.add_argument(
         "--model",
@@ -101,12 +101,16 @@ if __name__ == "__main__":
     fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
     prompt_path = args.prompt
     if prompt_path is None:
-        local_prompt = args.raw.with_name(f"{args.raw.stem}-validate.prompt.yaml")
-        prompt_path = (
-            local_prompt
-            if local_prompt.exists()
-            else Path(".github/prompts/validate-output.prompt.yaml")
-        )
+        doc_prompt = args.raw.with_name(f"{args.raw.stem}.validate.prompt.yaml")
+        dir_prompt = args.raw.with_name("validate.prompt.yaml")
+        if doc_prompt.exists():
+            prompt_path = doc_prompt
+        elif dir_prompt.exists():
+            prompt_path = dir_prompt
+        else:
+            prompt_path = Path(
+                ".github/prompts/validate-output.validate.prompt.yaml"
+            )
     verdict = validate_file(
         args.raw,
         args.rendered,
