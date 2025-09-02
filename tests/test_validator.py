@@ -65,6 +65,40 @@ def test_validate_file_returns_json(tmp_path):
     assert file_ids == ["raw.pdf-id"]
 
 
+def test_validate_file_strips_code_fences(tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    mock_response = MagicMock(output_text='```json\n{"ok": true}\n```')
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
+        "doc_ai.openai.responses.upload_file", return_value="file-id"
+    ):
+        result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
+
+    assert result == {"ok": True}
+
+
 def test_validate_file_bad_json(tmp_path):
     raw_path = tmp_path / "raw.pdf"
     rendered_path = tmp_path / "rendered.txt"

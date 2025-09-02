@@ -10,17 +10,21 @@ messages:
   - role: user
     content: |-
       Compare the PDF and {format} content. The structure or order may differ; focus only on whether the information is correct.
-      Return ONLY JSON with this schema:
-      {"match": bool,
-       "issues": [
-         {
-           "page": int,
-           "pdf_quote": str,
-           "md_quote": str,
-           "type": "number_mismatch"|"missing_data"|"extra_data"|"table_error"|"other",
-           "confidence": float
-         }
-       ]
+      Return valid JSON — do not wrap it in code fences or add commentary — using this schema:
+      {
+        "match": bool,
+        "issues": [
+          {
+            "page": int,
+            "description": str,
+            "pdf_quote": str,
+            "md_quote": str | null,
+            "suggested_md": str,
+            "type": "number_mismatch"|"missing_data"|"extra_data"|"table_error"|"other",
+            "confidence": float
+          }
+        ]
       }
-      If everything matches return {"match": true, "issues": []}.
-      Cite short snippets from both sources for every mismatch.
+      If everything matches, return {"match": true, "issues": []}.
+      Cite short snippets from both sources for every mismatch and include
+      "suggested_md" with the corrected markdown snippet.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import logging
 import os
 from pathlib import Path
@@ -128,6 +129,9 @@ def validate_file(
     text = (result.output_text or "").strip()
     if logger:
         logger.debug("Validation output_text: %s", text)
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\n", "", text)
+        text = re.sub(r"\n?```$", "", text).strip()
     if not text:
         raise ValueError("Model response contained no text")
     try:
