@@ -9,6 +9,7 @@ import shlex
 import traceback
 import warnings
 import logging
+import importlib.metadata
 
 import typer
 from rich.console import Console
@@ -35,17 +36,36 @@ load_dotenv()
 console = Console()
 app = typer.Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
+    add_completion=False,
 )
 
-SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+CONFIG = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+
+
+def _version_callback(value: bool) -> None:
+    """Print package version and exit."""
+    if value:
+        try:
+            version = importlib.metadata.version("doc-ai-starter")
+        except importlib.metadata.PackageNotFoundError:
+            version = "0.1.0"
+        typer.echo(version)
+        raise typer.Exit()
 
 
 @app.callback()
 def _main_callback(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show package version and exit",
+    ),
 ) -> None:
     """Global options."""
-    SETTINGS["verbose"] = verbose
+    CONFIG["verbose"] = verbose
 
 
 ASCII_ART = r"""
@@ -62,16 +82,122 @@ def _print_banner() -> None:  # pragma: no cover - visual flair only
 
 
 @app.command()
-def settings(
+def config(
     verbose: bool = typer.Option(
         None, "--verbose/--no-verbose", help="Toggle verbose error output"
-    )
+    ),
+    docs_site_url: Optional[str] = typer.Option(None, "--docs-site-url", help="Base site URL for docs"),
+    docs_base_url: Optional[str] = typer.Option(None, "--docs-base-url", help="Base path for docs"),
+    github_org: Optional[str] = typer.Option(None, "--github-org", help="GitHub organisation"),
+    github_repo: Optional[str] = typer.Option(None, "--github-repo", help="GitHub repository"),
+    pr_review_model: Optional[str] = typer.Option(None, "--pr-review-model", help="Model for PR review"),
+    validate_model: Optional[str] = typer.Option(None, "--validate-model", help="Model for validation"),
+    analyze_model: Optional[str] = typer.Option(None, "--analyze-model", help="Model for analysis"),
+    embed_model: Optional[str] = typer.Option(None, "--embed-model", help="Embedding model"),
+    embed_dimensions: Optional[int] = typer.Option(None, "--embed-dimensions", help="Embedding dimensions override"),
+    base_model_url: Optional[str] = typer.Option(None, "--base-model-url", help="Default model base URL"),
+    openai_api_key: Optional[str] = typer.Option(None, "--openai-api-key", help="OpenAI API key"),
+    validate_base_model_url: Optional[str] = typer.Option(None, "--validate-base-model-url", help="Base URL for validation"),
+    output_formats: Optional[str] = typer.Option(None, "--output-formats", help="Default formats for convert"),
+    disable_all_workflows: Optional[bool] = typer.Option(
+        None,
+        "--disable-all-workflows",
+        "--enable-all-workflows",
+        help="Disable all GitHub workflows",
+    ),
+    enable_convert_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-convert-workflow",
+        "--disable-convert-workflow",
+        help="Toggle convert workflow",
+    ),
+    enable_validate_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-validate-workflow",
+        "--disable-validate-workflow",
+        help="Toggle validate workflow",
+    ),
+    enable_vector_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-vector-workflow",
+        "--disable-vector-workflow",
+        help="Toggle vector workflow",
+    ),
+    enable_prompt_analysis_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-prompt-analysis-workflow",
+        "--disable-prompt-analysis-workflow",
+        help="Toggle prompt analysis workflow",
+    ),
+    enable_pr_review_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-pr-review-workflow",
+        "--disable-pr-review-workflow",
+        help="Toggle PR review workflow",
+    ),
+    enable_docs_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-docs-workflow",
+        "--disable-docs-workflow",
+        help="Toggle docs workflow",
+    ),
+    enable_lint_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-lint-workflow",
+        "--disable-lint-workflow",
+        help="Toggle lint workflow",
+    ),
+    enable_auto_merge_workflow: Optional[bool] = typer.Option(
+        None,
+        "--enable-auto-merge-workflow",
+        "--disable-auto-merge-workflow",
+        help="Toggle auto merge workflow",
+    ),
 ) -> None:
-    """Show or update runtime settings."""
+    """Show or update configuration defaults."""
+    from dotenv import set_key
+
     if verbose is not None:
-        SETTINGS["verbose"] = verbose
-    console.print("Current settings:")
-    console.print(f"  verbose: {SETTINGS['verbose']}")
+        CONFIG["verbose"] = verbose
+
+    dotenv_path = Path(__file__).resolve().parents[2] / ".env"
+    updates: dict[str, Optional[str | int | bool]] = {
+        "DOCS_SITE_URL": docs_site_url,
+        "DOCS_BASE_URL": docs_base_url,
+        "GITHUB_ORG": github_org,
+        "GITHUB_REPO": github_repo,
+        "PR_REVIEW_MODEL": pr_review_model,
+        "VALIDATE_MODEL": validate_model,
+        "ANALYZE_MODEL": analyze_model,
+        "EMBED_MODEL": embed_model,
+        "EMBED_DIMENSIONS": embed_dimensions,
+        "BASE_MODEL_URL": base_model_url,
+        "OPENAI_API_KEY": openai_api_key,
+        "VALIDATE_BASE_MODEL_URL": validate_base_model_url,
+        "OUTPUT_FORMATS": output_formats,
+        "DISABLE_ALL_WORKFLOWS": disable_all_workflows,
+        "ENABLE_CONVERT_WORKFLOW": enable_convert_workflow,
+        "ENABLE_VALIDATE_WORKFLOW": enable_validate_workflow,
+        "ENABLE_VECTOR_WORKFLOW": enable_vector_workflow,
+        "ENABLE_PROMPT_ANALYSIS_WORKFLOW": enable_prompt_analysis_workflow,
+        "ENABLE_PR_REVIEW_WORKFLOW": enable_pr_review_workflow,
+        "ENABLE_DOCS_WORKFLOW": enable_docs_workflow,
+        "ENABLE_LINT_WORKFLOW": enable_lint_workflow,
+        "ENABLE_AUTO_MERGE_WORKFLOW": enable_auto_merge_workflow,
+    }
+
+    for key, value in updates.items():
+        if value is None:
+            continue
+        if isinstance(value, bool):
+            str_val = "true" if value else "false"
+        else:
+            str_val = str(value)
+        os.environ[key] = str_val
+        set_key(dotenv_path, key, str_val)
+
+    console.print("Current config:")
+    console.print(f"  verbose: {CONFIG['verbose']}")
     defaults = load_env_defaults()
     if defaults:
         table = Table("Variable", "Current", "Default")
@@ -94,7 +220,7 @@ def convert(
 ) -> None:
     """Convert files using Docling."""
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
-    if not SETTINGS["verbose"]:
+    if not CONFIG["verbose"]:
         warnings.filterwarnings("ignore")
     if source.startswith(("http://", "https://")):
         results = convert_path(source, fmts)
@@ -276,14 +402,14 @@ def _interactive_shell() -> None:  # pragma: no cover - CLI utility
                 console.print(f"[red]{exc}[/red]")
             continue
         full_cmd = command
-        if SETTINGS["verbose"]:
+        if CONFIG["verbose"]:
             full_cmd += " --verbose"
         try:
             app(prog_name="cli.py", args=shlex.split(full_cmd))
         except SystemExit:
             pass
         except Exception as exc:  # pragma: no cover - runtime error display
-            if SETTINGS["verbose"]:
+            if CONFIG["verbose"]:
                 traceback.print_exc()
             else:
                 console.print(f"[red]{exc}[/red]")
@@ -294,12 +420,12 @@ def main() -> None:
     if len(sys.argv) > 1:
         _print_banner()
         args = sys.argv[1:]
-        if SETTINGS["verbose"] and "--verbose" not in args and "-v" not in args:
+        if CONFIG["verbose"] and "--verbose" not in args and "-v" not in args:
             args.append("--verbose")
         try:
             app(prog_name="cli.py", args=args)
         except Exception as exc:  # pragma: no cover - runtime error display
-            if SETTINGS["verbose"]:
+            if CONFIG["verbose"]:
                 traceback.print_exc()
             else:
                 console.print(f"[red]{exc}[/red]")

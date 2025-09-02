@@ -36,7 +36,13 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
    Copy `.env.example` to `.env` and adjust variables as needed. Environment
    variables from the runtime override values in the file and command-line
-   flags override both. See the
+   flags override both. Use the CLI to view or persist overrides:
+
+   ```bash
+   doc-ai config --pr-review-model gpt-4.1
+   ```
+
+   Running without flags displays current values. See the
    [Configuration guide](docs/content/configuration.md) for details on
    workflow toggles and model settings.
 
@@ -49,6 +55,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
    ```bash
    GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py --help
+   ```
+
+   Display the package version:
+
+   ```bash
+   ./doc_ai/cli.py --version
    ```
 
    Convert a document and validate the Markdown output:
