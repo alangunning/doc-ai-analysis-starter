@@ -30,3 +30,27 @@ def test_completions_top_level():
 def test_completions_options():
     opts = get_completions(cli.app, "convert --f", "--f")
     assert any(opt.startswith("--format") for opt in opts)
+
+
+def test_cd_path_completion(tmp_path):
+    sub = tmp_path / "subdir"
+    sub.mkdir()
+    cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        opts = get_completions(cli.app, "cd s", "s")
+        assert "subdir/" in opts
+    finally:
+        os.chdir(cwd)
+
+
+def test_argument_path_completion(tmp_path):
+    file = tmp_path / "file.txt"
+    file.write_text("x")
+    cwd = Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        opts = get_completions(cli.app, "convert f", "f")
+        assert "file.txt" in opts
+    finally:
+        os.chdir(cwd)
