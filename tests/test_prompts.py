@@ -10,20 +10,19 @@ def test_run_prompt_uses_spec_and_input(tmp_path):
         yaml.dump({"model": "test-model", "messages": [{"role": "user", "content": "Hello"}]})
     )
 
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="result"))]
+    mock_response = MagicMock(output_text="result")
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.prompts.OpenAI", return_value=mock_client) as mock_openai:
         output = run_prompt(prompt_file, "input")
 
     assert output == "result"
     mock_openai.assert_called_once()
-    args, kwargs = mock_client.chat.completions.create.call_args
+    args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "test-model"
-    messages = kwargs["messages"]
-    assert messages[0]["content"] == "Hello\n\ninput"
+    messages = kwargs["input"]
+    assert messages[0]["content"][0]["text"] == "Hello\n\ninput"
 
 
 def test_run_prompt_uses_env_base_and_token(monkeypatch, tmp_path):
@@ -35,10 +34,9 @@ def test_run_prompt_uses_env_base_and_token(monkeypatch, tmp_path):
     monkeypatch.setenv("GITHUB_TOKEN", "gh-test")
     monkeypatch.setenv("BASE_MODEL_URL", "https://example.com")
 
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock(message=MagicMock(content="result"))]
+    mock_response = MagicMock(output_text="result")
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.prompts.OpenAI", return_value=mock_client) as mock_openai:
         run_prompt(prompt_file, "input")

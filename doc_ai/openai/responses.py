@@ -17,6 +17,17 @@ from .files import (
 )
 
 
+ALLOWED_PARAMS = {
+    "temperature",
+    "top_p",
+    "tools",
+    "tool_choice",
+    "parallel_tool_calls",
+    "metadata",
+    "max_output_tokens",
+    "text",
+}
+
 def input_text(text: str) -> Dict[str, Any]:
     """Create a basic ``input_text`` payload."""
     return {"type": "input_text", "text": text}
@@ -103,11 +114,13 @@ def create_response(
 
     messages: list[Dict[str, Any]] = []
     for sys in _ensure_seq(system):
-        messages.append({"role": "system", "content": sys})
+        messages.append({"role": "system", "content": [input_text(sys)]})
     messages.append({"role": "user", "content": content})
 
     payload: Dict[str, Any] = {"model": model, "input": messages}
-    payload.update(kwargs)
+    for key, value in kwargs.items():
+        if key in ALLOWED_PARAMS:
+            payload[key] = value
     if logger:
         logger.debug(
             "Responses API request: %s",
