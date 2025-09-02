@@ -62,8 +62,14 @@ def test_validate_file_returns_json(tmp_path):
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]
     content = user_msg["content"]
-    assert content[0] == {"type": "input_text", "text": "Check text"}
-    assert content[1] == {"type": "input_text", "text": "text"}
+    assert content[0] == {
+        "type": "input_text",
+        "text": {"value": "Check text", "format": {"name": "text"}},
+    }
+    assert content[1] == {
+        "type": "input_text",
+        "text": {"value": "text", "format": {"name": "text"}},
+    }
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["raw.pdf-id"]
 
@@ -266,7 +272,7 @@ def test_validate_file_with_urls(tmp_path):
     content = kwargs["input"][1]["content"]
     file_urls = [part["file_url"] for part in content if part["type"] == "input_file"]
     assert file_urls == [raw_url]
-    texts = [part["text"] for part in content if part["type"] == "input_text"]
+    texts = [part["text"]["value"] for part in content if part["type"] == "input_text"]
     assert "rendered" in texts
 
 

@@ -19,7 +19,10 @@ def test_create_response_with_mixed_inputs():
     )
 
     expected_content = [
-        {"type": "input_text", "text": "what is in this file?"},
+        {
+            "type": "input_text",
+            "text": {"value": "what is in this file?", "format": {"name": "text"}},
+        },
         {"type": "input_file", "file_url": "https://example.com/file.pdf"},
         {"type": "input_file", "file_id": "file-123"},
         input_file_from_bytes("demo.txt", b"hello"),
@@ -45,7 +48,10 @@ def test_create_response_with_file_url_wrapper():
             {
                 "role": "user",
                 "content": [
-                    {"type": "input_text", "text": "what is in this file?"},
+                    {
+                        "type": "input_text",
+                        "text": {"value": "what is in this file?", "format": {"name": "text"}},
+                    },
                     {"type": "input_file", "file_url": "https://example.com/file.pdf"},
                 ],
             }
@@ -86,7 +92,15 @@ def test_create_response_with_system_message():
         model="gpt-4.1",
         input=[
             {"role": "system", "content": "sys"},
-            {"role": "user", "content": [{"type": "input_text", "text": "hello"}]},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": {"value": "hello", "format": {"name": "text"}},
+                    }
+                ],
+            },
         ],
     )
 
@@ -122,7 +136,17 @@ def test_create_response_passes_response_format():
     )
     client.responses.create.assert_called_once_with(
         model="gpt-4.1",
-        input=[{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": {"value": "hi", "format": {"name": "text"}},
+                    }
+                ],
+            }
+        ],
         response_format={"type": "json_schema"},
     )
 

@@ -228,6 +228,9 @@ def analyze_doc(
             base = base.with_suffix("")
         out_path = base.with_name(f"{base.name}.analysis.json")
     out_path.write_text(result + "\n", encoding="utf-8")
+    console.print(
+        f"[green]Analyzed {markdown_doc} -> {out_path} (SUCCESS)[/]"
+    )
     mark_step(
         meta,
         step_name,

@@ -17,18 +17,21 @@ from .files import (
 )
 
 
-def input_text(text: str) -> Dict[str, str]:
-    """Create an ``input_text`` payload."""
+def input_text(text: str, fmt: str = "text") -> Dict[str, Any]:
+    """Create an ``input_text`` payload with an explicit format."""
 
-    return {"type": "input_text", "text": text}
+    return {
+        "type": "input_text",
+        "text": {"value": text, "format": {"name": fmt}},
+    }
 
 
-def _ensure_seq(value: Union[str, Sequence[str], None]) -> Sequence[str]:
+def _ensure_seq(value: Union[Any, Sequence[Any], None]) -> Sequence[Any]:
     """Return ``value`` as a sequence."""
 
     if value is None:
         return []
-    if isinstance(value, str):
+    if isinstance(value, (str, bytes)):
         return [value]
     return value
 
@@ -37,7 +40,12 @@ def create_response(
     client: OpenAI,
     *,
     model: str,
-    texts: Union[str, Sequence[str], None] = None,
+    texts: Union[
+        str,
+        Tuple[str, str],
+        Sequence[Union[str, Tuple[str, str]]],
+        None,
+    ] = None,
     file_urls: Union[str, Sequence[str], None] = None,
     file_ids: Union[str, Sequence[str], None] = None,
     file_bytes: Sequence[Tuple[str, bytes]] | None = None,
@@ -84,7 +92,11 @@ def create_response(
 
     content: list[Dict[str, Any]] = []
     for text in _ensure_seq(texts):
-        content.append(input_text(text))
+        if isinstance(text, tuple):
+            txt, fmt = text
+            content.append(input_text(txt, fmt))
+        else:
+            content.append(input_text(text))
     for url in _ensure_seq(file_urls):
         content.append(input_file_from_url(url))
     for file_id in _ensure_seq(file_ids):
