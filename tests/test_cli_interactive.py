@@ -3,31 +3,30 @@ from unittest.mock import MagicMock
 import os
 
 from doc_ai import cli
+from doc_ai.cli.interactive import interactive_shell, get_completions
 
 
 def test_interactive_shell_cd(monkeypatch, tmp_path):
-    monkeypatch.setattr(cli, "_print_banner", lambda: None)
-
     def fake_app(*, prog_name, args):
         raise SystemExit()
 
-    monkeypatch.setattr(cli, "app", MagicMock(side_effect=fake_app))
+    app_mock = MagicMock(side_effect=fake_app)
     inputs = iter([f"cd {tmp_path}\n", "exit\n"])
     monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
 
     cwd = Path.cwd()
     try:
-        cli._interactive_shell()
+        interactive_shell(app_mock, print_banner=lambda: None)
         assert Path.cwd() == tmp_path
     finally:
         os.chdir(cwd)
 
 
 def test_completions_top_level():
-    opts = cli._get_completions("", "")
+    opts = get_completions(cli.app, "", "")
     assert "convert" in opts
 
 
 def test_completions_options():
-    opts = cli._get_completions("convert --f", "--f")
+    opts = get_completions(cli.app, "convert --f", "--f")
     assert any(opt.startswith("--format") for opt in opts)
