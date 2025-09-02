@@ -22,7 +22,6 @@ def test_create_response_with_mixed_inputs():
         {
             "type": "input_text",
             "text": "what is in this file?",
-            "format": {"name": "text"},
         },
         {"type": "input_file", "file_url": "https://example.com/file.pdf"},
         {"type": "input_file", "file_id": "file-123"},
@@ -52,7 +51,6 @@ def test_create_response_with_file_url_wrapper():
                     {
                         "type": "input_text",
                         "text": "what is in this file?",
-                        "format": {"name": "text"},
                     },
                     {"type": "input_file", "file_url": "https://example.com/file.pdf"},
                 ],
@@ -100,7 +98,6 @@ def test_create_response_with_system_message():
                     {
                         "type": "input_text",
                         "text": "hello",
-                        "format": {"name": "text"},
                     }
                 ],
             },
@@ -129,13 +126,13 @@ def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
     client.responses.create.assert_called_once()
 
 
-def test_create_response_passes_response_format():
+def test_create_response_passes_text_format():
     client = MagicMock()
     create_response(
         client,
         model="gpt-4.1",
         texts=["hi"],
-        response_format={"type": "json_schema"},
+        text={"format": {"type": "json_schema"}},
     )
     client.responses.create.assert_called_once_with(
         model="gpt-4.1",
@@ -146,11 +143,10 @@ def test_create_response_passes_response_format():
                     {
                         "type": "input_text",
                         "text": "hi",
-                        "format": {"name": "text"},
                     }
                 ],
             }
         ],
-        response_format={"type": "json_schema"},
+        text={"format": {"type": "json_schema"}},
     )
 
