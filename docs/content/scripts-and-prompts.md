@@ -40,7 +40,15 @@ Check that a converted file matches the original document:
 ```bash
 python scripts/validate.py data/example/example.pdf data/example/example.pdf.converted.md
 ```
-Override the model with `--model` or `VALIDATE_MODEL`.
+
+The script searches for a validation prompt in this order:
+
+- `<name>.validate.prompt.yaml` next to the document
+- `validate.prompt.yaml` in the same directory
+
+If neither exists, it falls back to
+`.github/prompts/validate-output.validate.prompt.yaml`. Override the discovery
+with `--prompt`. Override the model with `--model` or `VALIDATE_MODEL`.
 
 Behind the scenes the script relies on `doc_ai.openai.create_response` to
 upload local paths or reference remote URLs before calling the Responses API.

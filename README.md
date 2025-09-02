@@ -58,6 +58,15 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
    ```
 
+   The validator searches for a prompt file next to the inputs:
+
+   - `<name>.validate.prompt.yaml` for a single document
+   - `validate.prompt.yaml` shared by a directory
+
+   If neither exists, it falls back to
+   `.github/prompts/validate-output.validate.prompt.yaml`. Override discovery
+   with `--prompt`.
+
    The validation script relies on the reusable helpers in
    `doc_ai.openai` to upload local files or reference remote URLs. Only PDFs
    (and images) can be attached as `input_file` entries; other formats like
@@ -88,7 +97,7 @@ data/                     # Sample documents and outputs
 docs/                     # Docusaurus documentation
 ```
 
-`data` is organized by document type. Each folder includes a `<doc-type>.prompt.yaml` file that defines the prompt for GitHub's AI models. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
+`data` is organized by document type. Each folder includes a `<doc-type>.prompt.yaml` file for analysis prompts and may supply either `<name>.validate.prompt.yaml` or a shared `validate.prompt.yaml` for validation. When no custom validation prompt exists, the generic `.github/prompts/validate-output.validate.prompt.yaml` is used. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
 
 Example structure:
 
@@ -114,6 +123,7 @@ data/
     apple-sec-form-10q.pdf.metadata.json
   sec-form-4/
     sec-form-4.prompt.yaml
+    sec-form-4.validate.prompt.yaml
     apple-sec-form-4.pdf
     apple-sec-form-4.pdf.converted.md
     apple-sec-form-4.pdf.converted.html
