@@ -30,7 +30,8 @@ from .utils import (
     validate_doc,
 )
 
-load_dotenv()
+ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
+load_dotenv(ENV_FILE)
 
 console = Console()
 app = typer.Typer(
@@ -78,7 +79,7 @@ def config(
     if verbose is not None:
         SETTINGS["verbose"] = verbose
     if set_vars:
-        env_path = Path(find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env")
+        env_path = Path(ENV_FILE)
         env_path.touch(exist_ok=True)
         for item in set_vars:
             try:
