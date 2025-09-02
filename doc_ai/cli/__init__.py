@@ -9,6 +9,7 @@ import shlex
 import traceback
 import warnings
 import logging
+import importlib.metadata
 
 import typer
 from rich.console import Console
@@ -35,14 +36,33 @@ load_dotenv()
 console = Console()
 app = typer.Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
+    add_completion=False,
 )
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
 
 
+def _version_callback(value: bool) -> None:
+    """Print package version and exit."""
+    if value:
+        try:
+            version = importlib.metadata.version("doc-ai-starter")
+        except importlib.metadata.PackageNotFoundError:
+            version = "0.1.0"
+        typer.echo(version)
+        raise typer.Exit()
+
+
 @app.callback()
 def _main_callback(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show package version and exit",
+    ),
 ) -> None:
     """Global options."""
     SETTINGS["verbose"] = verbose

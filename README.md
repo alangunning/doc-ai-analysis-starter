@@ -51,6 +51,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    GITHUB_TOKEN=github_pat_xxxx ./doc_ai/cli.py --help
    ```
 
+   Display the package version:
+
+   ```bash
+   ./doc_ai/cli.py --version
+   ```
+
    Convert a document and validate the Markdown output:
 
    ```bash
