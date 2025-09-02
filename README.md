@@ -97,14 +97,14 @@ data/                     # Sample documents and outputs
 docs/                     # Docusaurus documentation
 ```
 
-`data` is organized by document type. Each folder includes a `<doc-type>.prompt.yaml` file for analysis prompts and may supply either `<name>.validate.prompt.yaml` or a shared `validate.prompt.yaml` for validation. When no custom validation prompt exists, the generic `.github/prompts/validate-output.validate.prompt.yaml` is used. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
+`data` is organized by document type. Each folder includes a `<doc-type>.analysis.prompt.yaml` file for analysis prompts and may supply either `<name>.validate.prompt.yaml` or a shared `validate.prompt.yaml` for validation. When no custom validation prompt exists, the generic `.github/prompts/validate-output.validate.prompt.yaml` is used. Each source file has converted siblings and an optional `<name>.metadata.json` file that records which steps have completed.
 
 Example structure:
 
 ```
 data/
   sec-form-8k/
-    sec-form-8k.prompt.yaml
+    sec-form-8k.analysis.prompt.yaml
     apple-sec-8-k.pdf
     apple-sec-8-k.pdf.converted.md
     apple-sec-8-k.pdf.converted.html
@@ -113,7 +113,7 @@ data/
     apple-sec-8-k.pdf.converted.doctags
     apple-sec-8-k.pdf.metadata.json
   sec-form-10q/
-    sec-form-10q.prompt.yaml
+    sec-form-10q.analysis.prompt.yaml
     apple-sec-form-10q.pdf
     apple-sec-form-10q.pdf.converted.md
     apple-sec-form-10q.pdf.converted.html
@@ -122,7 +122,7 @@ data/
     apple-sec-form-10q.pdf.converted.doctags
     apple-sec-form-10q.pdf.metadata.json
   sec-form-4/
-    sec-form-4.prompt.yaml
+    sec-form-4.analysis.prompt.yaml
     sec-form-4.validate.prompt.yaml
     apple-sec-form-4.pdf
     apple-sec-form-4.pdf.converted.md
@@ -155,7 +155,7 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | --- | --- | --- |
 | Convert | Push to `data/**` | Convert new documents with Docling and commit sibling outputs |
 | Validate | Push converted outputs | Compare rendered files to sources and correct mismatches |
-| Analysis | Push Markdown or `.prompt.yaml`, or manual dispatch | Run custom prompts against Markdown and upload JSON |
+| Analysis | Push Markdown or `*.analysis.prompt.yaml`, or manual dispatch | Run custom prompts against Markdown and upload JSON |
 | Vector | Push to `main` with Markdown | Generate embeddings for search |
 | PR Review | Pull request or `/review` comment | Provide AI feedback on the PR body |
 | Docs | Push to `docs/**` on `main` | Build and publish the documentation site |

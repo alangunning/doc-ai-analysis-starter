@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # Workflow Overview
 
-The template's GitHub Actions coordinate the document pipeline from raw uploads to analysis results. Documents live under `data/`, grouped by form type. Each folder includes a `<doc-type>.prompt.yaml` file that defines the analysis instructions for GitHub's AI model, and each source file keeps converted siblings and metadata records. A typical layout looks like:
+The template's GitHub Actions coordinate the document pipeline from raw uploads to analysis results. Documents live under `data/`, grouped by form type. Each folder includes a `<doc-type>.analysis.prompt.yaml` file that defines the analysis instructions for GitHub's AI model, and each source file keeps converted siblings and metadata records. A typical layout looks like:
 Committing a new file to `data/` kicks off the pipeline automatically: the Convert workflow runs first, then subsequent steps cascade based on the metadata.
 
 > **Note:** Committing documents directly works for small examples. For larger datasets, move files to Git LFS or an external storage service and update the workflows to pull from there.
@@ -13,7 +13,7 @@ Committing a new file to `data/` kicks off the pipeline automatically: the Conve
 ```
 data/
   sec-form-8k/
-    sec-form-8k.prompt.yaml
+    sec-form-8k.analysis.prompt.yaml
     apple-sec-8-k.pdf
     apple-sec-8-k.pdf.converted.md
     apple-sec-8-k.pdf.converted.html
@@ -22,7 +22,7 @@ data/
     apple-sec-8-k.pdf.converted.doctags
     apple-sec-8-k.pdf.metadata.json
   sec-form-10q/
-    sec-form-10q.prompt.yaml
+    sec-form-10q.analysis.prompt.yaml
     acme-2024-q1.pdf
     acme-2024-q1.pdf.converted.md
     acme-2024-q1.pdf.converted.html
@@ -31,7 +31,7 @@ data/
     acme-2024-q1.pdf.converted.doctags
     acme-2024-q1.pdf.metadata.json
   sec-form-4/
-    sec-form-4.prompt.yaml
+    sec-form-4.analysis.prompt.yaml
     insider-2024-01-01.pdf
     insider-2024-01-01.pdf.converted.md
     insider-2024-01-01.pdf.converted.html
@@ -45,7 +45,7 @@ Each workflow can run independently, but together they form an end-to-end proces
 
 - **Convert** – convert new documents under `data/**` using Docling and commit sibling outputs.
 - **Validate** – use the GitHub AI model to compare converted files to sources and correct mismatches.
-- **Analysis** – run `<doc-type>.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
+- **Analysis** – run `<doc-type>.analysis.prompt.yaml` against Markdown documents with the GitHub AI model and upload JSON.
 - **Vector** – generate embeddings for Markdown files on `main` with the GitHub AI model.
 - **PR Review** – review pull requests with the GitHub AI model; comment `/review` to rerun.
 - **Docs** – build the Docusaurus site.
@@ -58,7 +58,7 @@ The table below shows when each workflow runs and how to toggle it:
 | --- | --- | --- |
 | Convert | Push to `data/**` | `ENABLE_CONVERT_WORKFLOW` |
 | Validate | Push converted outputs | `ENABLE_VALIDATE_WORKFLOW` |
-| Analysis | Push Markdown or `.prompt.yaml`, or manual dispatch | `ENABLE_PROMPT_ANALYSIS_WORKFLOW` |
+| Analysis | Push Markdown or `*.analysis.prompt.yaml`, or manual dispatch | `ENABLE_PROMPT_ANALYSIS_WORKFLOW` |
 | Vector | Push to `main` with Markdown | `ENABLE_VECTOR_WORKFLOW` |
 | PR Review | Pull request or `/review` comment | `ENABLE_PR_REVIEW_WORKFLOW` |
 | Docs | Push to `docs/**` on `main` | `ENABLE_DOCS_WORKFLOW` |
