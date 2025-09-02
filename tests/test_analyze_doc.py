@@ -7,15 +7,17 @@ from doc_ai.metadata import load_metadata, metadata_path
 
 
 def test_analyze_doc_strips_fences_and_updates_metadata(tmp_path):
-    prompt = tmp_path / "sec-form-4.prompt.yaml"
+    doc_dir = tmp_path / "sec-form-4"
+    doc_dir.mkdir()
+    prompt = doc_dir / "sec-form-4.analysis.prompt.yaml"
     prompt.write_text(yaml.dump({"model": "test", "messages": []}))
-    raw = tmp_path / "apple-sec-form-4.pdf"
+    raw = doc_dir / "apple-sec-form-4.pdf"
     raw.write_text("raw")
-    md = tmp_path / "apple-sec-form-4.pdf.converted.md"
+    md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
     with patch("doc_ai.cli.run_prompt", return_value="```json\n{\"foo\": 1}\n```"):
-        analyze_doc(prompt, md)
-    out_file = tmp_path / "apple-sec-form-4.sec-form-4.json"
+        analyze_doc(md)
+    out_file = doc_dir / "apple-sec-form-4.pdf.analysis.json"
     assert out_file.exists()
     assert json.loads(out_file.read_text()) == {"foo": 1}
     assert not metadata_path(md).exists()

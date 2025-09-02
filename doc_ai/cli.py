@@ -171,13 +171,12 @@ def validate_doc(
 
 
 def analyze_doc(
-    prompt: Path,
     markdown_doc: Path,
+    prompt: Path | None = None,
     output: Path | None = None,
     model: str | None = None,
     base_url: str | None = None,
 ) -> None:
-    prompt_name = prompt.name.replace(".prompt.yaml", "")
     step_name = "analysis"
     raw_doc = markdown_doc
     if ".converted" in markdown_doc.suffixes:
@@ -193,8 +192,24 @@ def analyze_doc(
         )
     if is_step_done(meta, step_name) and prev_hash == md_hash:
         return
+
+    prompt_path = prompt
+    if prompt_path is None:
+        type_prompt = markdown_doc.parent / (
+            f"{markdown_doc.parent.name}.analysis.prompt.yaml"
+        )
+        dir_prompt = markdown_doc.parent / "analysis.prompt.yaml"
+        if type_prompt.exists():
+            prompt_path = type_prompt
+        elif dir_prompt.exists():
+            prompt_path = dir_prompt
+        else:
+            prompt_path = Path(
+                ".github/prompts/doc-analysis.analysis.prompt.yaml"
+            )
+
     result = run_prompt(
-        prompt,
+        prompt_path,
         markdown_doc.read_text(),
         model=model,
         base_url=base_url,
@@ -206,17 +221,19 @@ def analyze_doc(
     if output:
         out_path = output
     else:
-        base_name = markdown_doc.name
-        for _ in markdown_doc.suffixes:
-            base_name = Path(base_name).stem
-        out_path = markdown_doc.with_name(f"{base_name}.{prompt_name}.json")
+        base = markdown_doc
+        if base.suffix == ".md":
+            base = base.with_suffix("")
+        if base.suffix == ".converted":
+            base = base.with_suffix("")
+        out_path = base.with_name(f"{base.name}.analysis.json")
     out_path.write_text(result + "\n", encoding="utf-8")
     mark_step(
         meta,
         step_name,
         outputs=[out_path.name],
         inputs={
-            "prompt": prompt.name,
+            "prompt": prompt_path.name,
             "markdown": markdown_doc.name,
             "markdown_blake2b": md_hash,
         },
@@ -304,12 +321,17 @@ def validate(
 
 @app.command()
 def analyze(
-    prompt: Path = typer.Argument(..., help="Prompt file"),
     markdown_doc: Path = typer.Argument(..., help="Markdown document"),
+    prompt: Path | None = typer.Option(
+        None,
+        "--prompt",
+        "-p",
+        help="Prompt file (overrides auto-detected *.analysis.prompt.yaml)",
+    ),
     output: Optional[Path] = typer.Option(
         None,
         "--output",
-        help="Optional output file; defaults to <doc>.<prompt>.json",
+        help="Optional output file; defaults to <doc>.analysis.json",
     ),
     model: Optional[str] = typer.Option(
         None, "--model", help="Model name override"
@@ -319,7 +341,7 @@ def analyze(
     ),
 ) -> None:
     """Run an analysis prompt against a Markdown document."""
-    analyze_doc(prompt, markdown_doc, output, model, base_model_url)
+    analyze_doc(markdown_doc, prompt, output, model, base_model_url)
 
 
 @app.command()
@@ -334,7 +356,7 @@ def embed(
 def pipeline(
     source: Path = typer.Argument(..., help="Directory with raw documents"),
     prompt: Path = typer.Option(
-        Path(".github/prompts/doc-analysis.prompt.yaml"),
+        Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
         help="Analysis prompt file",
     ),
     format: List[OutputFormat] = typer.Option(
@@ -370,7 +392,7 @@ def pipeline(
                 model,
                 base_model_url,
             )
-            analyze_doc(prompt, md_file, model=model, base_url=base_model_url)
+            analyze_doc(md_file, prompt=prompt, model=model, base_url=base_model_url)
     build_vector_store(source)
 
 

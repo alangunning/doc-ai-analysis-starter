@@ -40,7 +40,15 @@ Check that a converted file matches the original document:
 ```bash
 python scripts/validate.py data/example/example.pdf data/example/example.pdf.converted.md
 ```
-Override the model with `--model` or `VALIDATE_MODEL`.
+
+The script searches for a validation prompt in this order:
+
+- `<name>.validate.prompt.yaml` next to the document
+- `validate.prompt.yaml` in the same directory
+
+If neither exists, it falls back to
+`.github/prompts/validate-output.validate.prompt.yaml`. Override the discovery
+with `--prompt`. Override the model with `--model` or `VALIDATE_MODEL`.
 
 Behind the scenes the script relies on `doc_ai.openai.create_response` to
 upload local paths or reference remote URLs before calling the Responses API.
@@ -72,9 +80,15 @@ sequenceDiagram
 Run a prompt definition against a Markdown document and save JSON output:
 
 ```bash
-python scripts/run_analysis.py data/sec-form-8k/sec-form-8k.prompt.yaml data/sec-form-8k/apple-sec-8-k.pdf.converted.md
+python scripts/run_analysis.py data/sec-form-8k/apple-sec-8-k.pdf.converted.md
 ```
-The above writes `data/sec-form-8k/apple-sec-8-k.sec-form-8k.json`. Override the model with `--model` or `ANALYZE_MODEL`.
+The script searches for an analysis prompt in this order:
+
+- `<name>.analysis.prompt.yaml` next to the document
+- `<doc-type>.analysis.prompt.yaml` in the same directory
+- `analysis.prompt.yaml` in the same directory
+
+If none exist, it falls back to `.github/prompts/doc-analysis.analysis.prompt.yaml`. Pass `--prompt` to override. The above command writes `data/sec-form-8k/apple-sec-8-k.pdf.analysis.json`. Override the model with `--model` or `ANALYZE_MODEL`.
 
 ```mermaid
 sequenceDiagram
@@ -167,6 +181,6 @@ sequenceDiagram
 
 Each `.prompt.yaml` defines model parameters and instructions for GitHub's AI models. Use the examples under `data/**` as starting points when crafting prompts for your own documents.
 
-1. Create a `.prompt.yaml` file next to the document (e.g., `data/acme-report/acme-report.prompt.yaml`).
+1. Create a `<doc-type>.analysis.prompt.yaml` file next to the document (e.g., `data/acme-report/acme-report.analysis.prompt.yaml`).
 2. Commit the prompt and document; the Analysis workflow will run it automatically.
 

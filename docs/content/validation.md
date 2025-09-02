@@ -9,6 +9,18 @@ Doc AI Starter validates Docling's Markdown output against the original PDF usin
 
 The validator runs **Stage B** adjudication only, relying on the model to flag mismatches. To keep results reproducible, each call follows a strict "cite‑then‑claim" rubric and returns structured JSON with evidence for every discrepancy.
 
+## Prompt discovery
+
+`validate.py` and the accompanying workflow look for `.validate.prompt.yaml` files
+to supply model instructions:
+
+1. `<name>.validate.prompt.yaml` next to the source applies to that document only.
+2. `validate.prompt.yaml` in the same directory covers an entire document type.
+
+When neither file exists, the generic
+`.github/prompts/validate-output.validate.prompt.yaml` is used. Pass `--prompt`
+to the CLI to override this discovery.
+
 ## Validation with OpenAI (PDF + Markdown)
 
 The snippet below uploads the PDF once and references it by `file_id` using
