@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "files_scanned": 94,
+    "violations": {
+      "endpoint_migration": 3,
+      "content_type": 1,
+      "file_inputs": 0,
+      "structured_outputs": 0,
+      "params_unknown": 0,
+      "tools_shape": 0
+    }
+  },
+  "violations": [
+    {
+      "rule_id": "endpoint_migration",
+      "file": "doc_ai/github/prompts.py",
+      "line": 58,
+      "before": "response = client.chat.completions.create(",
+      "after": "response = client.responses.create(",
+      "note": "Use Responses API instead of Chat Completions.",
+      "docs": ["https://platform.openai.com/docs/api-reference/responses"]
+    },
+    {
+      "rule_id": "endpoint_migration",
+      "file": "docs/content/scripts-and-prompts.md",
+      "line": 104,
+      "before": "P->>O: chat.completions.create",
+      "after": "P->>O: responses.create",
+      "note": "Documentation should reference the Responses API.",
+      "docs": ["https://platform.openai.com/docs/api-reference/responses"]
+    },
+    {
+      "rule_id": "endpoint_migration",
+      "file": "tests/test_prompts.py",
+      "line": 15,
+      "before": "mock_client.chat.completions.create.return_value = mock_response",
+      "after": "mock_client.responses.create.return_value = mock_response",
+      "note": "Tests should mock the Responses API instead of Chat Completions.",
+      "docs": ["https://platform.openai.com/docs/api-reference/responses"]
+    },
+    {
+      "rule_id": "content_type",
+      "file": "doc_ai/openai/responses.py",
+      "line": 116,
+      "before": "messages.append({\"role\": \"system\", \"content\": sys})",
+      "after": "messages.append({\"role\": \"system\", \"content\": [input_text(sys)]})",
+      "note": "Responses API requires request content parts like input_text.",
+      "docs": ["https://platform.openai.com/docs/api-reference/responses"]
+    }
+  ],
+  "autofixes": [
+    {
+      "file": "doc_ai/github/prompts.py",
+      "diff": "--- a/doc_ai/github/prompts.py\n+++ b/doc_ai/github/prompts.py\n@@\n-    response = client.chat.completions.create(\n-        model=model or spec[\"model\"],\n-        messages=messages,\n-        **spec.get(\"modelParameters\", {}),\n-    )\n-    return response.choices[0].message.content\n+    allowed = {\n+        \"temperature\",\n+        \"top_p\",\n+        \"tools\",\n+        \"tool_choice\",\n+        \"parallel_tool_calls\",\n+        \"metadata\",\n+        \"max_output_tokens\",\n+        \"text\",\n+    }\n+    params = {\n+        k: v for k, v in spec.get(\"modelParameters\", {}).items() if k in allowed\n+    }\n+    response = client.responses.create(\n+        model=model or spec[\"model\"],\n+        input=messages,\n+        **params,\n+    )\n+    return response.output_text\n"
+    },
+    {
+      "file": "docs/content/scripts-and-prompts.md",
+      "diff": "--- a/docs/content/scripts-and-prompts.md\n+++ b/docs/content/scripts-and-prompts.md\n@@\n-    P->>O: chat.completions.create\n+    P->>O: responses.create\n@@\n-    P->>O: chat.completions.create\n+    P->>O: responses.create\n"
+    },
+    {
+      "file": "tests/test_prompts.py",
+      "diff": "--- a/tests/test_prompts.py\n+++ b/tests/test_prompts.py\n@@\n-    mock_response = MagicMock()\n-    mock_response.choices = [MagicMock(message=MagicMock(content=\"result\"))]\n-    mock_client = MagicMock()\n-    mock_client.chat.completions.create.return_value = mock_response\n+    mock_response = MagicMock(output_text=\"result\")\n+    mock_client = MagicMock()\n+    mock_client.responses.create.return_value = mock_response\n@@\n-    args, kwargs = mock_client.chat.completions.create.call_args\n-    assert kwargs[\"model\"] == \"test-model\"\n-    messages = kwargs[\"messages\"]\n-    assert messages[0][\"content\"] == \"Hello\\n\\ninput\"\n+    args, kwargs = mock_client.responses.create.call_args\n+    assert kwargs[\"model\"] == \"test-model\"\n+    messages = kwargs[\"input\"]\n+    assert messages[0][\"content\"][0][\"text\"] == \"Hello\\n\\ninput\"\n"
+    },
+    {
+      "file": "doc_ai/openai/responses.py",
+      "diff": "--- a/doc_ai/openai/responses.py\n+++ b/doc_ai/openai/responses.py\n@@\n-    for sys in _ensure_seq(system):\n-        messages.append({\"role\": \"system\", \"content\": sys})\n-    messages.append({\"role\": \"user\", \"content\": content})\n-\n-    payload: Dict[str, Any] = {\"model\": model, \"input\": messages}\n-    payload.update(kwargs)\n+    for sys in _ensure_seq(system):\n+        messages.append({\"role\": \"system\", \"content\": [input_text(sys)]})\n+    messages.append({\"role\": \"user\", \"content\": content})\n+\n+    payload: Dict[str, Any] = {\"model\": model, \"input\": messages}\n+    for key, value in kwargs.items():\n+        if key in ALLOWED_PARAMS:\n+            payload[key] = value\n"
+    }
+  ]
+}

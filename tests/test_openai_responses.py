@@ -91,7 +91,7 @@ def test_create_response_with_system_message():
     client.responses.create.assert_called_once_with(
         model="gpt-4.1",
         input=[
-            {"role": "system", "content": "sys"},
+            {"role": "system", "content": [{"type": "input_text", "text": "sys"}]},
             {
                 "role": "user",
                 "content": [

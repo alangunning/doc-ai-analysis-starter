@@ -101,7 +101,7 @@ sequenceDiagram
     U->>R: prompt & markdown
     R->>M: load_metadata()
     R->>P: run_prompt()
-    P->>O: chat.completions.create
+    P->>O: responses.create
     O-->>P: analysis
     P-->>R: result
     R->>F: write JSON output
@@ -150,7 +150,7 @@ sequenceDiagram
     U->>S: prompt & PR body
     S->>R: review_pr()
     R->>P: run_prompt()
-    P->>O: chat.completions.create
+    P->>O: responses.create
     O-->>P: feedback
     P-->>R: analysis
     R-->>S: result
