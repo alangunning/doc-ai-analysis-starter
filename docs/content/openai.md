@@ -50,15 +50,15 @@ print(resp.output_text)
 ## Flow
 
 ```mermaid
-flowchart TD
+graph TD
     A[create_response]
     A -->|text| B[input_text]
-    A -->|file URL| C[input_file (URL)]
-    A -->|file ID| D[input_file (ID)]
+    A -->|file URL| C["input_file (URL)"]
+    A -->|file ID| D["input_file (ID)"]
     A -->|file bytes| E[encode to data URL]
     A -->|file path| F{size ≤ chunk?}
-    F -->|yes| G[/v1/files]
-    F -->|no| H[/v1/uploads]
+    F -->|yes| G["/v1/files"]
+    F -->|no| H["/v1/uploads"]
     G --> I[file_id]
     H --> I[file_id]
     B --> J[Responses API]
