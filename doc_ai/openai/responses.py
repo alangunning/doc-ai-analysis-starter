@@ -114,17 +114,7 @@ def create_response(
             "Responses API request: %s",
             json.dumps(payload, indent=2),
         )
-    try:
-        result = client.responses.create(**payload)
-    except TypeError as exc:
-        # Older clients may not support the ``response_format`` argument. Retry
-        # without it when we detect that specific failure.
-        if "response_format" in payload and "response_format" in str(exc):
-            payload = dict(payload)
-            payload.pop("response_format", None)
-            result = client.responses.create(**payload)
-        else:  # pragma: no cover - pass through unexpected errors
-            raise
+    result = client.responses.create(**payload)
     if logger:
         try:
             body = json.dumps(result.model_dump(), indent=2)

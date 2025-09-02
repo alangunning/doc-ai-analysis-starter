@@ -112,24 +112,17 @@ def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
     client.responses.create.assert_called_once()
 
 
-def test_create_response_retries_without_response_format():
+def test_create_response_passes_response_format():
     client = MagicMock()
-
-    def side_effect(**kwargs):
-        if "response_format" in kwargs:
-            raise TypeError("got an unexpected keyword argument 'response_format'")
-        return MagicMock()
-
-    client.responses.create.side_effect = side_effect
-
     create_response(
         client,
         model="gpt-4.1",
         texts=["hi"],
         response_format={"type": "json_schema"},
     )
-
-    assert client.responses.create.call_count == 2
-    args, kwargs = client.responses.create.call_args
-    assert "response_format" not in kwargs
+    client.responses.create.assert_called_once_with(
+        model="gpt-4.1",
+        input=[{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
+        response_format={"type": "json_schema"},
+    )
 
