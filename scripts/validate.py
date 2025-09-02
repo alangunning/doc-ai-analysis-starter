@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prompt",
         type=Path,
-        default=Path(".github/prompts/validate-output.prompt.yaml"),
+        help="Prompt file",
     )
     parser.add_argument(
         "--model",
@@ -99,11 +99,19 @@ if __name__ == "__main__":
         meta.blake2b = file_hash
         meta.extra = {}
     fmt = OutputFormat(args.format) if args.format else infer_format(args.rendered)
+    prompt_path = args.prompt
+    if prompt_path is None:
+        local_prompt = args.raw.with_name(f"{args.raw.stem}-validate.prompt.yaml")
+        prompt_path = (
+            local_prompt
+            if local_prompt.exists()
+            else Path(".github/prompts/validate-output.prompt.yaml")
+        )
     verdict = validate_file(
         args.raw,
         args.rendered,
         fmt,
-        args.prompt,
+        prompt_path,
         model=args.model,
         base_url=args.base_model_url,
         show_progress=True,

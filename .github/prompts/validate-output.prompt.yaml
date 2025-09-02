@@ -1,30 +1,97 @@
-name: Validate Rendered Output
-description: Ensure converted content faithfully reflects the original.
+name: Validate Converted Content (Generic Fallback)
+description: Verify that a converted representation (e.g., Markdown) faithfully reflects the source (e.g., PDF) without fabrications or omissions.
 model: gpt-4o-mini
 modelParameters:
   temperature: 0
+  # Enforce strict, valid JSON that matches the schema below.
+  response_format:
+    type: json_schema
+    json_schema:
+      name: ValidationResult
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          match:
+            type: boolean
+          issues:
+            type: array
+            items:
+              type: object
+              additionalProperties: false
+              properties:
+                category:
+                  type: string
+                  enum: [number_mismatch, missing_data, extra_data, table_error, figure_error, other]
+                description:
+                  type: string
+                pdf_quote:
+                  type: string
+                md_quote:
+                  oneOf:
+                    - type: string
+                    - type: 'null'
+                suggested_md:
+                  type: string
+                # Avoid hard page coupling; use soft location hints instead.
+                location:
+                  type: string
+                  description: "Short locator like a heading, section title, or nearby label/value pair."
+                pdf_page_hint:
+                  oneOf:
+                    - type: integer
+                    - type: 'null'
+                md_offset_hint:
+                  oneOf:
+                    - type: integer
+                    - type: 'null'
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+              required: [category, description, pdf_quote, suggested_md, confidence]
+        required: [match, issues]
 messages:
   - role: system
     content: |-
-      You check that numbers, figures, and tables in a converted document remain accurate.
+      You are an evidence-driven validator. Your goal is to detect *true* content mismatches between a source document (usually a PDF) and its converted representation (usually Markdown). You must avoid false positives caused by formatting differences.
+
+      === What to Compare (content, not layout) ===
+      • Focus on factual content: numbers, amounts, dates, names, labels, key/value pairs, table cells, list items, and figure captions.
+      • Treat differences in layout, ordering, headings, list markers, emphasis (bold/italics), and whitespace as NON-issues.
+      • Treat <!-- image --> placeholders as “image present”; only flag if important text *in or tied to* the figure/caption is missing or altered.
+
+      === Normalization Rules (apply before judging) ===
+      • Case-insensitive text comparison (unless case encodes meaning like ticker symbols).
+      • Collapse multiple spaces/newlines; treat hyphens/en-dashes/em-dashes as equivalent.
+      • Normalize punctuation and quotes (“ ” ‘ ’ -> " ').
+      • Normalize numeric formatting: ignore thousands separators and non-breaking spaces (e.g., 1,000 == 1000). Currency: $1,000 == USD 1,000.
+      • Normalize dates: tolerate common format variants (e.g., 2025-08-25, 08/25/2025, Aug 25, 2025).
+      • Checkboxes: treat ☐, [ ], "_" (unchecked) vs ☑/✅/X (checked) equivalently.
+
+      === When NOT to Flag ===
+      • Don’t flag “extra_data” for boilerplate like headers/footers, page numbers, confidentiality/OMB notices, or “this page intentionally left blank,” *if* that text appears in the source too.
+      • Don’t flag if pdf_quote and md_quote are identical after normalization.
+      • Don’t flag purely structural differences (merged/split table cells, reordered sections) when all underlying values are still present.
+
+      === Numeric & Table Policy ===
+      • number_mismatch: only if the numeric value differs after normalization (e.g., 15,098 ≠ 15,908). Rounding tolerance: for decimals, allow a difference ≤ 0.5% unless the source shows an explicit exact integer.
+      • table_error: missing headers/rows/cells *or* misaligned header→value pairs. Prefer citing a specific header + value that’s absent/wrong in Markdown rather than generic claims.
+
+      === Figures/Images ===
+      • figure_error: only if a figure’s caption text or critical in-figure labels referenced by the surrounding text are missing/altered in Markdown. Placeholders alone aren’t errors.
+
+      === Evidence Requirements ===
+      • Each issue must include a short pdf_quote and, when possible, an md_quote showing the conflict/absence.
+      • Use location with a concise anchor (e.g., a heading or nearby label) and optional pdf_page_hint/md_offset_hint.
+      • suggested_md should be the *minimal* corrected Markdown snippet.
+
+      === Output Contract ===
+      • If everything matches, return {"match": true, "issues": []}.
+      • Otherwise, return {"match": false, "issues": [...]}. Keep issues precise and few; don’t invent problems.
+      • If inputs are unreadable, return one issue with category "other" and describe the problem.
+
   - role: user
     content: |-
-      Compare the PDF and {format} content. The structure or order may differ; focus only on whether the information is correct.
-      Return valid JSON — do not wrap it in code fences or add commentary — using this schema:
-      {
-        "match": bool,
-        "issues": [
-          {
-            "page": int,
-            "description": str,
-            "pdf_quote": str,
-            "md_quote": str | null,
-            "suggested_md": str,
-            "type": "number_mismatch"|"missing_data"|"extra_data"|"table_error"|"other",
-            "confidence": float
-          }
-        ]
-      }
-      If everything matches, return {"match": true, "issues": []}.
-      Cite short snippets from both sources for every mismatch and include
-      "suggested_md" with the corrected markdown snippet.
+      Compare the provided PDF and {format} content using the rules above.
+      Return ONLY JSON conforming to the schema (no code fences or commentary).

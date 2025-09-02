@@ -389,6 +389,51 @@ def test_validate_doc_updates_metadata(tmp_path):
     assert inputs["format"] == OutputFormat.MARKDOWN.value
 
 
+def test_validate_doc_uses_local_prompt(tmp_path):
+    raw = tmp_path / "raw.pdf"
+    rendered = tmp_path / "raw.md"
+    prompt = tmp_path / "raw-validate.prompt.yaml"
+    raw.write_bytes(b"pdf")
+    rendered.write_text("md")
+    prompt.write_text(
+        yaml.dump(
+            {
+                "name": "p",
+                "model": "m",
+                "modelParameters": {"temperature": 0},
+                "messages": [],
+            }
+        )
+    )
+    called: dict[str, Path] = {}
+
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, **kwargs):
+        called["prompt"] = prompt_path
+        return {"match": True}
+
+    with patch("doc_ai.cli.validate_file", side_effect=fake_validate_file):
+        validate_doc(raw, rendered, OutputFormat.MARKDOWN)
+
+    assert called["prompt"] == prompt
+
+
+def test_validate_doc_uses_default_prompt(tmp_path):
+    raw = tmp_path / "raw.pdf"
+    rendered = tmp_path / "raw.md"
+    raw.write_bytes(b"pdf")
+    rendered.write_text("md")
+    called: dict[str, Path] = {}
+
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, **kwargs):
+        called["prompt"] = prompt_path
+        return {"match": True}
+
+    with patch("doc_ai.cli.validate_file", side_effect=fake_validate_file):
+        validate_doc(raw, rendered, OutputFormat.MARKDOWN)
+
+    assert called["prompt"].name == "validate-output.prompt.yaml"
+
+
 def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
     raw = tmp_path / "raw.pdf"
     rendered = tmp_path / "rendered.md"
@@ -483,3 +528,32 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
 
     assert called["model"] == "cli-model"
     assert called["base_url"] == "https://cli.base"
+
+
+def test_validate_script_auto_prompt(monkeypatch, tmp_path):
+    raw = tmp_path / "raw.pdf"
+    rendered = tmp_path / "raw.md"
+    prompt = tmp_path / "raw-validate.prompt.yaml"
+    raw.write_bytes(b"pdf")
+    rendered.write_text("md")
+    prompt.write_text(
+        yaml.dump(
+            {
+                "name": "p",
+                "model": "m",
+                "modelParameters": {"temperature": 0},
+                "messages": [],
+            }
+        )
+    )
+    called: dict[str, Path] = {}
+
+    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, **kwargs):
+        called["prompt"] = prompt_path
+        return {"match": True}
+
+    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
+    monkeypatch.setattr(sys, "argv", [str(script_path), str(raw), str(rendered)])
+    runpy.run_path(str(script_path), run_name="__main__")
+    assert called["prompt"] == prompt
