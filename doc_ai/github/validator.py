@@ -113,8 +113,13 @@ def validate_file(
         if progress is not None:
             progress.stop()
 
-    text = result.output_text or "{}"
-    return json.loads(text)
+    text = (result.output_text or "").strip()
+    if not text:
+        raise ValueError("Model response contained no text")
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Model response was not valid JSON: {text}") from exc
 
 
 __all__ = ["validate_file"]

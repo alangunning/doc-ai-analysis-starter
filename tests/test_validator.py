@@ -3,6 +3,7 @@ import runpy
 import sys
 from pathlib import Path
 import yaml
+import pytest
 
 from doc_ai.converter import OutputFormat
 from doc_ai.github.validator import validate_file
@@ -60,6 +61,39 @@ def test_validate_file_returns_json(tmp_path):
     assert content[1] == {"type": "input_text", "text": "text"}
     file_ids = [part["file_id"] for part in content if part["type"] == "input_file"]
     assert file_ids == ["raw.pdf-id"]
+
+
+def test_validate_file_bad_json(tmp_path):
+    raw_path = tmp_path / "raw.pdf"
+    rendered_path = tmp_path / "rendered.txt"
+    prompt_path = tmp_path / "prompt.yml"
+
+    raw_path.write_bytes(b"raw")
+    rendered_path.write_text("text")
+    prompt_path.write_text(
+        yaml.dump(
+            {
+                "name": "Validate Rendered Output",
+                "description": "Compare original documents with their rendered representation.",
+                "model": "validator-model",
+                "modelParameters": {"temperature": 0},
+                "messages": [
+                    {"role": "system", "content": "System instructions"},
+                    {"role": "user", "content": "Check {format}"},
+                ],
+            }
+        )
+    )
+
+    mock_response = MagicMock(output_text="not json")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
+        "doc_ai.openai.responses.upload_file", return_value="file-id"
+    ):
+        with pytest.raises(ValueError, match="not valid JSON"):
+            validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
 
 def test_validate_file_large_uses_uploads(monkeypatch, tmp_path):
