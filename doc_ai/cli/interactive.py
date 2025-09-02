@@ -20,6 +20,40 @@ from rich.console import Console
 __all__ = ["interactive_shell", "get_completions"]
 
 
+def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
+    """Return filesystem path completions for ``text``.
+
+    Parameters
+    ----------
+    text:
+        Current token to complete.
+    only_dirs:
+        If ``True``, limit results to directories.
+    """
+    expanded = os.path.expanduser(text)
+    directory, _, prefix = expanded.rpartition(os.sep)
+    if directory:
+        base = Path(directory or os.sep)
+    else:
+        base = Path(".")
+    try:
+        entries = list(base.iterdir())
+    except OSError:
+        return []
+    results: list[str] = []
+    for entry in entries:
+        name = entry.name
+        if not name.startswith(prefix):
+            continue
+        if only_dirs and not entry.is_dir():
+            continue
+        completion = os.path.join(directory, name) if directory else name
+        if entry.is_dir():
+            completion += os.sep
+        results.append(completion)
+    return results
+
+
 def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     """Return completion suggestions for the given buffer and text."""
     root = get_command(app)
@@ -31,16 +65,31 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     if buffer.endswith(" "):
         tokens.append("")
     suggestions: list[str] = []
+    incomplete: str | None = None
     if not tokens:
         suggestions = list(commands)
+    elif tokens[0] == "cd":
+        incomplete = tokens[1] if len(tokens) > 1 else ""
+        suggestions = _complete_path(incomplete, only_dirs=True)
     elif len(tokens) == 1:
         suggestions = [name for name in commands if name.startswith(tokens[0])]
+        if not suggestions:
+            incomplete = tokens[0]
+            suggestions = _complete_path(incomplete)
     else:
         cmd = commands.get(tokens[0])
         if cmd:
             incomplete = tokens[-1]
-            ctx = click.Context(cmd, info_name=cmd.name, resilient_parsing=True)
+            ctx = cmd.make_context(cmd.name, tokens[1:-1], resilient_parsing=True)
             suggestions = [item.value for item in cmd.shell_complete(ctx, incomplete)]
+            if not suggestions:
+                suggestions = _complete_path(incomplete)
+        else:
+            incomplete = tokens[-1]
+            suggestions = _complete_path(incomplete)
+    if incomplete is not None and len(incomplete) > len(text):
+        prefix = incomplete[: len(incomplete) - len(text)]
+        suggestions = [s[len(prefix):] if s.startswith(prefix) else s for s in suggestions]
     return sorted(suggestions)
 
 
