@@ -21,3 +21,13 @@ def test_interactive_shell_cd(monkeypatch, tmp_path):
         assert Path.cwd() == tmp_path
     finally:
         os.chdir(cwd)
+
+
+def test_completions_top_level():
+    opts = cli._get_completions("", "")
+    assert "convert" in opts
+
+
+def test_completions_options():
+    opts = cli._get_completions("convert --f", "--f")
+    assert any(opt.startswith("--format") for opt in opts)

@@ -10,7 +10,9 @@ import traceback
 import warnings
 import logging
 
+import click
 import typer
+from typer.main import get_command
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv
@@ -266,7 +268,45 @@ def pipeline(
 __all__ = ["app", "analyze_doc", "validate_doc", "convert_path", "validate_file", "run_prompt", "main"]
 
 
+def _get_completions(buffer: str, text: str) -> list[str]:
+    """Return CLI completion suggestions for the given buffer and text."""
+    root = get_command(app)
+    commands: dict[str, click.Command] = root.commands
+    try:
+        tokens = shlex.split(buffer)
+    except ValueError:
+        tokens = buffer.split()
+    if buffer.endswith(" "):
+        tokens.append("")
+    suggestions: list[str] = []
+    if not tokens:
+        suggestions = list(commands)
+    elif len(tokens) == 1:
+        suggestions = [name for name in commands if name.startswith(tokens[0])]
+    else:
+        cmd = commands.get(tokens[0])
+        if cmd:
+            incomplete = tokens[-1]
+            ctx = click.Context(cmd, info_name=cmd.name, resilient_parsing=True)
+            suggestions = [item.value for item in cmd.shell_complete(ctx, incomplete)]
+    return sorted(suggestions)
+
+
 def _interactive_shell() -> None:  # pragma: no cover - CLI utility
+    try:
+        import readline
+    except Exception:  # pragma: no cover - platform-specific
+        readline = None
+    if readline is not None:
+        def completer(text: str, state: int) -> str | None:
+            options = _get_completions(readline.get_line_buffer(), text)
+            return options[state] if state < len(options) else None
+
+        try:
+            readline.set_completer(completer)
+            readline.parse_and_bind("tab: complete")
+        except Exception:  # pragma: no cover - readline may be missing features
+            pass
     try:
         _print_banner()
         app(prog_name="cli.py", args=["--help"])
