@@ -418,6 +418,14 @@ def _interactive_shell() -> None:  # pragma: no cover - CLI utility
             continue
         if command.lower() in {"exit", "quit"}:
             break
+        if command.startswith("cd"):
+            parts = command.split(maxsplit=1)
+            target = Path(parts[1]).expanduser() if len(parts) > 1 else Path.home()
+            try:
+                os.chdir(target)
+            except OSError as exc:
+                console.print(f"[red]{exc}[/red]")
+            continue
         full_cmd = command
         if SETTINGS["verbose"]:
             full_cmd += " --verbose"
