@@ -21,6 +21,14 @@ When neither file exists, the generic
 `.github/prompts/validate-output.validate.prompt.yaml` is used. Pass `--prompt`
 to the CLI to override this discovery.
 
+## Metadata capture
+
+Each validation run updates the source document's companion metadata file. The
+`validation` step records the model, prompt, base URL, rendered filename and a
+timestamp under `inputs`, along with the full verdict. If the Markdown fails
+validation, the step is marked incomplete but the mismatch details remain for
+later review.
+
 ## Validation with OpenAI (PDF + Markdown)
 
 The snippet below uploads the PDF once and references it by `file_id` using

@@ -6,6 +6,7 @@ from typing import Callable, List
 import logging
 import os
 import re
+from datetime import datetime, timezone
 
 import typer
 from rich.console import Console
@@ -113,7 +114,7 @@ def validate_doc(
         else:
             prompt_path = Path(
                 ".github/prompts/validate-output.validate.prompt.yaml"
-            )
+    )
     verdict = validate_file_func(
         raw,
         rendered,
@@ -125,19 +126,29 @@ def validate_doc(
         logger=logger,
         console=console,
     )
-    if not verdict.get("match", False):
-        raise RuntimeError(f"Mismatch detected: {verdict}")
+    match = verdict.get("match", False)
+    now = datetime.now(timezone.utc).isoformat()
+    meta.date_modified = now
     mark_step(
         meta,
         "validation",
+        done=match,
         outputs=[rendered.name],
         inputs={
             "prompt": prompt_path.name,
             "rendered": rendered.name,
+            "rendered_blake2b": compute_hash(rendered),
             "format": fmt.value,
+            "model": model,
+            "base_url": base_url,
+            "document": str(raw),
+            "validated_at": now,
+            "verdict": verdict,
         },
     )
     save_metadata(raw, meta)
+    if not match:
+        raise RuntimeError(f"Mismatch detected: {verdict}")
 
 
 def analyze_doc(

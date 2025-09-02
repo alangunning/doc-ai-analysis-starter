@@ -2,6 +2,7 @@ import argparse
 import os
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -138,7 +139,25 @@ if __name__ == "__main__":
         logger=logger,
         console=console,
     )
+    now = datetime.now(timezone.utc).isoformat()
+    meta.date_modified = now
+    mark_step(
+        meta,
+        "validation",
+        done=verdict.get("match", False),
+        outputs=[rendered.name],
+        inputs={
+            "model": args.model,
+            "document": str(args.raw),
+            "rendered": rendered.name,
+            "rendered_blake2b": compute_hash(rendered),
+            "prompt": prompt_path.name,
+            "base_url": args.base_model_url,
+            "format": fmt.value,
+            "validated_at": now,
+            "verdict": verdict,
+        },
+    )
+    save_metadata(args.raw, meta)
     if not verdict.get("match", False):
         raise SystemExit(f"Mismatch detected: {verdict}")
-    mark_step(meta, "validation")
-    save_metadata(args.raw, meta)
