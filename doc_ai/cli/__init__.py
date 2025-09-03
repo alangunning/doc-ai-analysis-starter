@@ -20,7 +20,6 @@ if __package__ in (None, ""):
     sys.path[0] = str(Path(__file__).resolve().parent.parent)
 
 from doc_ai.converter import OutputFormat, convert_path
-from doc_ai.github import build_vector_store, validate_file, run_prompt
 from .utils import (
     analyze_doc,
     infer_format as _infer_format,
@@ -31,7 +30,6 @@ from .utils import (
 )
 
 ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
-load_dotenv(ENV_FILE)
 
 console = Console()
 app = typer.Typer(
@@ -61,6 +59,31 @@ ASCII_ART = r"""
 
 def _print_banner() -> None:  # pragma: no cover - visual flair only
     console.print(f"[bold green]{ASCII_ART}[/bold green]")
+
+
+@app.command("exit")
+@app.command("quit")
+def _exit_command() -> None:
+    """Exit the interactive shell."""
+    raise typer.Exit()
+
+
+def validate_file(*args, **kwargs):
+    from doc_ai.github.validator import validate_file as _validate_file
+
+    return _validate_file(*args, **kwargs)
+
+
+def build_vector_store(*args, **kwargs):
+    from doc_ai.github.vector import build_vector_store as _build_vector_store
+
+    return _build_vector_store(*args, **kwargs)
+
+
+def run_prompt(*args, **kwargs):
+    from doc_ai.github.prompts import run_prompt as _run_prompt
+
+    return _run_prompt(*args, **kwargs)
 
 
 @app.command()
@@ -282,6 +305,7 @@ __all__ = [
 
 def main() -> None:
     """Entry point for running the CLI as a script."""
+    load_dotenv(ENV_FILE)
     if len(sys.argv) > 1:
         _print_banner()
         args = sys.argv[1:]
@@ -295,9 +319,13 @@ def main() -> None:
             else:
                 console.print(f"[red]{exc}[/red]")
     else:
+        console.print(
+            "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
+        )
         interactive_shell(
             app,
             console=console,
             print_banner=_print_banner,
             verbose=SETTINGS["verbose"],
         )
+        console.print("Goodbye!")

@@ -8,7 +8,6 @@ import time
 from pathlib import Path
 
 from openai import OpenAI
-from dotenv import load_dotenv
 import logging
 
 from ..metadata import (
@@ -19,8 +18,6 @@ from ..metadata import (
     save_metadata,
 )
 from .prompts import DEFAULT_MODEL_BASE_URL
-
-load_dotenv()
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")

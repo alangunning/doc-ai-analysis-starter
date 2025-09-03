@@ -7,10 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
-from dotenv import load_dotenv
 from openai import OpenAI
-
-load_dotenv()
 
 DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
 

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 import yaml
-from dotenv import load_dotenv
 from openai import OpenAI
 
 from ..converter import OutputFormat
@@ -21,8 +20,6 @@ from rich.progress import Progress
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
-
-load_dotenv()
 
 
 def validate_file(

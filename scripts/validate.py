@@ -10,7 +10,6 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from doc_ai import OutputFormat, suffix_for_format
-from doc_ai.github import validate_file
 from doc_ai.metadata import (
     compute_hash,
     is_step_done,
@@ -18,8 +17,6 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
-
-load_dotenv()
 
 
 def infer_format(path: Path) -> OutputFormat:
@@ -41,6 +38,8 @@ def infer_format(path: Path) -> OutputFormat:
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    from doc_ai.github import validate_file
     parser = argparse.ArgumentParser()
     parser.add_argument("raw", type=Path)
     parser.add_argument("rendered", type=Path, nargs="?")

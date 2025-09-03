@@ -1,9 +1,11 @@
-import types
 import tempfile
 from pathlib import Path
 import sys
+import types
 import yaml
 from unittest.mock import patch
+
+from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from doc_ai.openai.responses import create_response
@@ -44,4 +46,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     main()

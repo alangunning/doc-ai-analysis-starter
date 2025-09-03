@@ -11,10 +11,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from doc_ai.converter import OutputFormat, convert_path
 
-load_dotenv()
-
 
 if __name__ == "__main__":
+    load_dotenv()
     parser = argparse.ArgumentParser()
     parser.add_argument("source", help="Path to raw document or folder")
     parser.add_argument(

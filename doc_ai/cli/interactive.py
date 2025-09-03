@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import shlex
 import traceback
+import atexit
 from pathlib import Path
 from typing import Callable
 
@@ -16,6 +17,8 @@ import click
 import typer
 from typer.main import get_command
 from rich.console import Console
+
+from .utils import load_env_defaults
 
 __all__ = ["interactive_shell", "get_completions"]
 
@@ -66,11 +69,20 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
         tokens.append("")
     suggestions: list[str] = []
     incomplete: str | None = None
-    if not tokens:
+    env_vars = set(os.environ) | set(load_env_defaults().keys())
+    if tokens and tokens[-1].startswith("$"):
+        incomplete = tokens[-1]
+        prefix = incomplete[1:]
+        suggestions = [f"${k}" for k in env_vars if k.startswith(prefix)]
+    elif not tokens:
         suggestions = list(commands)
     elif tokens[0] == "cd":
         incomplete = tokens[1] if len(tokens) > 1 else ""
         suggestions = _complete_path(incomplete, only_dirs=True)
+    elif len(tokens) == 1 and tokens[0].startswith("-"):
+        incomplete = tokens[0]
+        ctx = root.make_context(root.name, [], resilient_parsing=True)
+        suggestions = [item.value for item in root.shell_complete(ctx, incomplete)]
     elif len(tokens) == 1:
         suggestions = [name for name in commands if name.startswith(tokens[0])]
         if not suggestions:
@@ -82,8 +94,11 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
             incomplete = tokens[-1]
             ctx = cmd.make_context(cmd.name, tokens[1:-1], resilient_parsing=True)
             suggestions = [item.value for item in cmd.shell_complete(ctx, incomplete)]
-            if not suggestions:
+            if not suggestions and not incomplete.startswith("$"):
                 suggestions = _complete_path(incomplete)
+            if incomplete.startswith("$"):
+                prefix = incomplete[1:]
+                suggestions = [f"${k}" for k in env_vars if k.startswith(prefix)]
         else:
             incomplete = tokens[-1]
             suggestions = _complete_path(incomplete)
@@ -130,6 +145,12 @@ def interactive_shell(
             options = get_completions(app, readline.get_line_buffer(), text)
             return options[state] if state < len(options) else None
 
+        history_path = Path("~/.doc_ai_history").expanduser()
+        try:
+            readline.read_history_file(history_path)
+        except Exception:
+            pass
+        atexit.register(lambda: readline.write_history_file(history_path))
         try:
             readline.set_completer(completer)
             readline.parse_and_bind("tab: complete")
@@ -162,7 +183,12 @@ def interactive_shell(
         if verbose:
             full_cmd += " --verbose"
         try:
-            app(prog_name=prog_name, args=shlex.split(full_cmd))
+            args = shlex.split(full_cmd)
+        except ValueError as exc:
+            console.print(f"[red]Parse error: {exc}[/red]")
+            continue
+        try:
+            app(prog_name=prog_name, args=args)
         except SystemExit:
             pass
         except Exception as exc:  # pragma: no cover - runtime error display
