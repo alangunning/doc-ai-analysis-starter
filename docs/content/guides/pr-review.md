@@ -1,6 +1,6 @@
 ---
 title: Pull Request Reviews
-sidebar_position: 7
+sidebar_position: 3
 ---
 
 # Pull Request Reviews

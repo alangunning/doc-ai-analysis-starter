@@ -37,7 +37,7 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    Copy `.env.example` to `.env` and adjust variables as needed. Environment
    variables from the runtime override values in the file and command-line
    flags override both. Use `doc-ai config --set VAR=VALUE` to update the `.env`
-   file from the CLI. See the [Configuration guide](docs/content/configuration.md)
+  file from the CLI. See the [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md)
    for details on workflow toggles and model settings.
 
 4. **Try it out**
@@ -167,7 +167,7 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | Auto Merge | `/merge` issue comment | Approve and merge a pull request after review |
 | Lint | Push/PR touching Python files | Run Ruff style checks |
 
-Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](docs/content/configuration.md).
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md).
 
 ```mermaid
 graph LR
