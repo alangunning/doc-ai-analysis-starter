@@ -80,6 +80,27 @@ def test_create_response_with_file_paths(monkeypatch, tmp_path):
     client.responses.create.assert_called_once()
 
 
+def test_create_response_with_single_path(monkeypatch, tmp_path):
+    file_path = tmp_path / "single.txt"
+    file_path.write_text("hi")
+
+    uploads: list = []
+
+    def fake_upload_file(
+        client, path, purpose, *, use_upload=None, progress=None, logger=None
+    ):
+        uploads.append(path)
+        return "file-id"
+
+    monkeypatch.setattr("doc_ai.openai.responses.upload_file", fake_upload_file)
+
+    client = MagicMock()
+    create_response(client, model="gpt-4.1", file_paths=file_path)
+
+    assert uploads == [file_path]
+    client.responses.create.assert_called_once()
+
+
 def test_create_response_with_system_message():
     client = MagicMock()
     create_response(

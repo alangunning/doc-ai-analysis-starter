@@ -1,13 +1,13 @@
 """Convenience helpers for creating Responses API requests."""
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
-from pathlib import Path
-import json
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, TYPE_CHECKING
 import logging
 import os
 
-from openai import OpenAI
+if TYPE_CHECKING:  # pragma: no cover - import for type checking only
+    from openai import OpenAI
+    from pathlib import Path
 
 from .files import (
     input_file_from_bytes,
@@ -38,7 +38,7 @@ def _ensure_seq(value: Union[Any, Sequence[Any], None]) -> Sequence[Any]:
 
     if value is None:
         return []
-    if isinstance(value, (str, bytes)):
+    if isinstance(value, (str, bytes, os.PathLike)):
         return [value]
     return value
 
@@ -90,6 +90,10 @@ def create_response(
         Optional logger for emitting request and response payloads.
     """
 
+    from pathlib import Path
+    import json
+    import time
+
     file_purpose = file_purpose or os.getenv("OPENAI_FILE_PURPOSE", "user_data")
 
     content: list[Dict[str, Any]] = []
@@ -126,8 +130,22 @@ def create_response(
             "Responses API request: %s",
             json.dumps(payload, indent=2),
         )
-    result = client.responses.create(**payload)
-    if logger:
+
+    result = None
+    for attempt in range(3):
+        try:
+            result = client.responses.create(**payload)
+            break
+        except Exception as exc:  # pragma: no cover - network failures
+            if logger:
+                logger.warning(
+                    "Responses API request failed", extra={"attempt": attempt + 1, "error": str(exc)}
+                )
+            if attempt == 2:
+                raise
+            time.sleep(2 ** attempt)
+
+    if logger and result is not None:
         try:
             body = json.dumps(result.model_dump(), indent=2)
         except Exception:  # pragma: no cover - best effort
