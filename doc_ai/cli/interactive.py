@@ -58,7 +58,28 @@ def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
 
 
 def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
-    """Return completion suggestions for the given buffer and text."""
+    """Return completion suggestions for the given buffer and token.
+
+    Parameters
+    ----------
+    app:
+        Typer application providing command definitions.
+    buffer:
+        Full current input line.
+    text:
+        Partial token to complete within ``buffer``.
+
+    Returns
+    -------
+    list[str]
+        Sorted list of suggested completions.
+
+    Examples
+    --------
+    >>> from doc_ai.cli import app
+    >>> get_completions(app, "co", "co")
+    ['convert']
+    """
     root = get_command(app)
     commands: dict[str, click.Command] = root.commands
     try:
@@ -134,6 +155,13 @@ def interactive_shell(
 
     The loop provides readline-based tab completion for commands and options and
     supports simple built-in commands like ``cd`` and ``exit``.
+
+    Examples
+    --------
+    Run the library's own CLI in interactive mode::
+
+        from doc_ai import cli
+        cli.interactive_shell(cli.app)
     """
     console = console or Console()
     try:  # pragma: no cover - depends on system readline availability
