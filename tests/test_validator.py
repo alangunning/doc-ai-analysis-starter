@@ -44,7 +44,7 @@ def test_validate_file_returns_json(tmp_path):
     mock_openai.assert_called_once()
     assert mock_client.files.create.call_count == 2
     for call in mock_client.files.create.call_args_list:
-        assert call.kwargs["purpose"] == "assistants"
+        assert call.kwargs["purpose"] == "user_data"
     args, kwargs = mock_client.responses.create.call_args
     assert kwargs["model"] == "validator-model"
     user_msg = kwargs["input"][1]

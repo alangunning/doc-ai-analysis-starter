@@ -8,6 +8,7 @@ import os
 import sys
 import shlex
 import re
+import traceback
 
 import typer
 from rich.console import Console
@@ -33,6 +34,13 @@ console = Console()
 app = typer.Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation."
 )
+
+SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+
+@app.callback()
+def main(verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output")):
+    """Global options."""
+    SETTINGS["verbose"] = verbose
 
 ASCII_ART = r"""
  ____   ___   ____      _    ___    ____ _     ___
@@ -67,6 +75,28 @@ def _parse_env_formats() -> List[OutputFormat] | None:
     return formats
 
 
+@app.command()
+def settings(
+    verbose: bool = typer.Option(
+        None, "--verbose/--no-verbose", help="Toggle verbose error output"
+    )
+) -> None:
+    """Show or update runtime settings."""
+    if verbose is not None:
+        SETTINGS["verbose"] = verbose
+    console.print("Current settings:")
+    console.print(f"  verbose: {SETTINGS['verbose']}")
+    env_vars = [
+        "OUTPUT_FORMATS",
+        "OPENAI_API_KEY",
+        "GITHUB_TOKEN",
+        "BASE_MODEL_URL",
+        "VALIDATE_BASE_MODEL_URL",
+    ]
+    for var in env_vars:
+        console.print(f"  {var}: {os.getenv(var, '')}")
+
+
 def validate_doc(
     raw: Path,
     rendered: Path,
@@ -74,6 +104,7 @@ def validate_doc(
     prompt: Path = Path(".github/prompts/validate-output.prompt.yaml"),
     model: str | None = None,
     base_url: str | None = None,
+    show_progress: bool = False,
 ) -> None:
     meta = load_metadata(raw)
     file_hash = compute_hash(raw)
@@ -103,6 +134,7 @@ def validate_doc(
         prompt,
         model=model,
         base_url=base_url,
+        show_progress=show_progress,
     )
     if not verdict.get("match", False):
         raise RuntimeError(f"Mismatch detected: {verdict}")
@@ -213,7 +245,7 @@ def validate(
     ),
 ) -> None:
     """Validate converted output against the original file."""
-    validate_doc(raw, rendered, fmt, prompt, model, base_model_url)
+    validate_doc(raw, rendered, fmt, prompt, model, base_model_url, show_progress=True)
 
 
 @app.command()
@@ -304,15 +336,32 @@ def _interactive_shell() -> None:  # pragma: no cover - CLI utility
             continue
         if command.lower() in {"exit", "quit"}:
             break
+        full_cmd = command
+        if SETTINGS["verbose"]:
+            full_cmd += " --verbose"
         try:
-            app(prog_name="cli.py", args=shlex.split(command))
+            app(prog_name="cli.py", args=shlex.split(full_cmd))
         except SystemExit:
             pass
+        except Exception as exc:  # pragma: no cover - runtime error display
+            if SETTINGS["verbose"]:
+                traceback.print_exc()
+            else:
+                console.print(f"[red]{exc}[/red]")
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         _print_banner()
-        app()
+        args = sys.argv[1:]
+        if SETTINGS["verbose"] and "--verbose" not in args and "-v" not in args:
+            args.append("--verbose")
+        try:
+            app(prog_name="cli.py", args=args)
+        except Exception as exc:  # pragma: no cover - runtime error display
+            if SETTINGS["verbose"]:
+                traceback.print_exc()
+            else:
+                console.print(f"[red]{exc}[/red]")
     else:
         _interactive_shell()
