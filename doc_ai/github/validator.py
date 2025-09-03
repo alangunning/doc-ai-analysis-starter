@@ -9,13 +9,13 @@ import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-import requests
 import yaml
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from ..converter import OutputFormat
 from ..openai import create_response, upload_file
+from ..utils import http_get, sanitize_path
 from rich.console import Console
 from rich.progress import Progress
 from .prompts import DEFAULT_MODEL_BASE_URL
@@ -67,8 +67,12 @@ def validate_file(
     if not base or "models.github.ai" in base:
         base = OPENAI_BASE_URL
     api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
-    client = OpenAI(api_key=os.getenv(api_key_var), base_url=base)
+    api_key = os.getenv(api_key_var)
+    if not api_key:
+        raise RuntimeError(f"Missing required environment variable: {api_key_var}")
+    client = OpenAI(api_key=api_key, base_url=base)
 
+    prompt_path = sanitize_path(prompt_path)
     spec = yaml.safe_load(prompt_path.read_text())
     system_msgs = [m["content"] for m in spec["messages"] if m.get("role") == "system"]
     user_msgs: List[str] = [m["content"] for m in spec["messages"] if m.get("role") == "user"]
@@ -86,11 +90,11 @@ def validate_file(
             if str(p).lower().endswith(".pdf"):
                 file_urls.append(str(p))
             else:
-                resp = requests.get(str(p))
+                resp = http_get(str(p))
                 resp.raise_for_status()
                 texts.append(resp.text)
         else:
-            path = Path(p)
+            path = sanitize_path(p)
             if path.suffix.lower() == ".pdf":
                 file_paths.append(path)
             else:

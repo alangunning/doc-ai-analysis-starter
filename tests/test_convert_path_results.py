@@ -35,9 +35,22 @@ def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
         def raise_for_status(self):
             pass
 
-    # ensure download goes into tmp_path
-    monkeypatch.setattr("doc_ai.converter.path.tempfile.mkdtemp", lambda: str(tmp_path))
-    monkeypatch.setattr("doc_ai.converter.path.requests.get", lambda u, timeout=30: DummyResp())
+    class DummyTempDir:
+        def __init__(self, path):
+            self.path = path
+
+        def __enter__(self):
+            return str(self.path)
+
+        def __exit__(self, exc_type, exc, tb):
+            pass
+
+    monkeypatch.setattr(
+        "doc_ai.converter.path.TemporaryDirectory", lambda: DummyTempDir(tmp_path)
+    )
+    monkeypatch.setattr(
+        "doc_ai.converter.path.http_get", lambda u, **kwargs: DummyResp()
+    )
 
     def fake_convert_files(src, outputs, return_status=True):
         for out in outputs.values():
