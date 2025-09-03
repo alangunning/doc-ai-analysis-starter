@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 import os
 import sys
 import traceback
@@ -13,7 +12,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
-from .interactive import interactive_shell, get_completions
+from .interactive import complete_path, get_completions, interactive_shell
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -101,13 +100,19 @@ def config(
 @app.command()
 def convert(
     source: str = typer.Argument(
-        ..., help="Path or URL to raw document or folder"
+        ..., help="Path or URL to raw document or folder", autocompletion=complete_path
     ),
     format: list[OutputFormat] = typer.Option(
         None,
         "--format",
         "-f",
         help="Desired output format(s). Can be passed multiple times.",
+    ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Select files via checkbox prompt when SOURCE is a directory",
     ),
 ) -> None:
     """Convert files using Docling."""
@@ -117,7 +122,29 @@ def convert(
     if source.startswith(("http://", "https://")):
         results = convert_path(source, fmts)
     else:
-        results = convert_path(Path(source), fmts)
+        path = Path(source)
+        if interactive and path.is_dir():
+            try:
+                import questionary
+            except Exception as exc:  # pragma: no cover - import guard
+                raise typer.BadParameter(
+                    "questionary is required for interactive mode"
+                ) from exc
+            files = [str(p) for p in path.iterdir() if p.is_file()]
+            if not files:
+                console.print("No files found.")
+                return
+            selected = questionary.checkbox(
+                "Select files to convert", choices=files
+            ).ask()
+            if not selected:
+                console.print("No files selected.")
+                return
+            results: list[Path] = []
+            for sel in selected:
+                results.extend(convert_path(Path(sel), fmts))
+        else:
+            results = convert_path(path, fmts)
     if not results:
         console.print("No new files to process.")
 
@@ -128,20 +155,20 @@ def validate(
     rendered: Path | None = typer.Argument(
         None, help="Path to converted file"
     ),
-    fmt: Optional[OutputFormat] = typer.Option(None, "--format", "-f"),
-    prompt: Optional[Path] = typer.Option(
+    fmt: OutputFormat | None = typer.Option(None, "--format", "-f"),
+    prompt: Path | None = typer.Option(
         None,
         "--prompt",
         help="Prompt file (overrides auto-detected *.validate.prompt.yaml)",
     ),
-    model: Optional[str] = typer.Option(
+    model: str | None = typer.Option(
         None, "--model", help="Model name override"
     ),
-    base_model_url: Optional[str] = typer.Option(
+    base_model_url: str | None = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
-    log_file: Optional[Path] = typer.Option(
+    log_file: Path | None = typer.Option(
         None, "--log-file", help="Write request/response details to this file"
     ),
 ) -> None:
@@ -187,7 +214,7 @@ def validate(
 @app.command()
 def analyze(
     source: Path = typer.Argument(..., help="Raw or converted document"),
-    fmt: Optional[OutputFormat] = typer.Option(
+    fmt: OutputFormat | None = typer.Option(
         None, "--format", "-f", help="Format of converted file"
     ),
     prompt: Path | None = typer.Option(
@@ -196,15 +223,15 @@ def analyze(
         "-p",
         help="Prompt file (overrides auto-detected *.analysis.prompt.yaml)",
     ),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None,
         "--output",
         help="Optional output file; defaults to <doc>.analysis.json",
     ),
-    model: Optional[str] = typer.Option(
+    model: str | None = typer.Option(
         None, "--model", help="Model name override"
     ),
-    base_model_url: Optional[str] = typer.Option(
+    base_model_url: str | None = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
 ) -> None:
@@ -237,10 +264,10 @@ def pipeline(
         "-f",
         help="Desired output format(s) for conversion",
     ),
-    model: Optional[str] = typer.Option(
+    model: str | None = typer.Option(
         None, "--model", help="Model name override"
     ),
-    base_model_url: Optional[str] = typer.Option(
+    base_model_url: str | None = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
 ) -> None:

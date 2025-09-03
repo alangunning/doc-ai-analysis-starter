@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 import os
+import sys
 
 from doc_ai import cli
 from doc_ai.cli import interactive_shell, get_completions
@@ -25,6 +26,11 @@ def test_interactive_shell_cd(monkeypatch, tmp_path):
 def test_completions_top_level():
     opts = get_completions(cli.app, "", "")
     assert "convert" in opts
+
+
+def test_completions_root_options():
+    opts = get_completions(cli.app, "-", "-")
+    assert any(opt.startswith("--help") for opt in opts)
 
 
 def test_completions_options():
@@ -82,3 +88,30 @@ def test_argument_nested_path_completion(tmp_path):
         assert all(not opt.startswith("parent/") for opt in opts)
     finally:
         os.chdir(cwd)
+
+
+def test_convert_interactive_selects_files(monkeypatch, tmp_path):
+    f1 = tmp_path / "a.txt"
+    f2 = tmp_path / "b.txt"
+    f1.write_text("x")
+    f2.write_text("x")
+    selected = [str(f1)]
+
+    class DummyPrompt:
+        def ask(self):
+            return selected
+
+    class DummyQuestionary:
+        @staticmethod
+        def checkbox(*args, **kwargs):
+            return DummyPrompt()
+
+    monkeypatch.setitem(sys.modules, "questionary", DummyQuestionary())
+
+    calls: list[Path] = []
+    monkeypatch.setattr(
+        "doc_ai.cli.convert_path", lambda p, fmts: (calls.append(p), [p])[1]
+    )
+
+    cli.convert(str(tmp_path), interactive=True)
+    assert calls == [f1]
