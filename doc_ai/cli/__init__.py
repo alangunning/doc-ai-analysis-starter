@@ -109,6 +109,12 @@ def convert(
         "-f",
         help="Desired output format(s). Can be passed multiple times.",
     ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Select files via checkbox prompt when SOURCE is a directory",
+    ),
 ) -> None:
     """Convert files using Docling."""
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
@@ -117,7 +123,29 @@ def convert(
     if source.startswith(("http://", "https://")):
         results = convert_path(source, fmts)
     else:
-        results = convert_path(Path(source), fmts)
+        path = Path(source)
+        if interactive and path.is_dir():
+            try:
+                import questionary
+            except Exception as exc:  # pragma: no cover - import guard
+                raise typer.BadParameter(
+                    "questionary is required for interactive mode"
+                ) from exc
+            files = [str(p) for p in path.iterdir() if p.is_file()]
+            if not files:
+                console.print("No files found.")
+                return
+            selected = questionary.checkbox(
+                "Select files to convert", choices=files
+            ).ask()
+            if not selected:
+                console.print("No files selected.")
+                return
+            results: list[Path] = []
+            for sel in selected:
+                results.extend(convert_path(Path(sel), fmts))
+        else:
+            results = convert_path(path, fmts)
     if not results:
         console.print("No new files to process.")
 
