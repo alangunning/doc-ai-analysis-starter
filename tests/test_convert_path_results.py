@@ -28,12 +28,18 @@ def test_convert_path_returns_results(tmp_path):
 
 def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
     url = "https://example.com/file.pdf"
-
     class DummyResp:
-        content = b"data"
+        def __init__(self):
+            self.closed = False
 
         def raise_for_status(self):
             pass
+
+        def iter_content(self, chunk_size=8192):
+            yield b"data"
+
+        def close(self):
+            self.closed = True
 
     class DummyTempDir:
         def __init__(self, path):
@@ -48,9 +54,13 @@ def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "doc_ai.converter.path.TemporaryDirectory", lambda: DummyTempDir(tmp_path)
     )
-    monkeypatch.setattr(
-        "doc_ai.converter.path.http_get", lambda u, **kwargs: DummyResp()
-    )
+    resp_obj = DummyResp()
+
+    def fake_http_get(u, **kwargs):
+        assert kwargs.get("stream") is True
+        return resp_obj
+
+    monkeypatch.setattr("doc_ai.converter.path.http_get", fake_http_get)
 
     def fake_convert_files(src, outputs, return_status=True):
         for out in outputs.values():
@@ -64,6 +74,7 @@ def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
     downloaded = tmp_path / "file.pdf"
     assert downloaded.read_bytes() == b"data"
     assert downloaded in result
+    assert resp_obj.closed
 
     from doc_ai.metadata import load_metadata
 
@@ -71,6 +82,39 @@ def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
     inputs = meta.extra["inputs"]["conversion"]
     assert inputs["source_url"] == url
     assert inputs["source"] == str(downloaded)
+
+
+def test_convert_path_aborts_large_download(tmp_path, monkeypatch):
+    url = "https://example.com/big.pdf"
+
+    class DummyResp:
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size=8192):
+            yield b"a" * 5
+            yield b"b" * 5
+
+        def close(self):
+            pass
+
+    def fake_http_get(u, **kwargs):
+        assert kwargs.get("stream") is True
+        return DummyResp()
+
+    monkeypatch.setattr("doc_ai.converter.path.http_get", fake_http_get)
+    called = []
+
+    def fake_convert_files(*args, **kwargs):
+        called.append(True)
+
+    monkeypatch.setattr("doc_ai.converter.path.convert_files", fake_convert_files)
+
+    import pytest
+
+    with pytest.raises(ValueError, match="maximum size"):
+        convert_path(url, [OutputFormat.TEXT], max_size=8)
+    assert not called
 
 
 def test_convert_path_skips_preconverted_files_in_directory(tmp_path, monkeypatch):
