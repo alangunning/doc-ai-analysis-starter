@@ -138,6 +138,13 @@ data/
     apple-sec-form-4.pdf.metadata.json
 ```
 
+## Packaging
+
+The source distribution bundles this README and the small example documents
+under `data/` so they are available without extra downloads. Links in the
+README continue to point to the hosted documentation for users installing from
+PyPI.
+
 ## Documentation
 
 Guides for each part of the template live in the `docs/` folder and are published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/). Useful starting points:
