@@ -61,11 +61,18 @@ def _suffix(fmt: OutputFormat) -> str:
 
 
 def convert_path(
-    source: Path | str, formats: Iterable[OutputFormat]
+    source: Path | str,
+    formats: Iterable[OutputFormat],
+    *,
+    max_size: int | None = None,
 ) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
     """Convert a file or all files under a directory in-place.
 
     ``source`` may be a filesystem path or an HTTP(S) URL to a single file.
+
+    ``max_size`` limits the number of bytes downloaded when ``source`` is a
+    remote URL. If the limit is exceeded, the download is aborted with a
+    ``ValueError``.
 
     Returns a mapping of each processed file to a tuple containing the
     format-to-path mapping written for that file and Docling's
@@ -139,11 +146,22 @@ def convert_path(
         if source.startswith(("http://", "https://")):
             source_url = source
             with TemporaryDirectory() as tmp:
-                resp = http_get(source)
-                resp.raise_for_status()
-                name = Path(urlparse(source).path).name or "downloaded"
-                source_path = Path(tmp) / name
-                source_path.write_bytes(resp.content)
+                resp = http_get(source, stream=True)
+                try:
+                    resp.raise_for_status()
+                    name = Path(urlparse(source).path).name or "downloaded"
+                    source_path = Path(tmp) / name
+                    total = 0
+                    with open(source_path, "wb") as fh:
+                        for chunk in resp.iter_content(chunk_size=8192):
+                            if not chunk:
+                                continue
+                            total += len(chunk)
+                            if max_size is not None and total > max_size:
+                                raise ValueError("Downloaded file exceeds maximum size")
+                            fh.write(chunk)
+                finally:
+                    resp.close()
                 return _process(source_path, source_url)
         source_path = sanitize_path(source)
     else:

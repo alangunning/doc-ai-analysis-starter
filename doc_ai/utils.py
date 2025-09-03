@@ -20,7 +20,6 @@ def http_get(
 ) -> requests.Response:
     """Perform an HTTP GET with retry and timeout defaults."""
 
-    session = requests.Session()
     retry = Retry(
         total=max_retries,
         backoff_factor=0.3,
@@ -28,9 +27,11 @@ def http_get(
         allowed_methods=["GET"],
     )
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    return session.get(url, timeout=timeout, **kwargs)
+    with requests.Session() as session:
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        response = session.get(url, timeout=timeout, **kwargs)
+    return response
 
 
 def sanitize_path(path: Path | str) -> Path:
