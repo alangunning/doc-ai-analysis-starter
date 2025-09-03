@@ -39,6 +39,6 @@ Use the navigation to dive into specific topics:
 
 - [Workflow Overview](./workflows)
 - [CLI Scripts and Prompts](./scripts-and-prompts)
-- [Converter Module](./converter)
-- [GitHub Module](./github)
-- [Metadata Module](./metadata)
+- [Converter Module](./doc_ai/converter)
+- [GitHub Module](./doc_ai/github)
+- [Metadata Module](./doc_ai/metadata)
