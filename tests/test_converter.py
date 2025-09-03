@@ -1,5 +1,7 @@
 import json
 import os
+import threading
+import time
 from unittest.mock import patch
 
 from doc_ai.converter import OutputFormat, convert_files
@@ -151,3 +153,41 @@ def test_convert_files_handles_validation_error(tmp_path):
             ((input_file,), {"progress": True}),
             ((input_file,), {}),
         ]
+
+
+def test_get_docling_converter_thread_safe():
+    with (
+        patch("doc_ai.converter.document_converter._DoclingConverter") as MockConverter,
+        patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
+    ):
+        from doc_ai.converter import document_converter as dc
+        dc._converter_instance = None
+
+        call_lock = threading.Lock()
+
+        def side_effect():
+            with call_lock:
+                side_effect.calls += 1
+            time.sleep(0.01)
+
+            class Dummy:
+                pass
+
+            return Dummy()
+
+        side_effect.calls = 0
+        MockConverter.side_effect = side_effect
+
+        results: list[object] = []
+
+        def target():
+            results.append(dc._get_docling_converter())
+
+        threads = [threading.Thread(target=target) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert side_effect.calls == 1
+        assert len({id(r) for r in results}) == 1
