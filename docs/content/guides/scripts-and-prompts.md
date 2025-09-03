@@ -1,6 +1,6 @@
 ---
 title: CLI Scripts and Prompts
-sidebar_position: 3
+sidebar_position: 1
 ---
 
 # CLI Scripts

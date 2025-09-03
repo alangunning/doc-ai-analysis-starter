@@ -1,6 +1,6 @@
 ---
 title: PDF vs Markdown Validation
-sidebar_position: 7
+sidebar_position: 4
 ---
 
 # PDF vs Markdown Validation

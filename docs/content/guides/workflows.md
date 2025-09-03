@@ -1,6 +1,6 @@
 ---
 title: Workflow Overview
-sidebar_position: 2
+sidebar_position: 0
 ---
 
 # Workflow Overview

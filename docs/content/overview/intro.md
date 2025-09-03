@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 0
 slug: /
 ---
 
@@ -37,8 +37,8 @@ Each step writes to a `<name>.metadata.json` file so completed work can be skipp
 
 Use the navigation to dive into specific topics:
 
-- [Workflow Overview](./workflows)
-- [CLI Scripts and Prompts](./scripts-and-prompts)
-- [Converter Module](./doc_ai/converter)
-- [GitHub Module](./doc_ai/github)
-- [Metadata Module](./doc_ai/metadata)
+- [Workflow Overview](guides/workflows)
+- [CLI Scripts and Prompts](guides/scripts-and-prompts)
+- [Converter Module](doc_ai/converter)
+- [GitHub Module](doc_ai/github)
+- [Metadata Module](doc_ai/metadata)
