@@ -2,11 +2,14 @@ import argparse
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from doc_ai import OutputFormat, suffix_for_format
 from doc_ai.cli import analyze_doc
 
 
 if __name__ == "__main__":
+    load_dotenv()
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, help="Raw or converted document")
     parser.add_argument(
