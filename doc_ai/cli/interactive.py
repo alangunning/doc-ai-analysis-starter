@@ -64,8 +64,8 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
 
     Uses Click's ``shell_completion`` helpers to resolve the current
     command context and delegate option and argument completions. A custom
-    fallback completes filesystem paths when no Click suggestions are
-    available or for built-in commands like ``cd``.
+    fallback completes filesystem paths when Click requests file or
+    directory completion or for built-in commands like ``cd``.
     """
     root = get_command(app)
     commands: dict[str, click.Command] = root.commands
@@ -76,13 +76,17 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     incomplete = ""
 
     if not tokens:
-        suggestions = list(commands)
+        ctx = click.Context(root)
+        suggestions = [item.value for item in root.shell_complete(ctx, "")]
     elif tokens[0] == "cd":
         incomplete = tokens[1] if len(tokens) > 1 else ""
         suggestions = _complete_path(incomplete, only_dirs=True)
     elif len(tokens) == 1:
-        suggestions = [name for name in commands if name.startswith(tokens[0])]
-        if not suggestions:
+        ctx = click.Context(root)
+        items = root.shell_complete(ctx, tokens[0])
+        if items:
+            suggestions = [item.value for item in items]
+        else:
             incomplete = tokens[0]
             suggestions = _complete_path(incomplete)
     elif tokens[0] not in commands:
@@ -91,8 +95,16 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
     else:
         ctx = _resolve_context(root, {}, root.name or "", tokens[:-1])
         obj, incomplete = _resolve_incomplete(ctx, tokens[:-1], tokens[-1])
-        suggestions = [item.value for item in obj.shell_complete(ctx, incomplete)]
-        if not suggestions:
+        items = obj.shell_complete(ctx, incomplete)
+        if items:
+            types = {getattr(item, "type", None) for item in items}
+            if types <= {"file", "dir"}:
+                suggestions = _complete_path(
+                    incomplete, only_dirs=types == {"dir"}
+                )
+            else:
+                suggestions = [item.value for item in items]
+        else:
             suggestions = _complete_path(incomplete)
 
     if incomplete and len(incomplete) > len(text):
