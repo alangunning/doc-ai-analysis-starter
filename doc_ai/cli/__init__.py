@@ -13,7 +13,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
-from .interactive import interactive_shell, get_completions
+from .interactive import complete_path, get_completions, interactive_shell
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -101,7 +101,7 @@ def config(
 @app.command()
 def convert(
     source: str = typer.Argument(
-        ..., help="Path or URL to raw document or folder"
+        ..., help="Path or URL to raw document or folder", autocompletion=complete_path
     ),
     format: list[OutputFormat] = typer.Option(
         None,

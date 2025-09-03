@@ -21,7 +21,7 @@ import typer
 from typer.main import get_command
 from rich.console import Console
 
-__all__ = ["interactive_shell", "get_completions"]
+__all__ = ["interactive_shell", "get_completions", "complete_path"]
 
 
 def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
@@ -56,6 +56,13 @@ def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
             completion += os.sep
         results.append(completion)
     return results
+
+
+def complete_path(
+    ctx: click.Context, args: list[str], incomplete: str
+) -> list[str]:
+    """Autocompletion callback for filesystem paths."""
+    return _complete_path(incomplete)
 
 
 # Copied from Click's shell completion utilities (BSD-3-Clause license)
