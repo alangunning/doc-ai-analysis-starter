@@ -161,9 +161,11 @@ PyPI.
 ## Releases
 
 This project uses [semantic versioning](https://semver.org/). Update
-`CHANGELOG.md` and tag commits with `vMAJOR.MINOR.PATCH` to trigger the CI
-workflow, which runs `ruff`, `pytest`, builds the package, and publishes it to
-PyPI on tagged releases.
+`CHANGELOG.md` and tag commits with `vMAJOR.MINOR.PATCH` (for example,
+`v1.2.3`). Versions are derived automatically from these Git tags by
+[setuptools-scm](https://github.com/pypa/setuptools-scm), ensuring reproducible
+builds. Tagging a release triggers the CI workflow, which runs `ruff`, `pytest`,
+builds the package, and publishes it to PyPI.
 
 ## Documentation
 

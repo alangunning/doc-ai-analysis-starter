@@ -1,11 +1,11 @@
 [project]
 name = "github-janitor"
-version = "0.1.0"
 description = "Template repository for AI-powered document analysis."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "GitHub Janitor", email = "janitor@example.com"}]
 requires-python = ">=3.10"
+dynamic = ["version"]
 dependencies = [
     "docling",
     "openai==1.102.0",
@@ -50,8 +50,11 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "doc_ai/_version.py"
 
 [tool.setuptools.packages.find]
 include = ["doc_ai", "doc_ai.*"]
