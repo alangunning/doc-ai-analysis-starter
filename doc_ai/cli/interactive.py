@@ -13,6 +13,11 @@ from pathlib import Path
 from typing import Callable
 
 import click
+from click.shell_completion import (
+    _resolve_context,
+    _resolve_incomplete,
+    split_arg_string,
+)
 import typer
 from typer.main import get_command
 from rich.console import Console
@@ -55,17 +60,21 @@ def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
 
 
 def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
-    """Return completion suggestions for the given buffer and text."""
+    """Return completion suggestions for the given buffer and text.
+
+    Uses Click's ``shell_completion`` helpers to resolve the current
+    command context and delegate option and argument completions. A custom
+    fallback completes filesystem paths when no Click suggestions are
+    available or for built-in commands like ``cd``.
+    """
     root = get_command(app)
     commands: dict[str, click.Command] = root.commands
-    try:
-        tokens = shlex.split(buffer)
-    except ValueError:
-        tokens = buffer.split()
+    tokens = split_arg_string(buffer)
     if buffer.endswith(" "):
         tokens.append("")
     suggestions: list[str] = []
-    incomplete: str | None = None
+    incomplete = ""
+
     if not tokens:
         suggestions = list(commands)
     elif tokens[0] == "cd":
@@ -76,18 +85,17 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
         if not suggestions:
             incomplete = tokens[0]
             suggestions = _complete_path(incomplete)
+    elif tokens[0] not in commands:
+        incomplete = tokens[-1]
+        suggestions = _complete_path(incomplete)
     else:
-        cmd = commands.get(tokens[0])
-        if cmd:
-            incomplete = tokens[-1]
-            ctx = cmd.make_context(cmd.name, tokens[1:-1], resilient_parsing=True)
-            suggestions = [item.value for item in cmd.shell_complete(ctx, incomplete)]
-            if not suggestions:
-                suggestions = _complete_path(incomplete)
-        else:
-            incomplete = tokens[-1]
+        ctx = _resolve_context(root, {}, root.name or "", tokens[:-1])
+        obj, incomplete = _resolve_incomplete(ctx, tokens[:-1], tokens[-1])
+        suggestions = [item.value for item in obj.shell_complete(ctx, incomplete)]
+        if not suggestions:
             suggestions = _complete_path(incomplete)
-    if incomplete is not None and len(incomplete) > len(text):
+
+    if incomplete and len(incomplete) > len(text):
         prefix = incomplete[: len(incomplete) - len(text)]
         suggestions = [s[len(prefix):] if s.startswith(prefix) else s for s in suggestions]
     return sorted(suggestions)
