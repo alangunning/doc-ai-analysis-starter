@@ -12,6 +12,11 @@ from doc_ai.cli import validate_doc
 from doc_ai.metadata import load_metadata, metadata_path
 
 
+@pytest.fixture(autouse=True)
+def _set_token(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+
+
 def test_validate_file_returns_json(tmp_path):
     raw_path = tmp_path / "raw.pdf"
     rendered_path = tmp_path / "rendered.txt"
@@ -260,9 +265,11 @@ def test_validate_file_with_urls(tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), \
-         patch("doc_ai.github.validator.upload_file") as up, \
-         patch("requests.get") as fake_get:
+    with (
+        patch("doc_ai.github.validator.OpenAI", return_value=mock_client),
+        patch("doc_ai.github.validator.upload_file") as up,
+        patch("doc_ai.github.validator.http_get") as fake_get,
+    ):
         fake_get.return_value.text = "rendered"
         fake_get.return_value.raise_for_status = lambda: None
         validate_file(raw_url, rendered_url, OutputFormat.TEXT, prompt_path)
