@@ -91,6 +91,19 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
    reused in other Typer-based projects.
 
+## Programmatic Usage
+
+The package exposes a typed API and ships a `py.typed` marker for static type
+checkers.  You can query completions or launch the interactive shell from your
+own scripts:
+
+```python
+from doc_ai.cli import app, get_completions, interactive_shell
+
+get_completions(app, "co", "co")
+interactive_shell(app)
+```
+
 ## Directory Overview
 
 ```
@@ -144,6 +157,13 @@ The source distribution bundles this README and the small example documents
 under `data/` so they are available without extra downloads. Links in the
 README continue to point to the hosted documentation for users installing from
 PyPI.
+
+## Releases
+
+This project uses [semantic versioning](https://semver.org/). Update
+`CHANGELOG.md` and tag commits with `vMAJOR.MINOR.PATCH` to trigger the CI
+workflow, which runs `ruff`, `pytest`, builds the package, and publishes it to
+PyPI on tagged releases.
 
 ## Documentation
 
