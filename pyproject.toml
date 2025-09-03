@@ -1,9 +1,9 @@
 [project]
-name = "github-janitor"
-description = "Template repository for AI-powered document analysis."
+name = "doc-ai-analysis-starter"
+description = "Starter template for AI-powered document analysis workflows."
 readme = "README.md"
 license = {file = "LICENSE"}
-authors = [{name = "GitHub Janitor", email = "janitor@example.com"}]
+authors = [{name = "Alan Gunning", email = "alangunning@gmail.com"}]
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
@@ -27,9 +27,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/github-janitor/github-janitor"
-Repository = "https://github.com/github-janitor/github-janitor"
-Issues = "https://github.com/github-janitor/github-janitor/issues"
+Homepage = "https://github.com/alangunning/doc-ai-analysis-starter"
+Repository = "https://github.com/alangunning/doc-ai-analysis-starter"
+Issues = "https://github.com/alangunning/doc-ai-analysis-starter/issues"
+Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
 
 [project.scripts]
 "doc-ai" = "doc_ai.cli:app"
@@ -50,11 +51,11 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [build-system]
-requires = ["setuptools>=61", "wheel", "setuptools_scm>=8"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "doc_ai/_version.py"
+[tool.setuptools.dynamic]
+version = {attr = "doc_ai.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["doc_ai", "doc_ai.*"]
