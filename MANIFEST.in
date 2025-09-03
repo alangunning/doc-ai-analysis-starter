@@ -1,0 +1,6 @@
+include LICENSE
+include README.md
+recursive-include data *
+include doc_ai/py.typed
+exclude .env
+recursive-exclude * *.env
