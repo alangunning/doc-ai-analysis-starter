@@ -159,6 +159,8 @@ def analyze_doc(
     model: str | None = None,
     base_url: str | None = None,
     require_json: bool = False,
+    show_cost: bool = False,
+    estimate: bool = True,
     run_prompt_func: Callable | None = None,
 ) -> None:
     """Run an analysis prompt on a markdown document and store results."""
@@ -195,11 +197,13 @@ def analyze_doc(
             repo_root = Path(__file__).resolve().parents[2]
             prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
 
-    result = run_prompt_func(
+    result, _ = run_prompt_func(
         prompt_path,
         markdown_doc.read_text(),
         model=model,
         base_url=base_url,
+        show_cost=show_cost,
+        estimate=estimate,
     )
     result = result.strip()
     fence = re.match(r"```(?:json)?\n([\s\S]*?)\n```", result)

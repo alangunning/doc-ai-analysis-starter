@@ -16,8 +16,10 @@ def review_pr(
     base_url: str | None = None,
 ) -> str:
     """Run the PR review prompt against ``pr_body``."""
-
-    return run_prompt(prompt_path, pr_body, model=model, base_url=base_url)
+    output, _ = run_prompt(
+        prompt_path, pr_body, model=model, base_url=base_url
+    )
+    return output
 
 
 def merge_pr(pr_number: int) -> None:

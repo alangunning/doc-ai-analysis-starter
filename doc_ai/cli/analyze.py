@@ -44,6 +44,17 @@ def analyze(
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
     ),
+    show_cost: bool = typer.Option(
+        False,
+        "--show-cost",
+        help="Display token cost estimates",
+        is_flag=True,
+    ),
+    estimate: bool = typer.Option(
+        True,
+        "--estimate/--no-estimate",
+        help="Print pre-run cost estimate",
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -55,4 +66,13 @@ def analyze(
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
-    analyze_doc(markdown_doc, prompt, output, model, base_model_url, require_json)
+    analyze_doc(
+        markdown_doc,
+        prompt,
+        output,
+        model,
+        base_model_url,
+        require_json,
+        show_cost,
+        estimate,
+    )

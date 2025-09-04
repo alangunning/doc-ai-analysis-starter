@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import yaml
 from openai import OpenAI
+
+from doc_ai.pricing import estimate_cost, estimate_tokens
 
 DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
 
@@ -18,8 +20,15 @@ def run_prompt(
     *,
     model: Optional[str] = None,
     base_url: Optional[str] = None,
-) -> str:
-    """Execute ``prompt_file`` against ``input_text`` and return model output."""
+    show_cost: bool = False,
+    estimate: bool = True,
+) -> Tuple[str, float]:
+    """Execute ``prompt_file`` against ``input_text`` and return model output.
+
+    Returns a tuple of ``(output_text, actual_cost)`` where cost is in USD.
+    When ``show_cost`` is true, a pre-run estimate is displayed unless
+    ``estimate`` is false.
+    """
     spec = yaml.safe_load(prompt_file.read_text())
     if not isinstance(spec, dict):
         raise ValueError("Prompt file must be a mapping")
@@ -29,10 +38,13 @@ def run_prompt(
         raise ValueError("'messages' must be a list")
 
     messages = []
+    prompt_tokens = 0
+    model_name = model or spec["model"]
     for m in spec["messages"]:
         if not isinstance(m, dict) or "role" not in m or "content" not in m:
             raise ValueError("Each message must contain 'role' and 'content'")
         content = m["content"]
+        prompt_tokens += estimate_tokens(content, model_name)
         if m["role"] == "user":
             content = content + "\n\n" + input_text
         messages.append(
@@ -40,6 +52,13 @@ def run_prompt(
                 "role": m["role"],
                 "content": [{"type": "input_text", "text": content}],
             }
+        )
+
+    user_tokens = estimate_tokens(input_text, model_name)
+    if show_cost and estimate:
+        est = estimate_cost(model_name, prompt_tokens, user_tokens)
+        print(
+            f"Estimated cost: ${est:.6f} ({prompt_tokens + user_tokens} input tokens)"
         )
 
     base = (
@@ -66,11 +85,19 @@ def run_prompt(
         k: v for k, v in spec.get("modelParameters", {}).items() if k in allowed
     }
     response = client.responses.create(
-        model=model or spec["model"],
+        model=model_name,
         input=messages,
         **params,
     )
-    return response.output_text
+    input_tokens = getattr(getattr(response, "usage", {}), "input_tokens", 0)
+    output_tokens = getattr(getattr(response, "usage", {}), "output_tokens", 0)
+    actual_cost = estimate_cost(model_name, 0, input_tokens, output_tokens)
+    if show_cost:
+        print(
+            "Actual cost: $" +
+            f"{actual_cost:.6f} ({input_tokens} in, {output_tokens} out tokens)"
+        )
+    return response.output_text, actual_cost
 
 
 __all__ = ["run_prompt", "DEFAULT_MODEL_BASE_URL"]
