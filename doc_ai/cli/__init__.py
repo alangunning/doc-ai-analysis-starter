@@ -32,6 +32,7 @@ from .utils import (
 )
 
 from doc_ai import __version__
+from doc_ai.config import load_settings, load_user_config, save_user_config, Settings
 
 ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
 
@@ -41,24 +42,29 @@ app = typer.Typer(
     add_completion=False,
 )
 
-SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
-
 # File extensions considered raw inputs for the pipeline.
 RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
 
 
 @app.callback()
 def _main_callback(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-V", help="Show version and exit"
     ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    verbose: bool | None = typer.Option(
+        None, "--verbose/--no-verbose", "-v", help="Enable verbose output"
+    ),
 ) -> None:
     """Global options."""
+    if ctx.obj is None:
+        ctx.obj = load_settings(ENV_FILE)
+    settings: Settings = ctx.obj
     if version:
         console.print(__version__)
         raise typer.Exit()
-    SETTINGS["verbose"] = verbose
+    if verbose is not None:
+        settings.verbose = verbose
 
 
 ASCII_ART = r"""
@@ -101,7 +107,8 @@ def run_prompt(*args, **kwargs):
 
 @app.command()
 def config(
-    verbose: bool = typer.Option(
+    ctx: typer.Context,
+    verbose: bool | None = typer.Option(
         None, "--verbose/--no-verbose", help="Toggle verbose error output"
     ),
     set_vars: list[str] = typer.Option(
@@ -110,24 +117,35 @@ def config(
         help="Set VAR=VALUE pairs to update environment configuration",
         metavar="VAR=VALUE",
     ),
+    project: bool = typer.Option(
+        False, "--project", help="Also persist values to project .env file"
+    ),
 ) -> None:
     """Show or update runtime configuration."""
+    settings: Settings = ctx.obj
+    user_cfg = load_user_config()
     if verbose is not None:
-        SETTINGS["verbose"] = verbose
+        settings.verbose = verbose
+        user_cfg["verbose"] = verbose
     if set_vars:
         env_path = Path(ENV_FILE)
-        env_path.touch(exist_ok=True)
-        env_path.chmod(0o600)
+        if project:
+            env_path.touch(exist_ok=True)
+            env_path.chmod(0o600)
         for item in set_vars:
             try:
                 key, value = item.split("=", 1)
             except ValueError as exc:  # pragma: no cover - handled by typer
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
             os.environ[key] = value
-            set_key(str(env_path), key, value, quote_mode="never")
-            env_path.chmod(0o600)
+            settings.data[key] = value
+            user_cfg[key] = value
+            if project:
+                set_key(str(env_path), key, value, quote_mode="never")
+                env_path.chmod(0o600)
+    save_user_config(user_cfg)
     console.print("Current settings:")
-    console.print(f"  verbose: {SETTINGS['verbose']}")
+    console.print(f"  verbose: {settings.verbose}")
     defaults = load_env_defaults()
     if defaults:
         table = Table("Variable", "Current", "Default")
@@ -138,6 +156,7 @@ def config(
 
 @app.command()
 def convert(
+    ctx: typer.Context,
     source: str = typer.Argument(
         ..., help="Path or URL to raw document or folder"
     ),
@@ -150,7 +169,7 @@ def convert(
 ) -> None:
     """Convert files using Docling."""
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
-    if not SETTINGS["verbose"]:
+    if not ctx.obj.verbose:
         warnings.filterwarnings("ignore")
     if source.startswith(("http://", "https://")):
         results = convert_path(source, fmts)
@@ -250,6 +269,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -363,16 +383,17 @@ __all__ = [
 
 def main() -> None:
     """Entry point for running the CLI as a script."""
+    settings = load_settings(ENV_FILE)
     load_dotenv(ENV_FILE)
     if len(sys.argv) > 1:
         _print_banner()
         args = sys.argv[1:]
-        if SETTINGS["verbose"] and "--verbose" not in args and "-v" not in args:
+        if settings.verbose and "--verbose" not in args and "-v" not in args:
             args.append("--verbose")
         try:
-            app(prog_name="cli.py", args=args)
+            app(prog_name="cli.py", args=args, obj=settings)
         except Exception as exc:  # pragma: no cover - runtime error display
-            if SETTINGS["verbose"]:
+            if settings.verbose:
                 traceback.print_exc()
             else:
                 console.print(f"[red]{exc}[/red]")
@@ -384,6 +405,6 @@ def main() -> None:
             app,
             console=console,
             print_banner=_print_banner,
-            verbose=SETTINGS["verbose"],
+            verbose=settings.verbose,
         )
         console.print("Goodbye!")

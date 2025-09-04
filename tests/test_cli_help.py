@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from typer.testing import CliRunner
 
@@ -25,6 +26,7 @@ def test_validate_help_flag_shows_options():
 def test_config_sets_env(monkeypatch):
     runner = CliRunner()
     with runner.isolated_filesystem():
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(Path(".")))
         monkeypatch.setattr("doc_ai.cli.find_dotenv", lambda *a, **k: ".env")
         result = runner.invoke(app, ["config", "--set", "TEST_VAR=value"])
         assert result.exit_code == 0
