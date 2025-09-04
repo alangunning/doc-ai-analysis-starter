@@ -7,12 +7,15 @@ import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
+from doc_ai.logging import RedactFilter
+
 import yaml
 from openai import OpenAI
 
 from doc_ai.pricing import estimate_cost, estimate_tokens
 
 logger = logging.getLogger(__name__)
+logger.addFilter(RedactFilter())
 
 DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
 

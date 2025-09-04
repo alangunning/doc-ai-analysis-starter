@@ -10,6 +10,8 @@ from pathlib import Path
 from openai import OpenAI
 import logging
 
+from doc_ai.logging import RedactFilter
+
 from ..metadata import (
     compute_hash,
     is_step_done,
@@ -23,6 +25,7 @@ EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
 
 _log = logging.getLogger(__name__)
+_log.addFilter(RedactFilter())
 
 
 def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
@@ -100,6 +103,7 @@ def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
             json.dumps({"file": str(md_file), "embedding": embedding}) + "\n",
             encoding="utf-8",
         )
+        os.chmod(out_file, 0o600)
         mark_step(meta, "vector", outputs=[out_file.name])
         save_metadata(md_file, meta)
 

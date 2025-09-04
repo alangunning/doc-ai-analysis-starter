@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
+from doc_ai.logging import RedactFilter
+
 import yaml
 from openai import OpenAI
 
@@ -21,6 +23,9 @@ from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 
+_logger = logging.getLogger(__name__)
+_logger.addFilter(RedactFilter())
+
 
 def validate_file(
     raw_path: Path | str,
@@ -32,7 +37,7 @@ def validate_file(
     show_progress: bool = False,
     logger: logging.Logger | None = None,
     console: Console | None = None,
-) -> Dict:
+    ) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
     The raw and rendered files may be local paths or remote URLs. Local files are
@@ -54,6 +59,9 @@ def validate_file(
         Optional :class:`rich.console.Console` used for rendering progress bars and
         for rich logging handlers. A new console is created when omitted.
     """
+
+    logger = logger or _logger
+    logger.addFilter(RedactFilter())
 
     base = (
         base_url
