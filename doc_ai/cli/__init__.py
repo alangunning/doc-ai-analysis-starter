@@ -1,6 +1,7 @@
 """CLI orchestrator for AI document analysis pipeline."""
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
@@ -9,8 +10,10 @@ from enum import Enum
 from pathlib import Path
 
 import typer
-from dotenv import find_dotenv, load_dotenv
+from dotenv import find_dotenv, load_dotenv, dotenv_values
+from platformdirs import PlatformDirs
 from rich.console import Console
+import yaml
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
@@ -19,7 +22,6 @@ from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
     infer_format as _infer_format,
-    load_env_defaults,
     parse_env_formats as _parse_env_formats,
     suffix as _suffix,
     validate_doc,
@@ -37,11 +39,43 @@ app = typer.Typer(
     add_completion=True,
 )
 
-SETTINGS = {
-    "verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"},
-    "banner": os.getenv("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"},
-}
-DEFAULT_LOG_LEVEL = "DEBUG" if SETTINGS["verbose"] else "WARNING"
+dirs = PlatformDirs("doc_ai")
+GLOBAL_CONFIG_DIR = Path(dirs.user_config_dir)
+for ext in (".json", ".yaml", ".yml"):
+    candidate = GLOBAL_CONFIG_DIR / f"config{ext}"
+    if candidate.exists():
+        GLOBAL_CONFIG_PATH = candidate
+        break
+else:
+    GLOBAL_CONFIG_PATH = GLOBAL_CONFIG_DIR / "config.json"
+
+
+def load_global_config() -> dict[str, str]:
+    if GLOBAL_CONFIG_PATH.exists():
+        try:
+            if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
+                return yaml.safe_load(GLOBAL_CONFIG_PATH.read_text()) or {}
+            return json.loads(GLOBAL_CONFIG_PATH.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def save_global_config(cfg: dict[str, str]) -> None:
+    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
+        GLOBAL_CONFIG_PATH.write_text(yaml.safe_dump(cfg))
+    else:
+        GLOBAL_CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
+
+
+def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+    global_cfg = load_global_config()
+    env_vals: dict[str, str] = {}
+    if Path(ENV_FILE).exists():
+        env_vals = dotenv_values(ENV_FILE)  # type: ignore[assignment]
+    merged = {**global_cfg, **env_vals, **os.environ}
+    return global_cfg, env_vals, merged
 
 logger = logging.getLogger(__name__)
 
@@ -78,28 +112,40 @@ def _validate_prompt(value: Path | None) -> Path | None:
 
 @app.callback()
 def _main_callback(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-V", help="Show version and exit"
     ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
+    verbose: bool | None = typer.Option(
+        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
     log_level: str | None = typer.Option(
         None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
     ),
-    banner: bool = typer.Option(
-        False, "--banner/--quiet", help="Display ASCII banner before command"
+    banner: bool | None = typer.Option(
+        None, "--banner/--quiet", help="Display ASCII banner before command"
     ),
 ) -> None:
     """Global options."""
     if version:
         console.print(__version__)
         raise typer.Exit()
-    level_name = log_level
-    if verbose:
+
+    global_cfg, _env_vals, merged = read_configs()
+    ctx.obj = {
+        "config": merged,
+        "global_config": global_cfg,
+    }
+
+    verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
+    banner_default = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
+
+    effective_verbose = verbose if verbose is not None else verbose_default
+    level_name = log_level if log_level is not None else merged.get("LOG_LEVEL")
+    if effective_verbose:
         level_name = "DEBUG"
     if level_name is None:
-        level_name = DEFAULT_LOG_LEVEL
+        level_name = "DEBUG" if verbose_default else "WARNING"
     level = getattr(logging, level_name.upper(), logging.WARNING)
     logging.basicConfig(level=level, force=True)
     logging.captureWarnings(True)
@@ -108,9 +154,10 @@ def _main_callback(
         pywarn.setLevel(logging.WARNING)
     else:
         pywarn.setLevel(logging.ERROR)
-    SETTINGS["verbose"] = level <= logging.DEBUG
-    SETTINGS["banner"] = banner
-    if banner:
+    ctx.obj["verbose"] = level <= logging.DEBUG
+    banner_flag = banner if banner is not None else banner_default
+    ctx.obj["banner"] = banner_flag
+    if banner_flag:
         _print_banner()
 
 
@@ -129,13 +176,13 @@ def _print_banner() -> None:  # pragma: no cover - visual flair only
 
 @app.command("exit")
 @app.command("quit")
-def _exit_command() -> None:
+def _exit_command(ctx: typer.Context) -> None:
     """Exit the interactive shell."""
     raise typer.Exit()
 
 
 @app.command()
-def cd(path: Path = typer.Argument(...)) -> None:
+def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
     """Change the current working directory."""
     try:
         os.chdir(path)
@@ -189,6 +236,8 @@ __all__ = [
     "interactive_shell",
     "main",
     "pipeline",
+    "save_global_config",
+    "read_configs",
 ]
 
 
@@ -209,7 +258,8 @@ def main() -> None:
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         app(prog_name="cli.py", args=["--help"])
         return
-    if SETTINGS["banner"]:
+    _, _, merged = read_configs()
+    if merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}:
         _print_banner()
         try:
             app(prog_name="cli.py", args=["--help"])
