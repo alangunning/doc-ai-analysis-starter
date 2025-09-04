@@ -206,3 +206,41 @@ def test_history_persistence(monkeypatch, tmp_path):
     assert written and written[0] == history_file
     mode = history_file.stat().st_mode & 0o777
     assert mode == 0o600
+
+
+def test_banner_flag_triggers_print(monkeypatch):
+    called: list[bool] = []
+
+    def fake_app(*, prog_name, args):
+        raise SystemExit()
+
+    app_mock = MagicMock(side_effect=fake_app)
+    inputs = iter(["exit\n"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+    interactive_shell(
+        app_mock,
+        print_banner=lambda: called.append(True),
+        banner=True,
+        prog_name="test",
+    )
+    assert called == [True]
+
+
+def test_banner_flag_suppresses_print(monkeypatch):
+    called: list[bool] = []
+
+    def fake_app(*, prog_name, args):
+        raise SystemExit()
+
+    app_mock = MagicMock(side_effect=fake_app)
+    inputs = iter(["exit\n"])
+    monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
+
+    interactive_shell(
+        app_mock,
+        print_banner=lambda: called.append(True),
+        banner=False,
+        prog_name="test",
+    )
+    assert called == []
