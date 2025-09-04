@@ -54,7 +54,37 @@ def test_run_prompt_requires_token(monkeypatch, tmp_path):
     prompt_file.write_text(yaml.dump({"model": "m", "messages": []}))
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     with patch("doc_ai.github.prompts.OpenAI") as mock_openai:
-        with pytest.raises(RuntimeError, match="GITHUB_TOKEN not set"):
+        with pytest.raises(RuntimeError, match="GITHUB_TOKEN"):
+            run_prompt(prompt_file, "input")
+    mock_openai.assert_not_called()
+
+
+def test_run_prompt_uses_openai_token_for_openai_base(monkeypatch, tmp_path):
+    prompt_file = tmp_path / "prompt.yml"
+    prompt_file.write_text(yaml.dump({"model": "m", "messages": []}))
+    monkeypatch.setenv("OPENAI_API_KEY", "oa-test")
+    monkeypatch.setenv("BASE_MODEL_URL", "https://api.openai.com/v1")
+
+    mock_response = MagicMock(output_text="result")
+    mock_client = MagicMock()
+    mock_client.responses.create.return_value = mock_response
+
+    with patch("doc_ai.github.prompts.OpenAI", return_value=mock_client) as mock_openai:
+        run_prompt(prompt_file, "input")
+
+    args, kwargs = mock_openai.call_args
+    assert kwargs["api_key"] == "oa-test"
+    assert kwargs["base_url"] == "https://api.openai.com/v1"
+
+
+def test_run_prompt_requires_openai_token(monkeypatch, tmp_path):
+    prompt_file = tmp_path / "prompt.yml"
+    prompt_file.write_text(yaml.dump({"model": "m", "messages": []}))
+    monkeypatch.setenv("BASE_MODEL_URL", "https://api.openai.com/v1")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    with patch("doc_ai.github.prompts.OpenAI") as mock_openai:
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
             run_prompt(prompt_file, "input")
     mock_openai.assert_not_called()
 

@@ -41,15 +41,18 @@ def run_prompt(
                 "content": [{"type": "input_text", "text": content}],
             }
         )
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        raise RuntimeError("GITHUB_TOKEN not set")
-    client = OpenAI(
-        api_key=token,
-        base_url=base_url
+
+    base = (
+        base_url
+        or os.getenv("PROMPT_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL,
+        or DEFAULT_MODEL_BASE_URL
     )
+    api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
+    api_key = os.getenv(api_key_var)
+    if not api_key:
+        raise RuntimeError(f"Missing required environment variable: {api_key_var}")
+    client = OpenAI(api_key=api_key, base_url=base)
     allowed = {
         "temperature",
         "top_p",
