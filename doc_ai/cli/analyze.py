@@ -8,7 +8,7 @@ import typer
 
 from doc_ai.converter import OutputFormat
 from doc_ai.logging import configure_logging
-from .utils import analyze_doc, suffix as _suffix
+from .utils import analyze_doc, suffix as _suffix, resolve_bool, resolve_str
 from . import ModelName, _validate_prompt
 
 logger = logging.getLogger(__name__)
@@ -97,6 +97,14 @@ def analyze(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
+    cfg = ctx.obj.get("config", {})
+    model = resolve_str(ctx, "model", model, cfg, "MODEL")
+    base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
+    require_json = resolve_bool(ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED")
+    show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
+    estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
+    force = resolve_bool(ctx, "force", force, cfg, "FORCE")
+    fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN

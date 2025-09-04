@@ -12,7 +12,13 @@ from rich.progress import Progress
 
 from doc_ai.converter import OutputFormat
 from doc_ai.logging import configure_logging
-from .utils import parse_env_formats as _parse_env_formats, suffix as _suffix
+from .utils import (
+    parse_config_formats as _parse_config_formats,
+    resolve_bool,
+    resolve_int,
+    resolve_str,
+    suffix as _suffix,
+)
 from . import RAW_SUFFIXES, ModelName, _validate_prompt
 
 logger = logging.getLogger(__name__)
@@ -50,7 +56,7 @@ def pipeline(
         build_vector_store as _build_vector_store,
     )
 
-    fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
+    fmts = format or [OutputFormat.MARKDOWN]
     validation_prompt = Path(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
@@ -282,6 +288,16 @@ def _entrypoint(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
+    cfg = ctx.obj.get("config", {})
+    format = format or _parse_config_formats(cfg)
+    model = resolve_str(ctx, "model", model, cfg, "MODEL")
+    base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
+    fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
+    show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
+    estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
+    workers = resolve_int(ctx, "workers", workers, cfg, "WORKERS")
+    force = resolve_bool(ctx, "force", force, cfg, "FORCE")
+    dry_run = resolve_bool(ctx, "dry_run", dry_run, cfg, "DRY_RUN")
     pipeline(
         source,
         prompt,
@@ -290,10 +306,10 @@ def _entrypoint(
         base_model_url,
         fail_fast,
         show_cost,
-       estimate,
-       workers,
-       force,
-       dry_run,
+        estimate,
+        workers,
+        force,
+        dry_run,
         resume_from,
         skip,
     )
