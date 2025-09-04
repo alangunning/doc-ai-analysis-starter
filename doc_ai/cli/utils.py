@@ -6,6 +6,7 @@ from typing import Callable
 import logging
 import os
 import re
+import json
 import functools
 from datetime import datetime, timezone
 
@@ -157,6 +158,7 @@ def analyze_doc(
     output: Path | None = None,
     model: str | None = None,
     base_url: str | None = None,
+    require_json: bool = False,
     run_prompt_func: Callable | None = None,
 ) -> None:
     """Run an analysis prompt on a markdown document and store results."""
@@ -203,6 +205,12 @@ def analyze_doc(
     fence = re.match(r"```(?:json)?\n([\s\S]*?)\n```", result)
     if fence:
         result = fence.group(1).strip()
+    parsed: dict | list | None = None
+    try:
+        parsed = json.loads(result)
+    except json.JSONDecodeError:
+        if require_json:
+            raise ValueError("Analysis result is not valid JSON")
     if output:
         out_path = output
     else:
@@ -211,8 +219,12 @@ def analyze_doc(
             base = base.with_suffix("")
         if base.suffix == ".converted":
             base = base.with_suffix("")
-        out_path = base.with_name(f"{base.name}.analysis.json")
-    out_path.write_text(result + "\n", encoding="utf-8")
+        suffix = ".analysis.json" if parsed is not None else ".analysis.txt"
+        out_path = base.with_name(f"{base.name}{suffix}")
+    if parsed is not None:
+        out_path.write_text(json.dumps(parsed, indent=2) + "\n", encoding="utf-8")
+    else:
+        out_path.write_text(result + "\n", encoding="utf-8")
     from doc_ai.cli import console as _console
     _console.print(
         f"[green]Analyzed {markdown_doc} -> {out_path} (SUCCESS)[/]"
