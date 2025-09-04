@@ -12,6 +12,8 @@ from openai import OpenAI
 from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
 from doc_ai.logging import configure_logging
+from doc_ai.openai import create_response
+from . import ModelName
 
 app = typer.Typer(invoke_without_command=True, help="Query a vector store for similar documents.")
 
@@ -35,6 +37,17 @@ def query(
     ),
     text: str = typer.Argument(..., help="Query text"),
     k: int = typer.Option(5, "--k", help="Number of matches to display"),
+    ask: bool = typer.Option(
+        False,
+        "--ask",
+        help="Send top matches to an LLM and return an answer",
+        is_flag=True,
+    ),
+    model: ModelName = typer.Option(
+        ModelName.GPT_4O_MINI,
+        "--model",
+        help="Model to use when answering with --ask",
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -84,5 +97,30 @@ def query(
         results.append((score, data.get("file", str(emb_file))))
 
     results.sort(key=lambda x: x[0], reverse=True)
+    top_docs: list[tuple[str, str]] = []
     for score, fname in results[:k]:
         typer.echo(f"{score:.4f}\t{fname}")
+        if ask:
+            try:
+                content = Path(fname).read_text(encoding="utf-8")
+            except Exception:  # pragma: no cover - best effort
+                content = ""
+            top_docs.append((fname, content))
+
+    if ask and top_docs:
+        parts = ["Use the following documents to answer the question:"]
+        for idx, (fname, content) in enumerate(top_docs, 1):
+            parts.append(f"Document {idx}: {fname}\n{content}")
+        parts.append(f"Question: {text}\nAnswer:")
+        prompt = "\n\n".join(parts)
+        resp = create_response(
+            client,
+            model=model.value,
+            texts=prompt,
+        )
+        answer = getattr(resp, "output_text", "").strip()
+        if answer:
+            typer.echo(f"\n{answer}\n")
+            typer.echo("References:")
+            for fname, _ in top_docs:
+                typer.echo(f"- {fname}")
