@@ -16,11 +16,22 @@ from click_repl.utils import (
 from click_repl.exceptions import CommandLineParserError
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.completion import Completer, Completion, WordCompleter
+from prompt_toolkit.completion import Completer, WordCompleter
 import typer
 from typer.main import get_command
 
-__all__ = ["interactive_shell", "run_batch", "DocAICompleter"]
+
+SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
+"""Environment variable containing comma-separated safe env var names."""
+
+SAFE_ENV_VARS = {
+    v.strip()
+    for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",")
+    if v.strip()
+}
+"""Names of environment variables that may be exposed in the REPL."""
+
+__all__ = ["interactive_shell", "run_batch", "DocAICompleter", "SAFE_ENV_VARS"]
 
 
 class DocAICompleter(Completer):
@@ -28,10 +39,20 @@ class DocAICompleter(Completer):
 
     def __init__(self, cli: click.BaseCommand, ctx: click.Context) -> None:
         self._click = ClickCompleter(cli, ctx)
+        pattern = re.compile(
+            r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE
+        )
+        allowed = SAFE_ENV_VARS.union(
+            {
+                v.strip()
+                for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",")
+                if v.strip()
+            }
+        )
         env_words = [
             f"${name}"
             for name in os.environ
-            if not re.search(r"TOKEN|SECRET|PASSWORD", name, re.IGNORECASE)
+            if name in allowed or not pattern.search(name)
         ]
         self._env = WordCompleter(env_words, ignore_case=True)
 
