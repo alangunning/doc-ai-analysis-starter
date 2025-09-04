@@ -41,6 +41,8 @@ dev = ["ruff", "pytest"]
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
 
+[tool.setuptools_scm]
+
 [tool.ruff]
 [tool.ruff.lint]
 select = ["E", "F", "W"]
@@ -51,11 +53,8 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=61", "wheel", "setuptools_scm>=7"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools.dynamic]
-version = {attr = "doc_ai.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["doc_ai", "doc_ai.*"]
