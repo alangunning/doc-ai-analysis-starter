@@ -3,7 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version as _version
 
 try:  # pragma: no cover - runtime metadata
-    __version__ = _version("doc-ai-analysis-starter")
+    __version__ = _version("doc-ai")
 except PackageNotFoundError:  # pragma: no cover - fallback for local runs
     __version__ = "0.0.0"
 
