@@ -199,8 +199,11 @@ def upload_large_file(
     if isinstance(file, (str, Path)):
         path = Path(file)
         filename = path.name
-        size = path.stat().st_size
-        fh = open(path, "rb")
+        try:
+            fh = open(path, "rb")
+            size = path.stat().st_size
+        except FileNotFoundError as exc:
+            raise ValueError(f"File not found: {path}") from exc
         should_close = True
     else:
         fh = file  # type: ignore[assignment]
