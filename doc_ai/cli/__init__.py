@@ -102,7 +102,13 @@ def _main_callback(
     if level_name is None:
         level_name = DEFAULT_LOG_LEVEL
     level = getattr(logging, level_name.upper(), logging.WARNING)
-    logging.basicConfig(level=level)
+    logging.basicConfig(level=level, force=True)
+    logging.captureWarnings(True)
+    pywarn = logging.getLogger("py.warnings")
+    if level <= logging.DEBUG:
+        pywarn.setLevel(logging.WARNING)
+    else:
+        pywarn.setLevel(logging.ERROR)
     SETTINGS["verbose"] = level <= logging.DEBUG
     SETTINGS["banner"] = banner
     if banner:
