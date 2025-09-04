@@ -11,7 +11,8 @@ def test_global_help_lists_commands():
     assert "Usage:" in result.stdout
     assert "convert" in result.stdout
     assert "config" in result.stdout
-    assert "--install-completion" not in result.stdout
+    assert "--install-completion" in result.stdout
+    assert "--show-completion" in result.stdout
 
 
 def test_validate_help_flag_shows_options():

@@ -3,9 +3,10 @@ from typer.testing import CliRunner
 from doc_ai.cli import app
 
 
-def test_completion_scripts():
+def test_show_completion():
     runner = CliRunner()
-    for shell in ("bash", "zsh", "fish"):
-        result = runner.invoke(app, ["completion", shell])
-        assert result.exit_code == 0
-        assert f"_DOC_AI_COMPLETE=complete_{shell}" in result.stdout
+    result = runner.invoke(
+        app, ["--show-completion"], env={"SHELL": "/bin/bash"}, prog_name="doc-ai"
+    )
+    assert result.exit_code == 0
+    assert "_DOC_AI_COMPLETE=complete_bash" in result.stdout

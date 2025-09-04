@@ -11,7 +11,6 @@ from pathlib import Path
 import typer
 from dotenv import find_dotenv, load_dotenv
 from rich.console import Console
-from typer.completion import Shells, completion_init, get_completion_script
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
@@ -35,7 +34,7 @@ ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
 console = Console()
 app = typer.Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
-    add_completion=False,
+    add_completion=True,
 )
 
 SETTINGS = {
@@ -151,19 +150,6 @@ def run_prompt(*args, **kwargs):
     from doc_ai.github.prompts import run_prompt as _run_prompt
 
     return _run_prompt(*args, **kwargs)
-
-
-@app.command()
-def completion(shell: Shells):
-    """Generate shell completion script."""
-    completion_init()
-    prog_name = "doc-ai"
-    complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
-    script = get_completion_script(
-        prog_name=prog_name, complete_var=complete_var, shell=shell.value
-    )
-    typer.echo(script)
-
 
 # Register subcommands implemented in dedicated modules.
 from . import analyze as analyze_cmd  # noqa: E402
