@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from doc_ai.cli import pipeline
+from typer.testing import CliRunner
+from doc_ai.cli import app
 
 
 def test_pipeline_skips_converted(tmp_path):
@@ -30,7 +31,9 @@ def test_pipeline_skips_converted(tmp_path):
         patch("doc_ai.cli.validate_doc", side_effect=fake_validate),
         patch("doc_ai.cli.analyze_doc", side_effect=fake_analyze),
     ):
-        pipeline(src)
+        runner = CliRunner()
+        result = runner.invoke(app, ["pipeline", str(src)])
+        assert result.exit_code == 0
 
     assert calls == [
         ("validate", raw, md),

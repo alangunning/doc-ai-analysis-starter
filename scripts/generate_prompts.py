@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from rich.console import Console
-from rich.logging import RichHandler
+from doc_ai.logging_utils import setup_logging
 
 from openai import OpenAI
 
@@ -33,10 +33,9 @@ if __name__ == "__main__":
         help="Directory for generated prompt files (defaults to PDF directory)",
     )
     parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable debug logging",
+        "--log-level",
+        default="INFO",
+        help="Logging level (DEBUG, INFO, WARN, ERROR)",
     )
     parser.add_argument(
         "--log-file",
@@ -46,21 +45,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     console = Console()
-    logger = None
-    log_path = args.log_file
-    if args.verbose or log_path is not None:
-        logger = logging.getLogger("doc_ai.generate_prompts")
-        logger.setLevel(logging.DEBUG)
-        if args.verbose:
-            sh = RichHandler(console=console, show_time=False)
-            sh.setLevel(logging.DEBUG)
-            logger.addHandler(sh)
-        if log_path is None:
-            log_path = args.pdf.with_suffix(".generate.log")
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(log_path)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
+    setup_logging(args.log_level, args.log_file)
+    logger = logging.getLogger("doc_ai.generate_prompts")
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:

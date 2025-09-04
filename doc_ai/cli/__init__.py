@@ -14,6 +14,7 @@ from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
 from .interactive import interactive_shell, get_completions
+from doc_ai.logging_utils import setup_logging
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -41,7 +42,11 @@ app = typer.Typer(
     add_completion=False,
 )
 
-SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+SETTINGS = {
+    "verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"},
+    "log_level": "INFO",
+    "log_file": None,
+}
 
 # File extensions considered raw inputs for the pipeline.
 RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
@@ -49,16 +54,29 @@ RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
 
 @app.callback()
 def _main_callback(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", "-V", help="Show version and exit"
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    log_level: str = typer.Option(
+        "INFO", "--log-level", help="Logging level (DEBUG, INFO, WARN, ERROR)", case_sensitive=False
+    ),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Global options."""
     if version:
         console.print(__version__)
         raise typer.Exit()
-    SETTINGS["verbose"] = verbose
+    if verbose:
+        log_level = "DEBUG"
+    SETTINGS["verbose"] = verbose or log_level.upper() == "DEBUG"
+    SETTINGS["log_level"] = log_level.upper()
+    SETTINGS["log_file"] = log_file
+    ctx.obj = {"log_level": SETTINGS["log_level"], "log_file": log_file}
+    setup_logging(log_level, log_file)
 
 
 ASCII_ART = r"""
@@ -101,6 +119,7 @@ def run_prompt(*args, **kwargs):
 
 @app.command()
 def config(
+    ctx: typer.Context,
     verbose: bool = typer.Option(
         None, "--verbose/--no-verbose", help="Toggle verbose error output"
     ),
@@ -110,8 +129,12 @@ def config(
         help="Set VAR=VALUE pairs to update environment configuration",
         metavar="VAR=VALUE",
     ),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Show or update runtime configuration."""
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
     if verbose is not None:
         SETTINGS["verbose"] = verbose
     if set_vars:
@@ -138,6 +161,7 @@ def config(
 
 @app.command()
 def convert(
+    ctx: typer.Context,
     source: str = typer.Argument(
         ..., help="Path or URL to raw document or folder"
     ),
@@ -147,8 +171,12 @@ def convert(
         "-f",
         help="Desired output format(s). Can be passed multiple times.",
     ),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Convert files using Docling."""
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
     if not SETTINGS["verbose"]:
         warnings.filterwarnings("ignore")
@@ -162,6 +190,7 @@ def convert(
 
 @app.command()
 def validate(
+    ctx: typer.Context,
     raw: Path = typer.Argument(..., help="Path to raw document"),
     rendered: Path | None = typer.Argument(
         None, help="Path to converted file"
@@ -178,30 +207,14 @@ def validate(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
     log_file: Optional[Path] = typer.Option(
         None, "--log-file", help="Write request/response details to this file"
     ),
 ) -> None:
     """Validate converted output against the original file."""
-    logger: logging.Logger | None = None
-    log_path = log_file
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
+    logger = logging.getLogger("doc_ai.validate")
     console_local = Console()
-    if verbose or log_path is not None:
-        logger = logging.getLogger("doc_ai.validate")
-        logger.setLevel(logging.DEBUG)
-        if verbose:
-            from rich.logging import RichHandler
-
-            sh = RichHandler(console=console_local, show_time=False)
-            sh.setLevel(logging.DEBUG)
-            logger.addHandler(sh)
-        if log_path is None:
-            log_path = raw.with_suffix(".validate.log")
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(log_path)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
 
     if rendered is None:
         used_fmt = fmt or OutputFormat.MARKDOWN
@@ -224,6 +237,7 @@ def validate(
 
 @app.command()
 def analyze(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Raw or converted document"),
     fmt: Optional[OutputFormat] = typer.Option(
         None, "--format", "-f", help="Format of converted file"
@@ -250,13 +264,18 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
         help="Stop processing on first validation or analysis failure",
     ),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Run an analysis prompt against a converted document."""
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
@@ -266,14 +285,20 @@ def analyze(
 
 @app.command()
 def embed(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Directory containing Markdown files"),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Generate embeddings for Markdown files."""
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
     build_vector_store(source)
 
 
 @app.command("pipeline")
 def pipeline(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Directory with raw documents"),
     prompt: Path = typer.Option(
         Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
@@ -296,8 +321,12 @@ def pipeline(
         "--fail-fast/--keep-going",
         help="Stop processing on first validation or analysis failure",
     ),
+    log_file: Optional[Path] = typer.Option(
+        None, "--log-file", help="Write logs to this file"
+    ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
+    setup_logging(ctx.obj["log_level"], log_file or ctx.obj.get("log_file"))
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
     convert_path(source, fmts)
     validation_prompt = Path(
@@ -367,8 +396,8 @@ def main() -> None:
     if len(sys.argv) > 1:
         _print_banner()
         args = sys.argv[1:]
-        if SETTINGS["verbose"] and "--verbose" not in args and "-v" not in args:
-            args.append("--verbose")
+        if SETTINGS["verbose"] and "--log-level" not in args:
+            args.extend(["--log-level", "DEBUG"])
         try:
             app(prog_name="cli.py", args=args)
         except Exception as exc:  # pragma: no cover - runtime error display
