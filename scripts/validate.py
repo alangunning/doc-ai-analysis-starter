@@ -26,7 +26,6 @@ def infer_format(path: Path) -> OutputFormat:
         ".json": OutputFormat.JSON,
         ".txt": OutputFormat.TEXT,
         ".doctags": OutputFormat.DOCTAGS,
-        ".dogtags": OutputFormat.DOCTAGS,
     }
     try:
         return mapping[path.suffix.lower()]
