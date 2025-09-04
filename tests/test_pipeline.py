@@ -55,6 +55,7 @@ def test_pipeline_keep_going_reports_failures(monkeypatch, tmp_path):
 def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
     src = _setup_docs(tmp_path)
     calls: list[str] = []
+    embed_called = False
 
     def fake_validate(raw, md, fmt, prompt, model, base_url, **kwargs):
         calls.append(f"validate:{Path(raw).name}")
@@ -63,16 +64,21 @@ def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
     def fake_analyze(md, **kwargs):
         calls.append(f"analyze:{Path(md).name}")
 
+    def fake_build_vector_store(*args, **kwargs):
+        nonlocal embed_called
+        embed_called = True
+
     monkeypatch.setattr("doc_ai.cli.validate_doc", fake_validate)
     monkeypatch.setattr("doc_ai.cli.analyze_doc", fake_analyze)
     monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: None)
-    monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: None)
+    monkeypatch.setattr("doc_ai.cli.build_vector_store", fake_build_vector_store)
 
     runner = CliRunner()
     result = runner.invoke(app, ["pipeline", "--fail-fast", str(src)])
 
     assert result.exit_code == 1
     assert "Validation failed" in result.stdout
+    assert not embed_called
     assert len(calls) == 1 and calls[0].startswith("validate:")
 
 

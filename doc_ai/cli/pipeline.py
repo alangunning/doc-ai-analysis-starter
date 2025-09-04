@@ -171,17 +171,17 @@ def pipeline(
                     fut.result()
                     progress.advance(task)
 
-    if should_run(PipelineStep.EMBED):
-        if dry_run:
-            logger.info("Would build vector store for %s", source)
-        else:
-            _build_vector_store(source, workers=workers)
-                    
     if failures:
         logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
         for step, path, exc in failures:
             logger.error("- %s %s: %s", step, path, exc)
         raise typer.Exit(code=1)
+
+    if should_run(PipelineStep.EMBED):
+        if dry_run:
+            logger.info("Would build vector store for %s", source)
+        else:
+            _build_vector_store(source, workers=workers)
 
 
 app = typer.Typer(invoke_without_command=True, help="Run the full pipeline: convert, validate, analyze, and embed.")
