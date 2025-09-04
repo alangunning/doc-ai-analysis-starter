@@ -170,11 +170,13 @@ def pipeline(
                 for fut in as_completed(futures):
                     fut.result()
                     progress.advance(task)
+
     if should_run(PipelineStep.EMBED):
         if dry_run:
             logger.info("Would build vector store for %s", source)
         else:
-            _build_vector_store(source)
+            _build_vector_store(source, workers=workers)
+                    
     if failures:
         logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
         for step, path, exc in failures:

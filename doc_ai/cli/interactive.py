@@ -113,7 +113,12 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     ctx = click.Context(cmd)
     if init is not None:
         run_batch(ctx, init)
-    history = FileHistory(Path.home() / ".doc-ai-history")
+    history_path = Path.home() / ".doc-ai-history"
+    exists = history_path.exists()
+    history_path.touch(mode=0o600, exist_ok=True)
+    if exists:
+        history_path.chmod(0o600)
+    history = FileHistory(history_path)
     prompt_kwargs = {
         "history": history,
         "message": "doc-ai>",
