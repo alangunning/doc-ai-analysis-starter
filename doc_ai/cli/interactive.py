@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import click
 from click_repl import repl
+from prompt_toolkit.history import FileHistory
 import typer
 from typer.main import get_command
 
@@ -15,5 +18,6 @@ def interactive_shell(app: typer.Typer) -> None:
 
     cmd = get_command(app)
     ctx = click.Context(cmd)
-    repl(ctx, prompt_kwargs={"message": "doc-ai> "})
+    history = FileHistory(Path.home() / ".doc-ai-history")
+    repl(ctx, prompt=lambda: f"{Path.cwd().name}> ", history=history)
 

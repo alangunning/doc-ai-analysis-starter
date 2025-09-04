@@ -93,12 +93,14 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
     helper to change directories without leaving the session:
 
     ```
-    doc-ai> cd docs
-    doc-ai/docs>
+    doc-ai-analysis-starter> cd docs
+    docs>
     ```
 
-    The shell helper lives in ``doc_ai.cli.interactive`` and is re-exported
-    from ``doc_ai.cli`` so it can be reused in other Typer-based projects.
+    The prompt reflects the current working directory and command history is
+    stored in ``~/.doc-ai-history`` for future sessions. The shell helper lives
+    in ``doc_ai.cli.interactive`` and is re-exported from ``doc_ai.cli`` so it
+    can be reused in other Typer-based projects.
 
 ### Shell Completion
 
