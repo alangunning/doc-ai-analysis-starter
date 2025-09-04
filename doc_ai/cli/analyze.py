@@ -115,6 +115,6 @@ def analyze(
             estimate,
             force=force,
         )
-    except ValueError as exc:
+    except Exception as exc:
         logger.error("[red]%s[/red]", exc)
         raise typer.Exit(1) from exc
