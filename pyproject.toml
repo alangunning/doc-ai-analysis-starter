@@ -18,9 +18,9 @@ dependencies = [
     "typer>=0.9,<1",
     "rich>=13,<14",
     "tiktoken>=0.7,<1",
-    "platformdirs>=4,<5",
-    "click-repl>=0.3,<1",
-    "prompt_toolkit>=3,<4",
+    "platformdirs>=4,<5",  # cross-platform config dirs
+    "click-repl>=0.3,<1",  # enables interactive shell
+    "prompt_toolkit>=3,<4",  # REPL backend
 ]
 classifiers = [
     "Programming Language :: Python",
