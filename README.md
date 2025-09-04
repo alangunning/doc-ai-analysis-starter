@@ -39,7 +39,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    flags override both. Use `doc-ai config --set VAR=VALUE` to update the `.env`
    file from the CLI. The CLI creates or updates the file with `0600` permissions
    for security. See the [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md)
-   for details on workflow toggles and model settings.
+   for details on workflow toggles and model settings. The helpers read
+   `BASE_MODEL_URL` to choose between GitHub Models
+   (`https://models.github.ai/inference`) and OpenAI
+   (`https://api.openai.com/v1`). When the base URL points at OpenAI the code
+   uses `OPENAI_API_KEY`; otherwise it expects `GITHUB_TOKEN`. Embeddings can
+   target a different provider with `VECTOR_BASE_MODEL_URL`.
 
 4. **Try it out**
 

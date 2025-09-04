@@ -17,7 +17,7 @@ from ..openai import create_response, upload_file
 from ..utils import http_get, sanitize_path
 from rich.console import Console
 from rich.progress import Progress
-from .prompts import DEFAULT_MODEL_BASE_URL
+from .prompts import DEFAULT_BASE_MODEL_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 
@@ -57,9 +57,8 @@ def validate_file(
 
     base = (
         base_url
-        or os.getenv("VALIDATE_BASE_MODEL_URL")  # validation needs file uploads
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL
+        or DEFAULT_BASE_MODEL_URL
     )
     if not base or "models.github.ai" in base:
         base = OPENAI_BASE_URL

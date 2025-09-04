@@ -9,7 +9,7 @@ from typing import Optional
 import yaml
 from openai import OpenAI
 
-DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
+DEFAULT_BASE_MODEL_URL = "https://models.github.ai/inference"
 
 
 def run_prompt(
@@ -45,7 +45,7 @@ def run_prompt(
     base = (
         base_url
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL
+        or DEFAULT_BASE_MODEL_URL
     )
     api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
     api_key = os.getenv(api_key_var)
@@ -73,4 +73,4 @@ def run_prompt(
     return response.output_text
 
 
-__all__ = ["run_prompt", "DEFAULT_MODEL_BASE_URL"]
+__all__ = ["run_prompt", "DEFAULT_BASE_MODEL_URL"]

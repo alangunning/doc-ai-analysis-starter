@@ -20,10 +20,10 @@ When the same setting is defined in multiple places the resolution order is:
 
 Set `GITHUB_TOKEN` with the **Models:read** scope to access GitHub Models at
 `https://models.github.ai/inference`. All helpers read `BASE_MODEL_URL` for the
-API endpoint. The validation step requires OpenAI's file inputs, so provide
-`OPENAI_API_KEY` and, if needed, `VALIDATE_BASE_MODEL_URL=https://api.openai.com/v1`
-(this is the CLI default) while other steps can remain on the provider specified
-by `BASE_MODEL_URL`.
+API endpoint. If `BASE_MODEL_URL` targets GitHub Models (or is unset), the
+validator switches to OpenAI's `https://api.openai.com/v1` endpoint and expects
+`OPENAI_API_KEY`. Use `BASE_MODEL_URL` or per-step overrides such as
+`VECTOR_BASE_MODEL_URL` to point individual stages at a different provider.
 
 ## Workflow Toggles
 

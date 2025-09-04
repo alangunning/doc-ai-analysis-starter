@@ -17,7 +17,7 @@ from ..metadata import (
     mark_step,
     save_metadata,
 )
-from .prompts import DEFAULT_MODEL_BASE_URL
+from .prompts import DEFAULT_BASE_MODEL_URL
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
@@ -25,7 +25,12 @@ EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
 _log = logging.getLogger(__name__)
 
 
-def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
+def build_vector_store(
+    src_dir: Path,
+    *,
+    fail_fast: bool = False,
+    base_url: str | None = None,
+) -> None:
     """Generate embeddings for Markdown files in ``src_dir``.
 
     Args:
@@ -35,16 +40,17 @@ def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
             next file.
     """
 
-    base_url = (
-        os.getenv("VECTOR_BASE_MODEL_URL")
+    base = (
+        base_url
+        or os.getenv("VECTOR_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL
+        or DEFAULT_BASE_MODEL_URL
     )
-    api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base_url else "GITHUB_TOKEN"
+    api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
     token = os.getenv(api_key_var)
     if not token:
         raise RuntimeError(f"Missing required environment variable: {api_key_var}")
-    client = OpenAI(api_key=token, base_url=base_url)
+    client = OpenAI(api_key=token, base_url=base)
 
     for md_file in src_dir.rglob("*.md"):
         meta = load_metadata(md_file)

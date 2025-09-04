@@ -494,7 +494,7 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
     )
 
     monkeypatch.setenv("VALIDATE_MODEL", "env-model")
-    monkeypatch.setenv("VALIDATE_BASE_MODEL_URL", "https://test.base")
+    monkeypatch.setenv("BASE_MODEL_URL", "https://test.base")
 
     called: dict[str, str] = {}
 
@@ -538,7 +538,7 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
     )
 
     monkeypatch.setenv("VALIDATE_MODEL", "env-model")
-    monkeypatch.setenv("VALIDATE_BASE_MODEL_URL", "https://env.base")
+    monkeypatch.setenv("BASE_MODEL_URL", "https://env.base")
 
     called: dict[str, str] = {}
 

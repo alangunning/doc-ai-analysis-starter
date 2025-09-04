@@ -5,10 +5,7 @@ sidebar_position: 4
 
 # PDF vs Markdown Validation
 
-Doc AI Starter validates Docling's Markdown output against the original PDF using OpenAI's file inputs. The Responses API currently accepts PDF (and image) attachments, so the Markdown is supplied as plain text. GitHub Models do not expose file uploads, so this step always targets OpenAI's API while the rest of the pipeline can continue using GitHub Models for text‑only prompts and embeddings.
-
-Set `VALIDATE_BASE_MODEL_URL` to override the endpoint for this stage if the
-default `https://api.openai.com/v1` is unsuitable.
+Doc AI Starter validates Docling's Markdown output against the original PDF using OpenAI's file inputs. The Responses API currently accepts PDF (and image) attachments, so the Markdown is supplied as plain text. GitHub Models do not expose file uploads, so when `BASE_MODEL_URL` points to GitHub Models (or is unset) the validator automatically switches to OpenAI's endpoint using `OPENAI_API_KEY`. Specify a different provider with `--base-model-url` or by setting `BASE_MODEL_URL`.
 
 The validator runs **Stage B** adjudication only, relying on the model to flag mismatches. To keep results reproducible, each call follows a strict "cite‑then‑claim" rubric and returns structured JSON with evidence for every discrepancy.
 
