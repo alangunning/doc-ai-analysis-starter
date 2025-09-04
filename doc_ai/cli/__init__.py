@@ -161,7 +161,10 @@ def _main_callback(
     if level_name is None:
         level_name = "DEBUG" if verbose_default else "WARNING"
     log_file_val = log_file if log_file is not None else merged.get("LOG_FILE")
-    configure_logging(level_name, log_file_val)
+    log_file_path = Path(log_file_val) if isinstance(log_file_val, (str, Path)) and log_file_val else None
+    configure_logging(level_name, log_file_path)
+    ctx.obj["log_level"] = level_name
+    ctx.obj["log_file"] = log_file_path
     ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
     banner_flag = banner if banner is not None else banner_default
     ctx.obj["banner"] = banner_flag

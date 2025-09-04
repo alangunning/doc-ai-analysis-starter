@@ -11,7 +11,6 @@ from openai import OpenAI
 
 from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
-from doc_ai.logging import configure_logging
 from doc_ai.openai import create_response
 from . import ModelName
 from .utils import resolve_bool, resolve_str
@@ -49,27 +48,10 @@ def query(
         "--model",
         help="Model to use when answering with --ask",
     ),
-    verbose: bool | None = typer.Option(
-        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
-    ),
-    log_level: str | None = typer.Option(
-        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
-    ),
-    log_file: Path | None = typer.Option(
-        None, "--log-file", help="Write logs to the given file"
-    ),
 ) -> None:
     """Run a similarity search against embeddings in ``store``."""
     if ctx.obj is None:
         ctx.obj = {}
-    if any(opt is not None for opt in (verbose, log_level, log_file)):
-        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
-            logging.getLogger().level
-        )
-        configure_logging(level_name, log_file)
-        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
-        ctx.obj["log_level"] = level_name
-        ctx.obj["log_file"] = log_file
 
     cfg = ctx.obj.get("config", {})
     ask = resolve_bool(ctx, "ask", ask, cfg, "ASK")

@@ -27,6 +27,25 @@ from doc_ai.metadata import (
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Logging helpers
+# ---------------------------------------------------------------------------
+
+def get_logging_options(ctx: typer.Context) -> tuple[bool, str | None, Path | None]:
+    """Return logging options stored on the Typer context.
+
+    The root ``doc-ai`` callback records ``verbose``, ``log_level`` and
+    ``log_file`` values on ``ctx.obj`` after configuring logging. Subcommands
+    can call this helper to read those options without coupling to the exact
+    keys used in the context object.
+    """
+
+    obj = ctx.ensure_object(dict)
+    verbose = bool(obj.get("verbose", False))
+    level = obj.get("log_level")
+    log_file = obj.get("log_file")
+    return verbose, level, log_file
+
 # Mapping of file extensions to output formats used across commands
 EXTENSION_MAP = {
     ".md": OutputFormat.MARKDOWN,
