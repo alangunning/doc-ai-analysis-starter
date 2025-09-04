@@ -15,10 +15,17 @@ def init_workflows(
         Path(".github/workflows"), "--dest", help="Target directory for workflows"
     ),
     overwrite: bool = typer.Option(
-        False, "--overwrite", help="Overwrite existing files"
+        False,
+        "--overwrite",
+        help="Overwrite existing files (prompt before replacing unless --yes)",
     ),
     dry_run: bool = typer.Option(
-        False, "--dry-run", help="Show actions without writing files"
+        False, "--dry-run", help="Show actions without writing files",
+    ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatic yes to prompts; overwrite without confirmation",
     ),
 ) -> None:
     """Copy workflow templates into ``dest``."""
@@ -29,9 +36,14 @@ def init_workflows(
     dest.mkdir(parents=True, exist_ok=True)
     for src in files:
         target = dest / src.name
-        if target.exists() and not overwrite:
-            typer.echo(f"Skipping {target} (exists). Use --overwrite to replace.")
-            continue
+        if target.exists():
+            if not overwrite:
+                typer.echo(f"Skipping {target} (exists). Use --overwrite to replace.")
+                continue
+            if not dry_run and not yes:
+                if not typer.confirm(f"{target} exists. Overwrite?", default=False):
+                    typer.echo(f"Skipping {target}")
+                    continue
         if dry_run:
             typer.echo(f"Would copy {src} -> {target}")
         else:
