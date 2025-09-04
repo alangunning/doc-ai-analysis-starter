@@ -103,7 +103,11 @@ def run_batch(ctx: click.Context, path: Path) -> None:
 
 
 def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
-    """Start an interactive REPL for the given Typer application."""
+    """Start an interactive REPL for the given Typer application.
+
+    If *init* is provided, commands from that file are executed via
+    :func:`run_batch` before the prompt is shown.
+    """
 
     cmd = get_command(app)
     ctx = click.Context(cmd)

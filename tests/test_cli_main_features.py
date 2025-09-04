@@ -44,7 +44,7 @@ def test_interactive_startup_without_banner(monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     recorded = {}
 
-    def fake_shell(app):
+    def fake_shell(app, init=None):
         recorded["shell"] = True
 
     def fake_print_banner():
@@ -65,7 +65,7 @@ def test_interactive_startup_with_banner_env(monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     recorded = {}
 
-    def fake_shell(app):
+    def fake_shell(app, init=None):
         recorded["shell"] = True
 
     def fake_print_banner():
