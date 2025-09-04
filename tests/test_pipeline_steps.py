@@ -1,8 +1,14 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+import typer
+
 from doc_ai.cli import pipeline
 from doc_ai.cli.pipeline import PipelineStep
+import importlib
+
+pipeline_module = importlib.import_module("doc_ai.cli.pipeline")
 
 
 def _setup_docs(tmp_path: Path) -> tuple[Path, Path, Path]:
@@ -55,3 +61,23 @@ def test_pipeline_skip_validate(tmp_path):
     validate_mock.assert_not_called()
     convert_mock.assert_called_once()
     assert calls == [("analyze", md)]
+
+
+def test_pipeline_handles_unexpected_error(tmp_path, monkeypatch):
+    src, raw, md = _setup_docs(tmp_path)
+
+    def boom(*args, **kwargs):  # pragma: no cover - testing error path
+        raise RuntimeError("boom")
+
+    messages: list[str] = []
+
+    def fake_error(msg, *args, **kwargs):
+        messages.append(msg % args)
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", boom)
+    monkeypatch.setattr(pipeline_module.logger, "error", fake_error)
+
+    with pytest.raises(typer.Exit) as excinfo:
+        pipeline(src)
+    assert excinfo.value.exit_code == 1
+    assert any("Conversion failed" in m for m in messages)

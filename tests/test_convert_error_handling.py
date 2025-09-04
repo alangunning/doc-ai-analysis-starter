@@ -45,3 +45,24 @@ def test_convert_path_warns_and_continues(tmp_path, monkeypatch, caplog):
     assert "Failed to convert" in caplog.text
     assert str(bad) in caplog.text
 
+
+def test_convert_cli_handles_unexpected_error(tmp_path, monkeypatch):
+    runner = CliRunner()
+    src = tmp_path / "sample.pdf"
+    src.write_text("content")
+    messages: list[str] = []
+
+    def fake_error(msg, *args, **kwargs):
+        messages.append(msg % args)
+
+    def boom(path, fmts, force=False):  # pragma: no cover - testing error path
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr("doc_ai.cli.convert.logger.error", fake_error)
+    monkeypatch.setattr("doc_ai.cli.convert_path", boom)
+
+    result = runner.invoke(app, ["convert", str(src)])
+    assert result.exit_code == 1
+    assert any("kaboom" in m for m in messages)
+    assert "Traceback" not in result.output
+
