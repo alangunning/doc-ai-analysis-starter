@@ -81,6 +81,20 @@ def _exit_command() -> None:
     raise typer.Exit()
 
 
+@app.command()
+def cd(
+    directory: Path | None = typer.Argument(
+        None, dir_okay=True, file_okay=False, exists=False
+    ),
+) -> None:
+    """Change the current working directory."""
+    target = (directory or Path.home()).expanduser()
+    try:
+        os.chdir(target)
+    except OSError as exc:  # pragma: no cover - depends on filesystem
+        console.print(f"[red]{exc}[/red]")
+
+
 def validate_file(*args, **kwargs):
     from doc_ai.github.validator import validate_file as _validate_file
 
@@ -250,6 +264,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",

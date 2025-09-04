@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import os
 import shlex
-import traceback
 import atexit
 from pathlib import Path
 from typing import Callable
 
 import click
+import click_repl
+from click_repl import ExitReplException
 import typer
 from typer.main import get_command
 from rich.console import Console
@@ -241,37 +242,9 @@ def interactive_shell(
             app(prog_name=prog_name, args=["--help"])
         except SystemExit:
             pass
-    while True:
-        try:
-            command = input("> ").strip()
-        except (EOFError, KeyboardInterrupt):  # pragma: no cover - user exits
-            break
-        if not command:
-            continue
-        if command.lower() in {"exit", "quit"}:
-            break
-        if command.startswith("cd"):
-            parts = command.split(maxsplit=1)
-            target = Path(parts[1]).expanduser() if len(parts) > 1 else Path.home()
-            try:
-                os.chdir(target)
-            except OSError as exc:
-                console.print(f"[red]{exc}[/red]")
-            continue
-        full_cmd = command
-        if verbose:
-            full_cmd += " --verbose"
-        try:
-            args = shlex.split(full_cmd)
-        except ValueError as exc:
-            console.print(f"[red]Parse error: {exc}[/red]")
-            continue
-        try:
-            app(prog_name=prog_name, args=args)
-        except SystemExit:
-            pass
-        except Exception as exc:  # pragma: no cover - runtime error display
-            if verbose:
-                traceback.print_exc()
-            else:
-                console.print(f"[red]{exc}[/red]")
+    root = get_command(app)
+    ctx = root.make_context(prog_name, ["--verbose"] if verbose else [])
+    try:
+        click_repl.repl(ctx, prompt_kwargs={"message": "> "})
+    except ExitReplException:
+        pass
