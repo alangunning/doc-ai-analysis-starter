@@ -57,7 +57,7 @@ def validate_file(
 
     base = (
         base_url
-        or os.getenv("VALIDATE_BASE_MODEL_URL")
+        or os.getenv("VALIDATE_BASE_MODEL_URL")  # validation needs file uploads
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL
     )
