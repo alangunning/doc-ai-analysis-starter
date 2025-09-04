@@ -18,8 +18,9 @@ def test_global_help_lists_commands():
 def test_validate_help_flag_shows_options():
     runner = CliRunner()
     result = runner.invoke(app, ["validate", "--help"])
-    assert "--log-file" in result.stdout
-    assert "--verbose" in result.stdout
+    # logging options are now only available on the root command
+    assert "--log-file" not in result.stdout
+    assert "--verbose" not in result.stdout
     assert result.exit_code == 0
 
 
