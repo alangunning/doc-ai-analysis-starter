@@ -63,10 +63,14 @@ def convert(
     cfg = ctx.obj.get("config", {})
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
-    if source.startswith(("http://", "https://")):
-        results = _convert_path(source, fmts, force=force)
-    else:
-        results = _convert_path(Path(source), fmts, force=force)
+    try:
+        if source.startswith(("http://", "https://")):
+            results = _convert_path(source, fmts, force=force)
+        else:
+            results = _convert_path(Path(source), fmts, force=force)
+    except ValueError as exc:
+        logger.error(str(exc))
+        raise typer.Exit(1)
 
     if not results:
         logger.warning("No new files to process.")

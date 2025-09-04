@@ -117,6 +117,17 @@ def run_batch(ctx: click.Context, path: Path) -> None:
             ctx.default_map = sub_ctx.default_map
 
 
+def _prompt_name() -> str:
+    """Return the current directory name for the REPL prompt.
+
+    The repository root directory name ``doc-ai-analysis-starter`` is shortened
+    to ``doc-ai`` for a cleaner initial prompt.
+    """
+
+    name = Path.cwd().name
+    return "doc-ai" if name == "doc-ai-analysis-starter" else name
+
+
 def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     """Start an interactive REPL for the given Typer application.
 
@@ -137,7 +148,7 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     global PROMPT_KWARGS
     PROMPT_KWARGS = {
         "history": history,
-        "message": lambda: f"{Path.cwd().name}>",
+        "message": lambda: f"{_prompt_name()}>",
         "completer": DocAICompleter(cmd, ctx),
     }
     repl(ctx, prompt_kwargs=PROMPT_KWARGS)
