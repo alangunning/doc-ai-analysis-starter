@@ -104,6 +104,16 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
     in ``doc_ai.cli.interactive`` and is re-exported from ``doc_ai.cli`` so it
     can be reused in other Typer-based projects.
 
+    Execute a batch of commands before the shell starts with ``--init`` (alias
+    ``--batch``):
+
+    ```bash
+    doc-ai --init commands.txt
+    ```
+
+    Each non-empty, non-comment line in ``commands.txt`` runs as if typed at the
+    prompt before the REPL begins.
+
 ### Shell Completion
 
 The CLI ships with Typer's built-in completion support. Install completion for
@@ -125,9 +135,10 @@ The package exposes a typed API and ships a `py.typed` marker for static type
 checkers. You can launch the interactive shell from your own scripts:
 
 ```python
+from pathlib import Path
 from doc_ai.cli import app, interactive_shell
 
-interactive_shell(app)
+interactive_shell(app, init=Path("commands.txt"))
 ```
 
 ## Directory Overview

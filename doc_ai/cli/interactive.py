@@ -16,7 +16,7 @@ from click_repl.utils import (
 from click_repl.exceptions import CommandLineParserError
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.completion import Completer, Completion, WordCompleter
+from prompt_toolkit.completion import Completer, WordCompleter
 import typer
 from typer.main import get_command
 
@@ -82,7 +82,11 @@ def run_batch(ctx: click.Context, path: Path) -> None:
 
 
 def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
-    """Start an interactive REPL for the given Typer application."""
+    """Start an interactive REPL for the given Typer application.
+
+    If *init* is provided, commands from that file are executed via
+    :func:`run_batch` before the prompt is shown.
+    """
 
     cmd = get_command(app)
     ctx = click.Context(cmd)

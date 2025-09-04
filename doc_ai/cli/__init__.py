@@ -266,6 +266,25 @@ def main() -> None:
     """Entry point for running the CLI as a script."""
     load_dotenv(ENV_FILE)
     args = sys.argv[1:]
+    init_path: Path | None = None
+    for flag in ("--init", "--batch"):
+        for i, arg in enumerate(list(args)):
+            if arg == flag:
+                if i + 1 >= len(args):
+                    logger.error("[red]%s requires a path[/red]", flag)
+                    raise SystemExit(1)
+                init_path = Path(args[i + 1])
+                del args[i : i + 2]
+                break
+            if arg.startswith(f"{flag}="):
+                init_path = Path(arg.split("=", 1)[1])
+                del args[i]
+                break
+        if init_path is not None:
+            break
+    if init_path is not None and not init_path.exists():
+        logger.error("[red]Batch file not found: %s[/red]", init_path)
+        raise SystemExit(1)
     if args:
         try:
             app(prog_name="cli.py", args=args)
@@ -288,5 +307,5 @@ def main() -> None:
     logger.info(
         "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
     )
-    interactive_shell(app)
+    interactive_shell(app, init=init_path)
     logger.info("Goodbye!")
