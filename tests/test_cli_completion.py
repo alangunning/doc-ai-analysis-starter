@@ -19,6 +19,7 @@ def test_show_completion():
 def test_completer_hides_sensitive_env(monkeypatch):
     monkeypatch.setenv("VISIBLE", "1")
     monkeypatch.setenv("MY_SECRET", "x")
+    monkeypatch.setenv("MY_API_KEY", "x")
     cmd = get_command(app)
     ctx = click.Context(cmd)
     comp = DocAICompleter(cmd, ctx)
@@ -26,3 +27,15 @@ def test_completer_hides_sensitive_env(monkeypatch):
     texts = {c.text for c in completions}
     assert "$VISIBLE" in texts
     assert "$MY_SECRET" not in texts
+    assert "$MY_API_KEY" not in texts
+
+
+def test_completer_allows_whitelisted_env(monkeypatch):
+    monkeypatch.setenv("MY_API_KEY", "x")
+    monkeypatch.setenv("DOC_AI_SAFE_ENV_VARS", "MY_API_KEY")
+    cmd = get_command(app)
+    ctx = click.Context(cmd)
+    comp = DocAICompleter(cmd, ctx)
+    completions = list(comp.get_completions(Document("$"), None))
+    texts = {c.text for c in completions}
+    assert "$MY_API_KEY" in texts
