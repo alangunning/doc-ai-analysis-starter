@@ -217,6 +217,7 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 - [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
 - [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
 - [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
+- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands; see [docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a template
 
 ## Automated Workflows
 

@@ -264,6 +264,9 @@ app.add_typer(init_workflows_cmd.app, name="init-workflows")
 app.command("set")(config_cmd.set_defaults)
 
 
+_LOADED_PLUGINS: dict[str, typer.Typer] = {}
+
+
 def _register_plugins() -> None:
     """Load Typer apps from ``doc_ai.plugins`` entry points."""
     for ep in entry_points(group="doc_ai.plugins"):
@@ -274,8 +277,25 @@ def _register_plugins() -> None:
             continue
         if isinstance(plugin_app, typer.Typer):
             app.add_typer(plugin_app, name=ep.name)
+            _LOADED_PLUGINS[ep.name] = plugin_app
         else:  # pragma: no cover - plugin contract
             logger.error("Plugin %s did not return a Typer app", ep.name)
+
+
+plugins_app = typer.Typer(help="Utilities for inspecting plugins.")
+
+
+@plugins_app.command("list")
+def list_plugins() -> None:
+    """Print the names of loaded plugins."""
+    if not _LOADED_PLUGINS:
+        typer.echo("No plugins loaded.")
+        raise typer.Exit()
+    for name in sorted(_LOADED_PLUGINS):
+        typer.echo(name)
+
+
+app.add_typer(plugins_app, name="plugins")
 
 
 _register_plugins()
