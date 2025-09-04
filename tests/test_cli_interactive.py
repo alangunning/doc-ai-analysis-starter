@@ -87,6 +87,14 @@ def test_argument_nested_path_completion(tmp_path):
         os.chdir(cwd)
 
 
+def test_env_var_completion_filter(monkeypatch):
+    monkeypatch.setenv("SAFE_VAR", "1")
+    monkeypatch.setenv("MY_SECRET_TOKEN", "x")
+    opts = get_completions(cli.app, "$", "$")
+    assert "$SAFE_VAR" in opts
+    assert "$MY_SECRET_TOKEN" not in opts
+
+
 def test_tab_completion(monkeypatch, tmp_path):
     """Ensure the readline completer uses ``get_completions``."""
 
@@ -167,7 +175,11 @@ def test_history_persistence(monkeypatch, tmp_path):
     monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
 
     interactive_shell(app_mock, print_banner=lambda: None, prog_name="test")
+    history_file = tmp_path / ".doc_ai_history"
+    assert history_file.exists(), "history file not created"
     assert registered, "history writer not registered"
     for func in registered:
         func()
-    assert written and written[0] == tmp_path / ".doc_ai_history"
+    assert written and written[0] == history_file
+    mode = history_file.stat().st_mode & 0o777
+    assert mode == 0o600

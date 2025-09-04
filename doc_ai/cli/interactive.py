@@ -23,6 +23,24 @@ from .utils import load_env_defaults
 __all__ = ["interactive_shell", "get_completions"]
 
 
+# Environment variable completion filtering
+ENVVAR_ALLOWLIST: set[str] = set()
+ENVVAR_DENY_SUBSTRINGS = {"TOKEN", "KEY", "SECRET"}
+
+
+def _filter_env_vars(names: set[str]) -> set[str]:
+    """Filter out sensitive environment variable names."""
+    filtered: set[str] = set()
+    for name in names:
+        if name in ENVVAR_ALLOWLIST:
+            filtered.add(name)
+            continue
+        if any(part in name.upper() for part in ENVVAR_DENY_SUBSTRINGS):
+            continue
+        filtered.add(name)
+    return filtered
+
+
 def _complete_path(text: str, *, only_dirs: bool = False) -> list[str]:
     """Return filesystem path completions for ``text``.
 
@@ -90,7 +108,7 @@ def get_completions(app: typer.Typer, buffer: str, text: str) -> list[str]:
         tokens.append("")
     suggestions: list[str] = []
     incomplete: str | None = None
-    env_vars = set(os.environ) | set(load_env_defaults().keys())
+    env_vars = _filter_env_vars(set(os.environ) | set(load_env_defaults().keys()))
     if tokens and tokens[-1].startswith("$"):
         incomplete = tokens[-1]
         prefix = incomplete[1:]
@@ -175,10 +193,24 @@ def interactive_shell(
 
         history_path = Path("~/.doc_ai_history").expanduser()
         try:
+            history_path.touch(mode=0o600, exist_ok=True)
+        except Exception:
+            pass
+        try:
             readline.read_history_file(history_path)
         except Exception:
             pass
-        atexit.register(lambda: readline.write_history_file(history_path))
+
+        def _write_history() -> None:
+            try:
+                readline.write_history_file(history_path)
+            finally:
+                try:
+                    history_path.chmod(0o600)
+                except OSError:
+                    pass
+
+        atexit.register(_write_history)
         try:
             readline.set_completer(completer)
             readline.parse_and_bind("tab: complete")
