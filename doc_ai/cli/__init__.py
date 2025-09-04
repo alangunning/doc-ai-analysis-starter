@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 import os
 import sys
-import traceback
 import importlib
 from pathlib import Path
 from typing import Optional
@@ -41,6 +40,8 @@ app = typer.Typer(
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
 DEFAULT_LOG_LEVEL = "DEBUG" if SETTINGS["verbose"] else "WARNING"
+
+logger = logging.getLogger(__name__)
 
 # File extensions considered raw inputs for the pipeline.
 RAW_SUFFIXES = {
@@ -205,9 +206,10 @@ def main() -> None:
         try:
             app(prog_name="cli.py", args=args)
         except Exception as exc:  # pragma: no cover - runtime error display
-            if SETTINGS["verbose"]:
-                traceback.print_exc()
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.exception("Unhandled exception")
             else:
+                logger.error("%s", exc)
                 console.print(f"[red]{exc}[/red]")
         return
     if not sys.stdin.isatty() or not sys.stdout.isatty():
@@ -220,6 +222,5 @@ def main() -> None:
         app,
         console=console,
         print_banner=_print_banner,
-        verbose=SETTINGS["verbose"],
     )
     console.print("Goodbye!")
