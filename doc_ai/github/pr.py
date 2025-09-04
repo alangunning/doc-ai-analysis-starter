@@ -22,8 +22,12 @@ def review_pr(
 
 def merge_pr(pr_number: int) -> None:
     """Merge pull request ``pr_number`` using the GitHub CLI."""
-
-    subprocess.run(["gh", "pr", "merge", str(pr_number), "--merge"], check=True)
+    try:
+        subprocess.run(["gh", "pr", "merge", str(pr_number), "--merge"], check=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError("GitHub CLI 'gh' not found; ensure it is installed and on PATH") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"Failed to merge PR #{pr_number}: {exc}") from exc
 
 
 __all__ = ["review_pr", "merge_pr"]
