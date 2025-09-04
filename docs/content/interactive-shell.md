@@ -7,15 +7,16 @@ an interactive prompt to any [Typer](https://typer.tiangolo.com/) application.
 
 ## Running a shell
 
-```python
-from doc_ai import cli
+Start the REPL by running the `doc-ai` console script with no arguments:
 
-# Launch the project's own CLI in interactive mode
-cli.interactive_shell(cli.app)
+```bash
+doc-ai
+doc-ai> help
 ```
 
-The shell leverages ``click-repl`` to provide tab completion and persistent
-history across sessions, and is safe to reuse in other Typer based projects.
+Under the hood the shell leverages ``click-repl`` to provide tab completion and
+persistent history across sessions, and it can be reused in other Typer-based
+projects.
 
 ## Built-in commands
 
@@ -30,3 +31,13 @@ doc-ai/docs>
 
 The package ships a ``py.typed`` marker so these functions are fully typed when
 used with static type checkers such as ``mypy`` or ``pyright``.
+
+## Programmatic usage
+
+The same helper can power shells in other Typer applications:
+
+```python
+from doc_ai.cli import app, interactive_shell
+
+interactive_shell(app)
+```
