@@ -60,9 +60,13 @@ def convert(
         ctx.obj["log_file"] = log_file
     from . import convert_path as _convert_path
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
-    if source.startswith(("http://", "https://")):
-        results = _convert_path(source, fmts, force=force)
-    else:
-        results = _convert_path(Path(source), fmts, force=force)
+    try:
+        if source.startswith(("http://", "https://")):
+            results = _convert_path(source, fmts, force=force)
+        else:
+            results = _convert_path(Path(source), fmts, force=force)
+    except Exception as exc:
+        logger.error("Conversion failed for %s: %s", source, exc)
+        raise typer.Exit(1) from exc
     if not results:
         logger.warning("No new files to process.")

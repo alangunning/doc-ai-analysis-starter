@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
 from urllib.parse import urlparse
 from tempfile import TemporaryDirectory
+import logging
 from rich.progress import Progress
 
 from docling.exceptions import ConversionError
@@ -18,6 +19,8 @@ from doc_ai.metadata import (
 )
 
 from ..utils import http_get, sanitize_path
+
+logger = logging.getLogger(__name__)
 
 # File suffixes supported by Docling's ``DocumentConverter``.
 # Anything not in this list will be skipped instead of raising an error when
@@ -124,7 +127,8 @@ def convert_path(
                 return
             try:
                 written, status = convert_files(file, outputs, return_status=True)
-            except ConversionError:
+            except ConversionError as exc:
+                logger.warning("Failed to convert %s: %s", file, exc)
                 return
             results[file] = (written, status)
             mark_step(
