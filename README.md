@@ -95,17 +95,15 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
 ### Shell Completion
 
-Generate and install completion scripts for your preferred shell:
+The CLI ships with Typer's built-in completion support. Install completion for
+your current shell or print the script to install manually:
 
 ```bash
-# Bash
-doc-ai completion bash > /etc/bash_completion.d/doc-ai
+# Install completion for the detected shell
+doc-ai --install-completion
 
-# Zsh
-doc-ai completion zsh > "${ZDOTDIR:-$HOME}/.zsh/completions/_doc-ai"
-
-# Fish
-doc-ai completion fish > ~/.config/fish/completions/doc-ai.fish
+# Show the completion script
+doc-ai --show-completion
 ```
 
 Reload your shell after installing to enable tab completion for `doc-ai`.
