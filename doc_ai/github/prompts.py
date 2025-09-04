@@ -20,16 +20,24 @@ def run_prompt(
     base_url: Optional[str] = None,
 ) -> str:
     """Execute ``prompt_file`` against ``input_text`` and return model output."""
-
     spec = yaml.safe_load(prompt_file.read_text())
+    if not isinstance(spec, dict):
+        raise ValueError("Prompt file must be a mapping")
+    if "model" not in spec or "messages" not in spec:
+        raise ValueError("Prompt file must contain 'model' and 'messages'")
+    if not isinstance(spec["messages"], list):
+        raise ValueError("'messages' must be a list")
+
     messages = []
     for m in spec["messages"]:
-        content = m.get("content", "")
-        if m.get("role") == "user":
+        if not isinstance(m, dict) or "role" not in m or "content" not in m:
+            raise ValueError("Each message must contain 'role' and 'content'")
+        content = m["content"]
+        if m["role"] == "user":
             content = content + "\n\n" + input_text
         messages.append(
             {
-                "role": m.get("role", "user"),
+                "role": m["role"],
                 "content": [{"type": "input_text", "text": content}],
             }
         )

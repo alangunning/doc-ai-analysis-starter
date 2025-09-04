@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+import json
 import logging
 import os
+import time
+from pathlib import Path
 
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from openai import OpenAI
-    from pathlib import Path
 
 from .files import (
     input_file_from_bytes,
@@ -89,10 +91,6 @@ def create_response(
     logger:
         Optional logger for emitting request and response payloads.
     """
-
-    from pathlib import Path
-    import json
-    import time
 
     file_purpose = file_purpose or os.getenv("OPENAI_FILE_PURPOSE", "user_data")
 
