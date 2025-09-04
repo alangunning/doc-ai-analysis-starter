@@ -117,7 +117,6 @@ def config(
     if set_vars:
         env_path = Path(ENV_FILE)
         env_path.touch(exist_ok=True)
-        env_path.chmod(0o600)
         for item in set_vars:
             try:
                 key, value = item.split("=", 1)
@@ -125,7 +124,7 @@ def config(
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
             os.environ[key] = value
             set_key(str(env_path), key, value, quote_mode="never")
-            env_path.chmod(0o600)
+        env_path.chmod(0o600)
     console.print("Current settings:")
     console.print(f"  verbose: {SETTINGS['verbose']}")
     defaults = load_env_defaults()
@@ -250,6 +249,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",

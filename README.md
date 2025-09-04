@@ -92,6 +92,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
    reused in other Typer-based projects.
 
+## Dependency Management
+
+Runtime dependencies follow a `package>=x.y,<z` convention in `pyproject.toml`.
+This allows compatible minor and patch updates while avoiding unexpected
+breaking changes from new major versions.
+
 ## Programmatic Usage
 
 The package exposes a typed API and ships a `py.typed` marker for static type
