@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from typing import Callable
 import os
+import importlib
 
 from doc_ai import cli
 from doc_ai.cli import interactive_shell, get_completions
@@ -90,9 +91,31 @@ def test_argument_nested_path_completion(tmp_path):
 def test_env_var_completion_filter(monkeypatch):
     monkeypatch.setenv("SAFE_VAR", "1")
     monkeypatch.setenv("MY_SECRET_TOKEN", "x")
+    monkeypatch.setenv("DB_PASS", "x")
+    monkeypatch.setenv("MY_PASSWORD", "x")
+    monkeypatch.setenv("AUTH_VAR", "x")
     opts = get_completions(cli.app, "$", "$")
     assert "$SAFE_VAR" in opts
     assert "$MY_SECRET_TOKEN" not in opts
+    assert "$DB_PASS" not in opts
+    assert "$MY_PASSWORD" not in opts
+    assert "$AUTH_VAR" not in opts
+
+
+def test_env_var_customization(monkeypatch):
+    monkeypatch.setenv("DOC_AI_ENVVAR_ALLOWLIST", "DB_PASS")
+    monkeypatch.setenv("DOC_AI_ENVVAR_DENY_SUBSTRINGS", "PRIVATE")
+    monkeypatch.setenv("DB_PASS", "1")
+    monkeypatch.setenv("MY_PRIVATE_KEY", "x")
+    importlib.reload(interactive_mod)
+    try:
+        opts = interactive_mod.get_completions(cli.app, "$", "$")
+        assert "$DB_PASS" in opts
+        assert "$MY_PRIVATE_KEY" not in opts
+    finally:
+        monkeypatch.delenv("DOC_AI_ENVVAR_ALLOWLIST", raising=False)
+        monkeypatch.delenv("DOC_AI_ENVVAR_DENY_SUBSTRINGS", raising=False)
+        importlib.reload(interactive_mod)
 
 
 def test_tab_completion(monkeypatch, tmp_path):
