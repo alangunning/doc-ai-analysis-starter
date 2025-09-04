@@ -36,7 +36,7 @@ Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
 "doc-ai" = "doc_ai.cli:main"
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest"]
+dev = ["ruff", "pytest", "bandit"]
 
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
@@ -51,6 +51,9 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+
+[tool.bandit]
+exclude = ["tests"]
 
 [build-system]
 requires = ["setuptools>=61", "wheel", "setuptools_scm>=7"]
