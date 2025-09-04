@@ -39,6 +39,7 @@ __all__ = [
     "DocAICompleter",
     "SAFE_ENV_VARS",
     "PROMPT_KWARGS",
+    "_prompt_name",
 ]
 
 
