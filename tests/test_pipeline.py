@@ -82,6 +82,31 @@ def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
     assert len(calls) == 1 and calls[0].startswith("validate:")
 
 
+def test_pipeline_fail_fast_skips_embedding_on_analysis_failure(monkeypatch, tmp_path):
+    src = _setup_docs(tmp_path)
+    embed_called = False
+
+    monkeypatch.setattr("doc_ai.cli.validate_doc", lambda *a, **k: None)
+
+    def fake_analyze(md, **kwargs):
+        raise ValueError("kaboom")
+
+    def fake_build_vector_store(*args, **kwargs):
+        nonlocal embed_called
+        embed_called = True
+
+    monkeypatch.setattr("doc_ai.cli.analyze_doc", fake_analyze)
+    monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: None)
+    monkeypatch.setattr("doc_ai.cli.build_vector_store", fake_build_vector_store)
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["pipeline", "--fail-fast", str(src)])
+
+    assert result.exit_code == 1
+    assert "Analysis failed" in result.stdout
+    assert not embed_called
+
+
 def test_pipeline_workers_option(monkeypatch, tmp_path):
     src = _setup_docs(tmp_path)
     captured: dict[str, int] = {}

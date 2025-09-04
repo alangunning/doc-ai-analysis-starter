@@ -18,9 +18,20 @@ def test_redaction(tmp_path):
     log_path = tmp_path / "redact.log"
     configure_logging("INFO", log_path)
     logger = logging.getLogger("test")
-    secret = "sk-" + "x" * 20 + " and ghp_" + "x" * 36
+    openai_token = "sk-" + "a" * 20
+    github_token = "ghp_" + "b" * 36
+    secret = f"{openai_token} and {github_token}"
     logger.warning("credentials: %s", secret)
     text = log_path.read_text()
-    assert "sk-" not in text
-    assert "ghp_" not in text
-    assert "<redacted>" in text
+
+    expected_openai = (
+        openai_token[:4] + "*" * (len(openai_token) - 8) + openai_token[-4:]
+    )
+    expected_github = (
+        github_token[:4] + "*" * (len(github_token) - 8) + github_token[-4:]
+    )
+
+    assert expected_openai in text
+    assert expected_github in text
+    assert openai_token not in text
+    assert github_token not in text

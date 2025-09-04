@@ -252,6 +252,7 @@ pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
 from . import validate as validate_cmd  # noqa: E402
 from . import query as query_cmd  # noqa: E402
 from . import init_workflows as init_workflows_cmd  # noqa: E402
+from . import new_doc_type as new_doc_type_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(convert_cmd.app, name="convert")
@@ -261,7 +262,11 @@ app.add_typer(embed_cmd.app, name="embed")
 app.add_typer(pipeline_cmd.app, name="pipeline")
 app.add_typer(query_cmd.app, name="query")
 app.add_typer(init_workflows_cmd.app, name="init-workflows")
+app.add_typer(new_doc_type_cmd.app, name="new")
 app.command("set")(config_cmd.set_defaults)
+
+
+_LOADED_PLUGINS: dict[str, typer.Typer] = {}
 
 
 def _register_plugins() -> None:
@@ -274,8 +279,25 @@ def _register_plugins() -> None:
             continue
         if isinstance(plugin_app, typer.Typer):
             app.add_typer(plugin_app, name=ep.name)
+            _LOADED_PLUGINS[ep.name] = plugin_app
         else:  # pragma: no cover - plugin contract
             logger.error("Plugin %s did not return a Typer app", ep.name)
+
+
+plugins_app = typer.Typer(help="Utilities for inspecting plugins.")
+
+
+@plugins_app.command("list")
+def list_plugins() -> None:
+    """Print the names of loaded plugins."""
+    if not _LOADED_PLUGINS:
+        typer.echo("No plugins loaded.")
+        raise typer.Exit()
+    for name in sorted(_LOADED_PLUGINS):
+        typer.echo(name)
+
+
+app.add_typer(plugins_app, name="plugins")
 
 
 _register_plugins()

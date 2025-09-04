@@ -91,3 +91,5 @@ Many command options can also be configured through environment variables or ent
 | Global | `--log-file` | `LOG_FILE` |
 | Global | `--verbose` | `VERBOSE` |
 | Global | `--banner/--quiet` | `DOC_AI_BANNER` |
+
+Secrets that resemble OpenAI or GitHub tokens are partially masked in logs, keeping the first and last four characters and replacing the middle with `*`.
