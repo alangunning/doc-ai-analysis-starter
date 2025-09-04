@@ -101,8 +101,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    `.github/prompts/`.
 
    Run ``doc-ai`` with no arguments to drop into an interactive shell with
-   tab-completion for commands and options. The shell includes a ``cd``
-   helper to change directories without leaving the session:
+   tab-completion for commands and options.
+
+   #### cd command
+
+   The shell includes a ``cd`` helper to change directories without leaving the session.
+   It reloads any ``.env`` file and global configuration in the target directory:
 
     ```
     doc-ai> cd docs
