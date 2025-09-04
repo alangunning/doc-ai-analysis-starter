@@ -21,7 +21,10 @@ app = typer.Typer(help="Show or update runtime configuration.")
 
 def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
     """Persist ``VAR=VALUE`` pairs to config sources."""
-    if use_global:
+    force_global = use_global or any(
+        p.split("=", 1)[0] == "interactive" for p in pairs
+    )
+    if force_global:
         cfg = dict(ctx.obj.get("global_config", {}))
         for item in pairs:
             try:
@@ -92,6 +95,7 @@ def _print_settings(ctx: typer.Context) -> None:
     logger.info("Current settings:")
     logger.info("  verbose: %s", ctx.obj.get("verbose"))
     defaults = load_env_defaults()
+    defaults.setdefault("interactive", "true")
     for key in os.environ:
         if key.startswith("MODEL_PRICE_") and key not in defaults:
             defaults[key] = None

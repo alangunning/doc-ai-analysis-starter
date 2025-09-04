@@ -133,6 +133,11 @@ def _main_callback(
     banner: bool | None = typer.Option(
         None, "--banner/--quiet", help="Display ASCII banner before command"
     ),
+    interactive: bool | None = typer.Option(
+        None,
+        "--interactive/--no-interactive",
+        help="Start interactive shell when no command is provided",
+    ),
 ) -> None:
     """Global options."""
     if version:
@@ -147,6 +152,7 @@ def _main_callback(
 
     verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
     banner_default = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
+    interactive_default = merged.get("interactive", "true").lower() in {"1", "true", "yes"}
 
     effective_verbose = verbose if verbose is not None else verbose_default
     level_name = log_level if log_level is not None else merged.get("LOG_LEVEL")
@@ -161,6 +167,8 @@ def _main_callback(
     ctx.obj["banner"] = banner_flag
     if banner_flag:
         _print_banner()
+    interactive_flag = interactive if interactive is not None else interactive_default
+    ctx.obj["interactive"] = interactive_flag
 
 
 ASCII_ART = r"""
@@ -378,7 +386,17 @@ def main() -> None:
         app(prog_name="cli.py", args=["--help"])
         return
     _, _, merged = read_configs()
-    if merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}:
+    banner_cfg = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
+    interactive_cfg = merged.get("interactive", "true").lower() in {"1", "true", "yes"}
+    if not interactive_cfg:
+        if banner_cfg:
+            _print_banner()
+        try:
+            app(prog_name="cli.py", args=["--help"])
+        except SystemExit:
+            pass
+        return
+    if banner_cfg:
         _print_banner()
         try:
             app(prog_name="cli.py", args=["--help"])
