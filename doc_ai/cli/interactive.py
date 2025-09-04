@@ -24,18 +24,37 @@ __all__ = ["interactive_shell", "get_completions"]
 
 
 # Environment variable completion filtering
-ENVVAR_ALLOWLIST: set[str] = set()
-ENVVAR_DENY_SUBSTRINGS = {"TOKEN", "KEY", "SECRET"}
+def _load_env_var_set(var_name: str) -> set[str]:
+    """Return uppercase entries from a comma-separated environment variable."""
+    val = os.getenv(var_name)
+    if not val:
+        return set()
+    return {item.strip().upper() for item in val.split(",") if item.strip()}
+
+
+ENVVAR_ALLOWLIST: set[str] = _load_env_var_set("DOC_AI_ENVVAR_ALLOWLIST")
+ENVVAR_DENY_SUBSTRINGS = {
+    "TOKEN",
+    "KEY",
+    "SECRET",
+    "PASS",
+    "PASSWORD",
+    "AUTH",
+}
+ENVVAR_DENY_SUBSTRINGS.update(
+    _load_env_var_set("DOC_AI_ENVVAR_DENY_SUBSTRINGS")
+)
 
 
 def _filter_env_vars(names: set[str]) -> set[str]:
     """Filter out sensitive environment variable names."""
     filtered: set[str] = set()
     for name in names:
-        if name in ENVVAR_ALLOWLIST:
+        upper_name = name.upper()
+        if upper_name in ENVVAR_ALLOWLIST:
             filtered.add(name)
             continue
-        if any(part in name.upper() for part in ENVVAR_DENY_SUBSTRINGS):
+        if any(part in upper_name for part in ENVVAR_DENY_SUBSTRINGS):
             continue
         filtered.add(name)
     return filtered
