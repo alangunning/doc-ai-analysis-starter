@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # Configuration
 
-Doc AI Starter uses environment variables to control models and GitHub Actions. Copy `.env.example` to `.env` and edit as needed. Variables in your shell override values in the file.
+Doc AI Starter uses environment variables to control models and GitHub Actions. Copy `.env.example` to `.env` and edit as needed. Variables in your shell override values in the file. The CLI ensures the `.env` file has `0600` permissions when creating or updating it.
 
 ### Precedence
 

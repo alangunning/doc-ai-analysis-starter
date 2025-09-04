@@ -7,16 +7,16 @@ authors = [{name = "Alan Gunning", email = "alangunning@gmail.com"}]
 requires-python = ">=3.10"
 dynamic = ["version"]
 dependencies = [
-    "docling",
-    "openai==1.102.0",
-    "httpx",
-    "pydantic",
-    "pyyaml",
-    "requests",
-    "anyio",
-    "python-dotenv",
-    "typer",
-    "rich",
+    "docling>=2,<3",
+    "openai>=1.102.0,<2",  # Requires Responses API introduced in v1.102.0
+    "httpx>=0.24,<1",
+    "pydantic>=1,<3",
+    "pyyaml>=6,<7",
+    "requests>=2,<3",
+    "anyio>=3,<5",
+    "python-dotenv>=1,<2",
+    "typer>=0.9,<1",
+    "rich>=13,<14",
 ]
 classifiers = [
     "Programming Language :: Python",
@@ -36,7 +36,11 @@ Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
 "doc-ai" = "doc_ai.cli:main"
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "bandit"]
+dev = [
+    "ruff>=0.1,<1",
+    "pytest>=7,<9",
+    "bandit>=1,<2",
+]
 
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
@@ -56,7 +60,11 @@ testpaths = ["tests"]
 exclude = ["tests"]
 
 [build-system]
-requires = ["setuptools>=61", "wheel", "setuptools_scm>=7"]
+requires = [
+    "setuptools>=61,<75",
+    "wheel>=0.38,<1",
+    "setuptools_scm>=7,<9",
+]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

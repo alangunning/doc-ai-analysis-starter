@@ -20,7 +20,9 @@ if __package__ in (None, ""):
     sys.path[0] = str(Path(__file__).resolve().parent.parent)
 
 from doc_ai.converter import OutputFormat, convert_path
+from doc_ai.converter.path import SUPPORTED_SUFFIXES
 from .utils import (
+    EXTENSION_MAP,
     analyze_doc,
     infer_format as _infer_format,
     load_env_defaults,
@@ -40,6 +42,9 @@ app = typer.Typer(
 )
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+
+# File extensions considered raw inputs for the pipeline.
+RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
 
 
 @app.callback()
@@ -112,6 +117,7 @@ def config(
     if set_vars:
         env_path = Path(ENV_FILE)
         env_path.touch(exist_ok=True)
+        env_path.chmod(0o600)
         for item in set_vars:
             try:
                 key, value = item.split("=", 1)
@@ -119,6 +125,7 @@ def config(
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
             os.environ[key] = value
             set_key(str(env_path), key, value, quote_mode="never")
+            env_path.chmod(0o600)
     console.print("Current settings:")
     console.print(f"  verbose: {SETTINGS['verbose']}")
     defaults = load_env_defaults()
@@ -238,13 +245,23 @@ def analyze(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
+    require_json: bool = typer.Option(
+        False,
+        "--require-structured",
+        help="Fail if analysis output is not valid JSON",
+        is_flag=True,
+    fail_fast: bool = typer.Option(
+        True,
+        "--fail-fast/--keep-going",
+        help="Stop processing on first validation or analysis failure",
+    ),
 ) -> None:
     """Run an analysis prompt against a converted document."""
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
-    analyze_doc(markdown_doc, prompt, output, model, base_model_url)
+    analyze_doc(markdown_doc, prompt, output, model, base_model_url, require_json)
 
 
 @app.command()
@@ -274,6 +291,11 @@ def pipeline(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
+    fail_fast: bool = typer.Option(
+        True,
+        "--fail-fast/--keep-going",
+        help="Stop processing on first validation or analysis failure",
+    ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
@@ -281,21 +303,49 @@ def pipeline(
     validation_prompt = Path(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
+    failures: list[tuple[str, Path, Exception]] = []
     for raw_file in source.rglob("*"):
-        if not raw_file.is_file():
+        if (
+            not raw_file.is_file()
+            or raw_file.suffix.lower() not in RAW_SUFFIXES
+            or any(".converted" in part for part in raw_file.parts)
+        ):
             continue
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists():
-            validate_doc(
-                raw_file,
-                md_file,
-                OutputFormat.MARKDOWN,
-                validation_prompt,
-                model,
-                base_model_url,
-            )
-            analyze_doc(md_file, prompt=prompt, model=model, base_url=base_model_url)
+            try:
+                validate_doc(
+                    raw_file,
+                    md_file,
+                    OutputFormat.MARKDOWN,
+                    validation_prompt,
+                    model,
+                    base_model_url,
+                )
+            except Exception as exc:  # pragma: no cover - error handling
+                failures.append(("validation", raw_file, exc))
+                console.print(
+                    f"[red]Validation failed for {raw_file}: {exc}[/red]"
+                )
+                if fail_fast:
+                    break
+            try:
+                analyze_doc(
+                    md_file, prompt=prompt, model=model, base_url=base_model_url
+                )
+            except Exception as exc:  # pragma: no cover - error handling
+                failures.append(("analysis", md_file, exc))
+                console.print(
+                    f"[red]Analysis failed for {md_file}: {exc}[/red]"
+                )
+                if fail_fast:
+                    break
     build_vector_store(source)
+    if failures:
+        console.print("[bold red]Failures encountered during pipeline:[/bold red]")
+        for step, path, exc in failures:
+            console.print(f"- {step} {path}: {exc}")
+        raise typer.Exit(code=1)
 
 
 __all__ = [
