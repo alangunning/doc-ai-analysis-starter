@@ -33,8 +33,11 @@ def run_prompt(
                 "content": [{"type": "input_text", "text": content}],
             }
         )
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN not set")
     client = OpenAI(
-        api_key=os.getenv("GITHUB_TOKEN"),
+        api_key=token,
         base_url=base_url
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL,

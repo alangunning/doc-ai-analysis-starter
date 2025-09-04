@@ -60,7 +60,12 @@ def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
             "encoding_format": "float",
         }
         if EMBED_DIMENSIONS:
-            kwargs["dimensions"] = int(EMBED_DIMENSIONS)
+            try:
+                dims = int(EMBED_DIMENSIONS)
+                if dims > 0:
+                    kwargs["dimensions"] = dims
+            except ValueError:
+                pass
 
         success = False
         max_attempts = 3

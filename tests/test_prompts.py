@@ -1,14 +1,17 @@
 from unittest.mock import MagicMock, patch
 import yaml
+import pytest
 
 from doc_ai.github.prompts import run_prompt
 
 
-def test_run_prompt_uses_spec_and_input(tmp_path):
+def test_run_prompt_uses_spec_and_input(tmp_path, monkeypatch):
     prompt_file = tmp_path / "prompt.yml"
     prompt_file.write_text(
         yaml.dump({"model": "test-model", "messages": [{"role": "user", "content": "Hello"}]})
     )
+
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
 
     mock_response = MagicMock(output_text="result")
     mock_client = MagicMock()
@@ -44,3 +47,13 @@ def test_run_prompt_uses_env_base_and_token(monkeypatch, tmp_path):
     args, kwargs = mock_openai.call_args
     assert kwargs["api_key"] == "gh-test"
     assert kwargs["base_url"] == "https://example.com"
+
+
+def test_run_prompt_requires_token(monkeypatch, tmp_path):
+    prompt_file = tmp_path / "p.yml"
+    prompt_file.write_text(yaml.dump({"model": "m", "messages": []}))
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    with patch("doc_ai.github.prompts.OpenAI") as mock_openai:
+        with pytest.raises(RuntimeError, match="GITHUB_TOKEN not set"):
+            run_prompt(prompt_file, "input")
+    mock_openai.assert_not_called()
