@@ -26,6 +26,12 @@ def convert(
         "-f",
         help="Desired output format(s). Can be passed multiple times.",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Re-run conversion even if metadata is present",
+        is_flag=True,
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -55,8 +61,8 @@ def convert(
     from . import convert_path as _convert_path
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
     if source.startswith(("http://", "https://")):
-        results = _convert_path(source, fmts)
+        results = _convert_path(source, fmts, force=force)
     else:
-        results = _convert_path(Path(source), fmts)
+        results = _convert_path(Path(source), fmts, force=force)
     if not results:
         logger.warning("No new files to process.")

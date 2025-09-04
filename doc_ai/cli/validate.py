@@ -44,6 +44,12 @@ def validate(
         envvar="VALIDATE_BASE_MODEL_URL",
         help="Model base URL override",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Re-run validation even if metadata is present",
+        is_flag=True,
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -86,5 +92,6 @@ def validate(
         base_model_url,
         show_progress=True,
         console=console_local,
+        force=force,
     )
 

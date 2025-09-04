@@ -63,3 +63,43 @@ def test_validate_doc_records_invalid(tmp_path):
     inputs = meta.extra["inputs"]["validation"]
     assert meta.extra["steps"]["validation"] is False
     assert inputs["verdict"]["match"] is False
+
+
+def test_validate_force_bypasses_metadata(tmp_path):
+    raw, rendered, prompt = _create_files(tmp_path)
+
+    def good_validate_file(raw_p, rendered_p, fmt, prompt_p, **kwargs):
+        return {"match": True}
+
+    validate_doc(
+        raw,
+        rendered,
+        fmt=OutputFormat.MARKDOWN,
+        prompt=prompt,
+        validate_file_func=good_validate_file,
+    )
+
+    calls: list[bool] = []
+
+    def tracker(*args, **kwargs):
+        calls.append(True)
+        return {"match": True}
+
+    validate_doc(
+        raw,
+        rendered,
+        fmt=OutputFormat.MARKDOWN,
+        prompt=prompt,
+        validate_file_func=tracker,
+    )
+    assert calls == []
+
+    validate_doc(
+        raw,
+        rendered,
+        fmt=OutputFormat.MARKDOWN,
+        prompt=prompt,
+        validate_file_func=tracker,
+        force=True,
+    )
+    assert calls == [True]

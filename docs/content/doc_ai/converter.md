@@ -22,6 +22,8 @@ has a convenience file suffix:
 | `json` | Raw JSON export of the Docling document | `.json` |
 | `text` | Plain text rendering | `.txt` |
 | `doctags` | Docling "doctags" markup | `.doctags` |
+| `csv` | CSV export of tabular data | `.csv` |
+| `summary_txt` | Plain text summary | `.summary.txt` |
 
 ## API
 

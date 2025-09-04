@@ -82,3 +82,30 @@ def test_analyze_doc_requires_json(tmp_path):
             analyze_doc(md, require_json=True)
     assert not (doc_dir / "apple-sec-form-4.pdf.analysis.txt").exists()
     assert not metadata_path(md).exists()
+
+
+def test_analyze_force_bypasses_metadata(tmp_path):
+    doc_dir = tmp_path / "sec-form-4"
+    doc_dir.mkdir()
+    prompt = doc_dir / "sec-form-4.analysis.prompt.yaml"
+    prompt.write_text(yaml.dump({"model": "test", "messages": []}))
+    raw = doc_dir / "apple-sec-form-4.pdf"
+    raw.write_text("raw")
+    md = doc_dir / "apple-sec-form-4.pdf.converted.md"
+    md.write_text("sample")
+    with patch("doc_ai.cli.run_prompt", return_value=("{}", 0.0)):
+        analyze_doc(md)
+
+    calls: list[bool] = []
+
+    def tracker(*args, **kwargs):
+        calls.append(True)
+        return "{}", 0.0
+
+    with patch("doc_ai.cli.run_prompt", side_effect=tracker):
+        analyze_doc(md)
+    assert calls == []
+
+    with patch("doc_ai.cli.run_prompt", side_effect=tracker):
+        analyze_doc(md, force=True)
+    assert calls == [True]

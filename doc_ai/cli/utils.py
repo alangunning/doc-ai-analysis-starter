@@ -32,6 +32,8 @@ EXTENSION_MAP = {
     ".json": OutputFormat.JSON,
     ".txt": OutputFormat.TEXT,
     ".doctags": OutputFormat.DOCTAGS,
+    ".csv": OutputFormat.CSV,
+    ".summary.txt": OutputFormat.SUMMARY_TXT,
 }
 
 
@@ -42,6 +44,8 @@ def suffix(fmt: OutputFormat) -> str:
 
 def infer_format(path: Path) -> OutputFormat:
     """Infer an output format from a file extension."""
+    if path.name.endswith(".summary.txt"):
+        return OutputFormat.SUMMARY_TXT
     try:
         return EXTENSION_MAP[path.suffix.lower()]
     except KeyError as exc:
@@ -88,6 +92,8 @@ def validate_doc(
     logger: logging.Logger | None = None,
     console: Console | None = None,
     validate_file_func: Callable | None = None,
+    *,
+    force: bool = False,
 ) -> None:
     """Validate a converted document against its raw source."""
     if validate_file_func is None:
@@ -95,7 +101,7 @@ def validate_doc(
 
     meta = load_metadata(raw)
     file_hash = compute_hash(raw)
-    if meta.blake2b == file_hash and is_step_done(meta, "validation"):
+    if not force and meta.blake2b == file_hash and is_step_done(meta, "validation"):
         return
     if meta.blake2b != file_hash:
         meta.blake2b = file_hash
@@ -164,6 +170,8 @@ def analyze_doc(
     show_cost: bool = False,
     estimate: bool = True,
     run_prompt_func: Callable | None = None,
+    *,
+    force: bool = False,
 ) -> None:
     """Run an analysis prompt on a markdown document and store results."""
     if run_prompt_func is None:
@@ -182,7 +190,7 @@ def analyze_doc(
             .get(step_name, {})
             .get("markdown_blake2b")
         )
-    if is_step_done(meta, step_name) and prev_hash == md_hash:
+    if not force and is_step_done(meta, step_name) and prev_hash == md_hash:
         return
 
     prompt_path = prompt

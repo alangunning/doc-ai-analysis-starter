@@ -87,6 +87,8 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ```bash
    doc-ai pipeline data/sec-form-8k/
    ```
+   Use `--workers N` to process files concurrently and `--force` to ignore
+   cached metadata when rerunning steps.
 
     Run ``doc-ai`` with no arguments to drop into an interactive shell with
     tab-completion for commands and options. The shell includes a ``cd``

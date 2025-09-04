@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Tuple
 from urllib.parse import urlparse
 from tempfile import TemporaryDirectory
+from rich.progress import Progress
 
 from docling.exceptions import ConversionError
 
@@ -65,6 +66,7 @@ def convert_path(
     formats: Iterable[OutputFormat],
     *,
     max_size: int | None = None,
+    force: bool = False,
 ) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
     """Convert a file or all files under a directory in-place.
 
@@ -102,7 +104,7 @@ def convert_path(
 
             meta = load_metadata(file)
             file_hash = compute_hash(file)
-            if meta.blake2b == file_hash and is_step_done(meta, "conversion"):
+            if not force and meta.blake2b == file_hash and is_step_done(meta, "conversion"):
                 return
             if meta.blake2b != file_hash:
                 meta.blake2b = file_hash
@@ -136,9 +138,16 @@ def convert_path(
         if src.is_file():
             handle_file(src, src_url)
         else:
-            for file in src.rglob("*"):
-                if file.is_file():
-                    handle_file(file)
+            files = [f for f in src.rglob("*") if f.is_file()]
+            if files:
+                with Progress(transient=True) as progress:
+                    task = progress.add_task(f"Converting {src}", total=len(files))
+                    for file in files:
+                        handle_file(file, src_url)
+                        progress.advance(task)
+            else:
+                for file in files:
+                    handle_file(file, src_url)
 
         return results
 
