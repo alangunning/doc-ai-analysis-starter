@@ -206,7 +206,9 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
 
     # Update prompt for interactive sessions
     if interactive_module.PROMPT_KWARGS is not None:
-        interactive_module.PROMPT_KWARGS["message"] = lambda: f"{Path.cwd().name}>"
+        interactive_module.PROMPT_KWARGS["message"] = (
+            lambda: f"{interactive_module._prompt_name()}>"
+        )
 
     # Ensure config submodule uses the new ENV_FILE if already imported
     try:  # pragma: no cover - defensive

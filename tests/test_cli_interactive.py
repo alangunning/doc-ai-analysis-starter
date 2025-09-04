@@ -5,7 +5,7 @@ from prompt_toolkit.history import FileHistory
 from typer.main import get_command
 
 from doc_ai.cli import app, interactive_shell
-from doc_ai.cli.interactive import DocAICompleter
+from doc_ai.cli.interactive import DocAICompleter, _prompt_name
 
 
 def test_interactive_shell_uses_click_repl(monkeypatch):
@@ -20,12 +20,7 @@ def test_interactive_shell_uses_click_repl(monkeypatch):
 
     pk = called["prompt_kwargs"]
     assert callable(pk["message"])
-    expected = (
-        "doc-ai>"
-        if Path.cwd().name == "doc-ai-analysis-starter"
-        else f"{Path.cwd().name}>"
-    )
-    assert pk["message"]() == expected
+    assert pk["message"]() == f"{_prompt_name()}>"
     assert isinstance(pk["history"], FileHistory)
     assert isinstance(pk["completer"], DocAICompleter)
     assert isinstance(called["ctx"], click.Context)
@@ -56,7 +51,7 @@ def test_prompt_updates_on_cd(tmp_path, monkeypatch):
         cmd.invoke(sub)
         ctx.default_map = sub.default_map
         ctx.obj = sub.obj
-        assert pk["message"]() == f"{first.name}>"
+        assert pk["message"]() == f"{_prompt_name()}>"
         assert pk["message"] is not original_callable
 
         second = first / "two"
@@ -65,7 +60,7 @@ def test_prompt_updates_on_cd(tmp_path, monkeypatch):
         cmd.invoke(sub)
         ctx.default_map = sub.default_map
         ctx.obj = sub.obj
-        assert pk["message"]() == f"{second.name}>"
+        assert pk["message"]() == f"{_prompt_name()}>"
     finally:
         os.chdir(start)
 
