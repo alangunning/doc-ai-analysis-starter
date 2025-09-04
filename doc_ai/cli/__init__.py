@@ -191,6 +191,26 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
         logger.error("[red]%s[/red]", exc)
         raise typer.Exit(code=1)
 
+    # Recompute .env location and refresh environment variables
+    global ENV_FILE
+    ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
+    load_dotenv(ENV_FILE, override=True)
+
+    # Reload configuration so subsequent commands see updated values
+    global_cfg, _env_vals, merged = read_configs()
+    if ctx.obj is None:
+        ctx.obj = {}
+    ctx.obj["global_config"] = global_cfg
+    ctx.obj["config"] = merged
+
+    # Ensure config submodule uses the new ENV_FILE if already imported
+    try:  # pragma: no cover - defensive
+        from . import config as config_module
+
+        config_module.ENV_FILE = ENV_FILE
+    except Exception:
+        pass
+
 
 @app.command("version")
 def _version_command() -> None:
