@@ -11,12 +11,13 @@ Start the REPL by running the `doc-ai` console script with no arguments:
 
 ```bash
 doc-ai
-doc-ai> help
+doc-ai-analysis-starter> help
 ```
 
-Under the hood the shell leverages ``click-repl`` to provide tab completion and
-persistent history across sessions, and it can be reused in other Typer-based
-projects.
+The prompt updates to reflect the current working directory and command
+history is stored in ``~/.doc-ai-history`` for future sessions. Under the hood
+the shell leverages ``click-repl`` to provide tab completion and can be reused
+in other Typer-based projects.
 
 ## Built-in commands
 
@@ -25,8 +26,8 @@ Use ``cd <path>`` to change the current working directory for subsequent
 commands:
 
 ```
-doc-ai> cd docs
-doc-ai/docs>
+doc-ai-analysis-starter> cd docs
+docs>
 ```
 
 The package ships a ``py.typed`` marker so these functions are fully typed when
