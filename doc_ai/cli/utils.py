@@ -143,13 +143,39 @@ def resolve_str(
     return value
 
 
+DEFAULT_ENV_VARS: dict[str, str | None] = {
+    "DOCS_SITE_URL": "https://alangunning.github.io",
+    "DOCS_BASE_URL": "/doc-ai-analysis-starter/docs/",
+    "GITHUB_ORG": "alangunning",
+    "GITHUB_REPO": "doc-ai-analysis-starter",
+    "PR_REVIEW_MODEL": "gpt-4.1",
+    "MODEL_PRICE_GPT_4O_INPUT": "0.005",
+    "MODEL_PRICE_GPT_4O_OUTPUT": "0.015",
+    "OUTPUT_FORMATS": "markdown,html,json,text,doctags",
+    "DISABLE_ALL_WORKFLOWS": "false",
+    "ENABLE_CONVERT_WORKFLOW": "true",
+    "ENABLE_VALIDATE_WORKFLOW": "true",
+    "ENABLE_VECTOR_WORKFLOW": "true",
+    "ENABLE_PROMPT_ANALYSIS_WORKFLOW": "true",
+    "ENABLE_PR_REVIEW_WORKFLOW": "true",
+    "ENABLE_DOCS_WORKFLOW": "true",
+    "ENABLE_LINT_WORKFLOW": "true",
+    "ENABLE_AUTO_MERGE_WORKFLOW": "false",
+}
+
+
 @functools.lru_cache()
 def load_env_defaults() -> dict[str, str | None]:
-    """Load default settings from the repository's .env.example file."""
+    """Load default settings from the repository's .env.example file.
+
+    If the example file is not present (e.g. when installed from a wheel),
+    return a built-in set of defaults so ``config show`` can still display
+    available configuration options.
+    """
     example_path = Path(__file__).resolve().parents[2] / ".env.example"
     if example_path.exists():
         return dotenv_values(example_path)  # type: ignore[return-value]
-    return {}
+    return dict(DEFAULT_ENV_VARS)
 
 
 def validate_doc(
