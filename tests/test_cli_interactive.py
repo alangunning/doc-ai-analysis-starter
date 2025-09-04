@@ -17,4 +17,5 @@ def test_interactive_shell_uses_click_repl(monkeypatch):
     assert called["prompt"] == {"message": "doc-ai> "}
     assert isinstance(called["ctx"], click.Context)
     assert called["ctx"].command.name == get_command(app).name
+    assert "cd" in called["ctx"].command.commands
 

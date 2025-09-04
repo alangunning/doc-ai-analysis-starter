@@ -134,6 +134,16 @@ def _exit_command() -> None:
     raise typer.Exit()
 
 
+@app.command()
+def cd(path: Path = typer.Argument(...)) -> None:
+    """Change the current working directory."""
+    try:
+        os.chdir(path)
+    except OSError as exc:  # pragma: no cover - just error display
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+
+
 def validate_file(*args, **kwargs):
     from doc_ai.github.validator import validate_file as _validate_file
 
