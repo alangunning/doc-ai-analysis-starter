@@ -20,7 +20,6 @@ if __package__ in (None, ""):
     sys.path[0] = str(Path(__file__).resolve().parent.parent)
 
 from doc_ai.converter import OutputFormat, convert_path
-from doc_ai.converter.path import SUPPORTED_SUFFIXES
 from .utils import (
     EXTENSION_MAP,
     analyze_doc,
@@ -44,7 +43,45 @@ app = typer.Typer(
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
 
 # File extensions considered raw inputs for the pipeline.
-RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
+RAW_SUFFIXES = {
+    ".pdf",
+    ".docx",
+    ".pptx",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".tif",
+    ".tiff",
+    ".bmp",
+    ".webp",
+    ".svg",
+}
+
+# Supported model names for CLI options.
+SUPPORTED_MODELS = {
+    "gpt-4.1",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "o3-mini",
+}
+
+
+def _validate_model(value: str | None) -> str | None:
+    if value is None:
+        return value
+    if value not in SUPPORTED_MODELS:
+        valid = ", ".join(sorted(SUPPORTED_MODELS))
+        raise typer.BadParameter(
+            f"Unknown model '{value}'. Choose from: {valid}"
+        )
+    return value
+
+
+def _validate_prompt(value: Path | None) -> Path | None:
+    if value is not None and not value.exists():
+        raise typer.BadParameter(f"Prompt file not found: {value}")
+    return value
 
 
 @app.callback()
@@ -171,9 +208,13 @@ def validate(
         None,
         "--prompt",
         help="Prompt file (overrides auto-detected *.validate.prompt.yaml)",
+        callback=_validate_prompt,
     ),
     model: Optional[str] = typer.Option(
-        None, "--model", help="Model name override"
+        None,
+        "--model",
+        help="Model name override",
+        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
@@ -233,6 +274,7 @@ def analyze(
         "--prompt",
         "-p",
         help="Prompt file (overrides auto-detected *.analysis.prompt.yaml)",
+        callback=_validate_prompt,
     ),
     output: Optional[Path] = typer.Option(
         None,
@@ -240,7 +282,10 @@ def analyze(
         help="Optional output file; defaults to <doc>.analysis.json",
     ),
     model: Optional[str] = typer.Option(
-        None, "--model", help="Model name override"
+        None,
+        "--model",
+        help="Model name override",
+        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
@@ -250,6 +295,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -278,6 +324,7 @@ def pipeline(
     prompt: Path = typer.Option(
         Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
         help="Analysis prompt file",
+        callback=_validate_prompt,
     ),
     format: list[OutputFormat] = typer.Option(
         None,
@@ -286,7 +333,10 @@ def pipeline(
         help="Desired output format(s) for conversion",
     ),
     model: Optional[str] = typer.Option(
-        None, "--model", help="Model name override"
+        None,
+        "--model",
+        help="Model name override",
+        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
