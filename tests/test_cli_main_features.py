@@ -78,6 +78,25 @@ def test_interactive_startup_with_banner_env(monkeypatch):
     assert recorded.get("shell") is True
 
 
+def test_interactive_disabled_via_config(monkeypatch, capsys):
+    monkeypatch.setenv("interactive", "false")
+    importlib.reload(cli_module)
+    monkeypatch.setattr(sys, "argv", ["cli.py"])
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    called = False
+
+    def fake_shell(app, init=None):
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(cli_module, "interactive_shell", fake_shell)
+    cli_module.main()
+    assert called is False
+    out = capsys.readouterr().out
+    assert "Usage:" in out
+
+
 def test_logging_configuration(monkeypatch):
     runner = CliRunner()
     recorded: dict[str, object] = {}

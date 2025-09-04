@@ -101,7 +101,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    `.github/prompts/`.
 
    Run ``doc-ai`` with no arguments to drop into an interactive shell with
-   tab-completion for commands and options.
+   tab-completion for commands and options. Use ``--no-interactive`` (or set
+   ``doc-ai config set interactive=false``) to show help and exit instead of
+   starting the REPL.
 
    #### cd command
 
