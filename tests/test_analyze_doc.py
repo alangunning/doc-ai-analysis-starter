@@ -18,7 +18,10 @@ def test_analyze_doc_strips_fences_and_updates_metadata(tmp_path):
     raw.write_text("raw")
     md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
-    with patch("doc_ai.cli.run_prompt", return_value="```json\n{\"foo\": 1}\n```"):
+    with patch(
+        "doc_ai.cli.run_prompt",
+        return_value=("```json\n{\"foo\": 1}\n```", 0.0),
+    ):
         analyze_doc(md)
     out_file = doc_dir / "apple-sec-form-4.pdf.analysis.json"
     assert out_file.exists()
@@ -38,7 +41,7 @@ def test_analyze_doc_reports_success(tmp_path, monkeypatch):
     raw.write_text("raw")
     md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
-    with patch("doc_ai.cli.run_prompt", return_value="{}"):
+    with patch("doc_ai.cli.run_prompt", return_value=("{}", 0.0)):
         buf = StringIO()
         monkeypatch.setattr(
             "doc_ai.cli.console", Console(file=buf, force_terminal=False, color_system=None)
@@ -59,7 +62,7 @@ def test_analyze_doc_saves_text_when_json_invalid(tmp_path):
     raw.write_text("raw")
     md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
-    with patch("doc_ai.cli.run_prompt", return_value="not json"):
+    with patch("doc_ai.cli.run_prompt", return_value=("not json", 0.0)):
         analyze_doc(md)
     out_file = doc_dir / "apple-sec-form-4.pdf.analysis.txt"
     assert out_file.exists()
@@ -78,7 +81,7 @@ def test_analyze_doc_requires_json(tmp_path):
     raw.write_text("raw")
     md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
-    with patch("doc_ai.cli.run_prompt", return_value="oops"):
+    with patch("doc_ai.cli.run_prompt", return_value=("oops", 0.0)):
         with pytest.raises(ValueError):
             analyze_doc(md, require_json=True)
     assert not (doc_dir / "apple-sec-form-4.pdf.analysis.txt").exists()

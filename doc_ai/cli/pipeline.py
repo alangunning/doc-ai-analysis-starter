@@ -17,6 +17,8 @@ def pipeline(
     model: Optional[ModelName] = None,
     base_model_url: Optional[str] = None,
     fail_fast: bool = True,
+    show_cost: bool = False,
+    estimate: bool = True,
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
@@ -59,7 +61,12 @@ def pipeline(
                     break
             try:
                 _analyze_doc(
-                    md_file, prompt=prompt, model=model, base_url=base_model_url
+                    md_file,
+                    prompt=prompt,
+                    model=model,
+                    base_url=base_model_url,
+                    show_cost=show_cost,
+                    estimate=estimate,
                 )
             except Exception as exc:  # pragma: no cover - error handling
                 failures.append(("analysis", md_file, exc))
@@ -106,5 +113,25 @@ def _entrypoint(
         "--fail-fast/--keep-going",
         help="Stop processing on first validation or analysis failure",
     ),
+    show_cost: bool = typer.Option(
+        False,
+        "--show-cost",
+        help="Display token cost estimates",
+        is_flag=True,
+    ),
+    estimate: bool = typer.Option(
+        True,
+        "--estimate/--no-estimate",
+        help="Print pre-run cost estimate",
+    ),
 ) -> None:
-    pipeline(source, prompt, format, model, base_model_url, fail_fast)
+    pipeline(
+        source,
+        prompt,
+        format,
+        model,
+        base_model_url,
+        fail_fast,
+        show_cost,
+        estimate,
+    )

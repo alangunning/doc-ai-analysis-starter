@@ -18,7 +18,7 @@ def test_run_prompt_uses_spec_and_input(tmp_path, monkeypatch):
     mock_client.responses.create.return_value = mock_response
 
     with patch("doc_ai.github.prompts.OpenAI", return_value=mock_client) as mock_openai:
-        output = run_prompt(prompt_file, "input")
+        output, _ = run_prompt(prompt_file, "input")
 
     assert output == "result"
     mock_openai.assert_called_once()
