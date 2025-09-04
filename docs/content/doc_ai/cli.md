@@ -47,6 +47,6 @@ After installation, the same commands are available via the `doc-ai` console scr
 
 ## Global configuration and logging
 
-The CLI looks for a global configuration file in the user config directory provided by `platformdirs` (for example `~/.config/doc_ai/config.json` on Linux). Use `doc-ai config --global set VAR=VALUE` to persist settings across projects. Command-line flags override environment variables, which in turn override `.env` entries and finally values in the global config file.
+The CLI looks for a global configuration file in the user config directory provided by `platformdirs` (for example `~/.config/doc_ai/config.json` on Linux). Use `doc-ai config --global set VAR=VALUE` to persist settings across projects. Command-line flags take precedence, followed by environment variables, entries in a project `.env` file and finally values from the global config. Built-in defaults apply only if a setting is absent from all other sources.
 
 Set `LOG_LEVEL` or `LOG_FILE` in any config source or pass `--log-level` / `--log-file` on the command line to tweak logging behavior.

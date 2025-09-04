@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Mapping, TypeVar
 import logging
 import os
 import re
@@ -14,6 +14,7 @@ import click
 import typer
 from rich.console import Console
 from dotenv import dotenv_values
+from click.core import ParameterSource
 
 from doc_ai.converter import OutputFormat, suffix_for_format
 from doc_ai.metadata import (
@@ -71,6 +72,75 @@ def parse_env_formats() -> list[OutputFormat] | None:
                 f"Invalid output format '{val}'. Choose from: {valid}"
             ) from exc
     return formats
+
+
+T = TypeVar("T")
+
+
+def parse_config_formats(cfg: Mapping[str, str]) -> list[OutputFormat] | None:
+    """Return formats from config mapping if set."""
+    env_val = cfg.get("OUTPUT_FORMATS")
+    if not env_val:
+        return None
+    formats: list[OutputFormat] = []
+    for val in env_val.split(","):
+        try:
+            formats.append(OutputFormat(val.strip()))
+        except ValueError as exc:
+            valid = ", ".join(f.value for f in OutputFormat)
+            raise typer.BadParameter(
+                f"Invalid output format '{val}'. Choose from: {valid}"
+            ) from exc
+    return formats
+
+
+TRUE_SET = {"1", "true", "yes"}
+
+
+def resolve_bool(
+    ctx: typer.Context,
+    name: str,
+    value: bool,
+    cfg: Mapping[str, str],
+    key: str,
+) -> bool:
+    """Return boolean from config if option not explicitly provided."""
+    if ctx.get_parameter_source(name) is ParameterSource.DEFAULT:
+        val = cfg.get(key)
+        if isinstance(val, str):
+            return val.lower() in TRUE_SET
+    return value
+
+
+def resolve_int(
+    ctx: typer.Context,
+    name: str,
+    value: int,
+    cfg: Mapping[str, str],
+    key: str,
+) -> int:
+    """Return integer from config if option not explicitly provided."""
+    if ctx.get_parameter_source(name) is ParameterSource.DEFAULT:
+        val = cfg.get(key)
+        if val is not None:
+            try:
+                return int(val)
+            except ValueError:
+                return value
+    return value
+
+
+def resolve_str(
+    ctx: typer.Context,
+    name: str,
+    value: T | None,
+    cfg: Mapping[str, str],
+    key: str,
+) -> T | None:
+    """Return string from config if option not explicitly provided."""
+    if ctx.get_parameter_source(name) is ParameterSource.DEFAULT:
+        return cfg.get(key, value)  # type: ignore[return-value]
+    return value
 
 
 @functools.lru_cache()

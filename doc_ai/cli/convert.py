@@ -7,7 +7,7 @@ import typer
 
 from doc_ai.converter import OutputFormat
 from doc_ai.logging import configure_logging
-from .utils import parse_env_formats as _parse_env_formats
+from .utils import parse_config_formats as _parse_config_formats, resolve_bool
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,9 @@ def convert(
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
     from . import convert_path as _convert_path
-    fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
+    cfg = ctx.obj.get("config", {})
+    force = resolve_bool(ctx, "force", force, cfg, "FORCE")
+    fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     if source.startswith(("http://", "https://")):
         results = _convert_path(source, fmts, force=force)
     else:
