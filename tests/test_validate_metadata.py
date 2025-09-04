@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+import click
 
 from doc_ai.cli.utils import validate_doc
 from doc_ai.converter import OutputFormat
@@ -48,7 +49,7 @@ def test_validate_doc_records_invalid(tmp_path):
     def bad_validate_file(raw_p, rendered_p, fmt, prompt_p, **kwargs):
         return {"match": False, "issues": ["x"]}
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(click.ClickException):
         validate_doc(
             raw,
             rendered,
