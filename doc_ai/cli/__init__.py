@@ -22,6 +22,7 @@ from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
 from doc_ai.logging import configure_logging
 from .interactive import interactive_shell, run_batch  # noqa: F401
+import doc_ai.cli.interactive as interactive_module
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
@@ -202,6 +203,10 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
         ctx.obj = {}
     ctx.obj["global_config"] = global_cfg
     ctx.obj["config"] = merged
+
+    # Update prompt for interactive sessions
+    if interactive_module.PROMPT_KWARGS is not None:
+        interactive_module.PROMPT_KWARGS["message"] = lambda: f"{Path.cwd().name}>"
 
     # Ensure config submodule uses the new ENV_FILE if already imported
     try:  # pragma: no cover - defensive

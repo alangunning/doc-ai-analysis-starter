@@ -31,7 +31,15 @@ SAFE_ENV_VARS = {
 }
 """Names of environment variables that may be exposed in the REPL."""
 
-__all__ = ["interactive_shell", "run_batch", "DocAICompleter", "SAFE_ENV_VARS"]
+PROMPT_KWARGS: dict[str, object] | None = None
+
+__all__ = [
+    "interactive_shell",
+    "run_batch",
+    "DocAICompleter",
+    "SAFE_ENV_VARS",
+    "PROMPT_KWARGS",
+]
 
 
 class DocAICompleter(Completer):
@@ -126,9 +134,10 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     if exists:
         history_path.chmod(0o600)
     history = FileHistory(history_path)
-    prompt_kwargs = {
+    global PROMPT_KWARGS
+    PROMPT_KWARGS = {
         "history": history,
-        "message": "doc-ai>",
+        "message": lambda: f"{Path.cwd().name}>",
         "completer": DocAICompleter(cmd, ctx),
     }
-    repl(ctx, prompt_kwargs=prompt_kwargs)
+    repl(ctx, prompt_kwargs=PROMPT_KWARGS)
