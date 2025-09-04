@@ -8,10 +8,14 @@ import typer
 from rich.console import Console
 
 from doc_ai.converter import OutputFormat
+from doc_ai.logging import configure_logging
 from .utils import infer_format as _infer_format, suffix as _suffix, validate_doc
 from . import ModelName, _validate_prompt
 
-app = typer.Typer(invoke_without_command=True, help="Validate converted output against the original file.")
+app = typer.Typer(
+    invoke_without_command=True,
+    help="Validate converted output against the original file.",
+)
 
 
 @app.callback()
@@ -35,35 +39,38 @@ def validate(
         help="Model name override",
     ),
     base_model_url: Optional[str] = typer.Option(
-        None, "--base-model-url",
+        None,
+        "--base-model-url",
         envvar="VALIDATE_BASE_MODEL_URL",
-        help="Model base URL override"
+        help="Model base URL override",
     ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
-    log_file: Optional[Path] = typer.Option(
-        None, "--log-file", help="Write request/response details to this file"
+    verbose: bool | None = typer.Option(
+        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
+    ),
+    log_level: str | None = typer.Option(
+        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
+    ),
+    log_file: Path | None = typer.Option(
+        None, "--log-file", help="Write logs to the given file"
     ),
 ) -> None:
-    """Validate converted output against the original file."""
-    logger: logging.Logger | None = None
-    log_path = log_file
+    """Validate converted output against the original file.
+
+    Examples:
+        doc-ai validate report.pdf --verbose
+        doc-ai --log-file validate.log validate report.pdf converted.md
+    """
+    if ctx.obj is None:
+        ctx.obj = {}
+    if any(opt is not None for opt in (verbose, log_level, log_file)):
+        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
+            logging.getLogger().level
+        )
+        configure_logging(level_name, log_file)
+        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
+        ctx.obj["log_level"] = level_name
+        ctx.obj["log_file"] = log_file
     console_local = Console()
-    if verbose or log_path is not None:
-        logger = logging.getLogger("doc_ai.validate")
-        logger.setLevel(logging.DEBUG)
-        if verbose:
-            from rich.logging import RichHandler
-
-            sh = RichHandler(console=console_local, show_time=False)
-            sh.setLevel(logging.DEBUG)
-            logger.addHandler(sh)
-        if log_path is None:
-            log_path = raw.with_suffix(".validate.log")
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(log_path)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-
     if rendered is None:
         used_fmt = fmt or OutputFormat.MARKDOWN
         rendered = raw.with_name(raw.name + _suffix(used_fmt))
@@ -78,6 +85,6 @@ def validate(
         model,
         base_model_url,
         show_progress=True,
-        logger=logger,
         console=console_local,
     )
+

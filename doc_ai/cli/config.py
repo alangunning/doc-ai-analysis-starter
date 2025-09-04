@@ -8,6 +8,7 @@ import typer
 from rich.table import Table
 from dotenv import set_key, dotenv_values
 
+from doc_ai.logging import configure_logging
 from .utils import load_env_defaults
 from . import ENV_FILE, save_global_config, read_configs, console
 
@@ -49,14 +50,37 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
 @app.callback()
 def config(
     ctx: typer.Context,
-    verbose: bool = typer.Option(None, "--verbose/--no-verbose"),
+    verbose: bool | None = typer.Option(
+        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
+    ),
+    log_level: str | None = typer.Option(
+        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
+    ),
+    log_file: Path | None = typer.Option(
+        None, "--log-file", help="Write logs to the given file"
+    ),
     pairs: list[str] = typer.Option(None, "--set", metavar="VAR=VALUE"),
     global_scope: bool = typer.Option(
         False, "--global", help="Modify global config instead of project .env"
     ),
 ) -> None:
-    """Configuration command group."""
-    if verbose is not None:
+    """Configuration command group.
+
+    Examples:
+        doc-ai config --log-level DEBUG show
+        doc-ai config show --log-file config.log
+    """
+    if ctx.obj is None:
+        ctx.obj = {}
+    if any(opt is not None for opt in (verbose, log_level, log_file)):
+        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
+            logging.getLogger().level
+        )
+        configure_logging(level_name, log_file)
+        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
+        ctx.obj["log_level"] = level_name
+        ctx.obj["log_file"] = log_file
+    elif verbose is not None:
         ctx.obj["verbose"] = verbose
     if pairs:
         _set_pairs(ctx, pairs, global_scope)
