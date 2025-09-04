@@ -29,7 +29,6 @@ EXTENSION_MAP = {
     ".json": OutputFormat.JSON,
     ".txt": OutputFormat.TEXT,
     ".doctags": OutputFormat.DOCTAGS,
-    ".dogtags": OutputFormat.DOCTAGS,
 }
 
 
