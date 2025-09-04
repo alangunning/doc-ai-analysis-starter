@@ -41,5 +41,5 @@ compare long documents without running into context limits. For cost‑sensitive
 jobs, specify a smaller model such as `gpt-4o-mini` or chunk the source document
 into smaller pieces and validate them individually.
 
-### `build_vector_store(src_dir)`
-Generate vector embeddings for Markdown files in a directory and write `.embedding.json` files alongside each source.
+### `build_vector_store(src_dir, workers=1)`
+Generate vector embeddings for Markdown files in a directory and write `.embedding.json` files alongside each source. Set ``workers`` to process files concurrently.

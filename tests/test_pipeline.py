@@ -79,6 +79,7 @@ def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
 def test_pipeline_workers_option(monkeypatch, tmp_path):
     src = _setup_docs(tmp_path)
     captured: dict[str, int] = {}
+    captured_build: dict[str, int] = {}
 
     class DummyExecutor:
         def __init__(self, max_workers):
@@ -103,10 +104,15 @@ def test_pipeline_workers_option(monkeypatch, tmp_path):
     monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: None)
     monkeypatch.setattr("doc_ai.cli.validate_doc", lambda *a, **k: None)
     monkeypatch.setattr("doc_ai.cli.analyze_doc", lambda *a, **k: None)
-    monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: None)
+
+    def dummy_build_vector_store(src, *, workers=1, **kwargs):
+        captured_build["workers"] = workers
+
+    monkeypatch.setattr("doc_ai.cli.build_vector_store", dummy_build_vector_store)
 
     run_pipeline(src, workers=3)
     assert captured['max_workers'] == 3
+    assert captured_build['workers'] == 3
 
 
 def test_pipeline_dry_run(monkeypatch, tmp_path, caplog):
