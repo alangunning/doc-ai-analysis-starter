@@ -111,13 +111,11 @@ Reload your shell after installing to enable tab completion for `doc-ai`.
 ## Programmatic Usage
 
 The package exposes a typed API and ships a `py.typed` marker for static type
-checkers.  You can query completions or launch the interactive shell from your
-own scripts:
+checkers. You can launch the interactive shell from your own scripts:
 
 ```python
-from doc_ai.cli import app, get_completions, interactive_shell
+from doc_ai.cli import app, interactive_shell
 
-get_completions(app, "co", "co")
 interactive_shell(app)
 ```
 

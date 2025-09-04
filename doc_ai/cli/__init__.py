@@ -14,7 +14,7 @@ from rich.console import Console
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
-from .interactive import get_completions, interactive_shell  # noqa: F401
+from .interactive import interactive_shell  # noqa: F401
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
@@ -177,7 +177,6 @@ __all__ = [
     "validate_file",
     "run_prompt",
     "interactive_shell",
-    "get_completions",
     "main",
     "pipeline",
 ]
@@ -200,13 +199,12 @@ def main() -> None:
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         app(prog_name="cli.py", args=["--help"])
         return
-    console.print(
-        "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
-    )
-    interactive_shell(
-        app,
-        console=console,
-        print_banner=_print_banner,
-        banner=SETTINGS["banner"],
-    )
+    if SETTINGS["banner"]:
+        _print_banner()
+        try:
+            app(prog_name="cli.py", args=["--help"])
+        except SystemExit:
+            pass
+    console.print("Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave.")
+    interactive_shell(app)
     console.print("Goodbye!")
