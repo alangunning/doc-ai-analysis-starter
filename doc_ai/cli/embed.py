@@ -18,6 +18,9 @@ def embed(
     fail_fast: bool = typer.Option(
         False, "--fail-fast", help="Abort immediately on the first HTTP error"
     ),
+    workers: int = typer.Option(
+        1, "--workers", "-w", help="Number of worker threads"
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -44,4 +47,4 @@ def embed(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
-    build_vector_store(source, fail_fast=fail_fast)
+    build_vector_store(source, fail_fast=fail_fast, workers=workers)

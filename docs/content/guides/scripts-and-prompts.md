@@ -126,9 +126,9 @@ sequenceDiagram
 Generate embeddings for Markdown files and write them next to each source:
 
 ```bash
-python scripts/build_vector_store.py data
+python scripts/build_vector_store.py data --workers 4
 ```
-Override the embedding model with `EMBED_MODEL`.
+Override the embedding model with `EMBED_MODEL` and use `--workers` to set the number of concurrent threads.
 
 ```mermaid
 sequenceDiagram
