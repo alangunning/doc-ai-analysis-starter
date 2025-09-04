@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import importlib
+from importlib.metadata import entry_points
 from enum import Enum
 from pathlib import Path
 
@@ -213,6 +214,8 @@ from . import convert as convert_cmd  # noqa: E402
 from . import embed as embed_cmd  # noqa: E402
 pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
 from . import validate as validate_cmd  # noqa: E402
+from . import query as query_cmd  # noqa: E402
+from . import init_workflows as init_workflows_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(convert_cmd.app, name="convert")
@@ -220,7 +223,26 @@ app.add_typer(validate_cmd.app, name="validate")
 app.add_typer(analyze_cmd.app, name="analyze")
 app.add_typer(embed_cmd.app, name="embed")
 app.add_typer(pipeline_cmd.app, name="pipeline")
+app.add_typer(query_cmd.app, name="query")
+app.add_typer(init_workflows_cmd.app, name="init-workflows")
 app.command("set")(config_cmd.set_defaults)
+
+
+def _register_plugins() -> None:
+    """Load Typer apps from ``doc_ai.plugins`` entry points."""
+    for ep in entry_points(group="doc_ai.plugins"):
+        try:
+            plugin_app = ep.load()
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Failed to load plugin %s: %s", ep.name, exc)
+            continue
+        if isinstance(plugin_app, typer.Typer):
+            app.add_typer(plugin_app, name=ep.name)
+        else:  # pragma: no cover - plugin contract
+            logger.error("Plugin %s did not return a Typer app", ep.name)
+
+
+_register_plugins()
 
 # Re-export pipeline callback for tests and external use.
 from .pipeline import pipeline  # noqa: E402
