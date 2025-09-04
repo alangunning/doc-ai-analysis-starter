@@ -3,8 +3,10 @@ from unittest.mock import patch
 import yaml
 import logging
 import pytest
+from typer.testing import CliRunner
 
 from doc_ai.cli import analyze_doc
+from doc_ai.cli.analyze import app as analyze_app
 from doc_ai.metadata import load_metadata, metadata_path
 
 
@@ -109,3 +111,22 @@ def test_analyze_force_bypasses_metadata(tmp_path):
     with patch("doc_ai.cli.run_prompt", side_effect=tracker):
         analyze_doc(md, force=True)
     assert calls == [True]
+
+
+def test_analyze_cli_handles_generic_error(monkeypatch):
+    runner = CliRunner()
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    messages: list[str] = []
+
+    def fake_error(msg, *args, **kwargs):
+        messages.append(msg % args)
+
+    monkeypatch.setattr("doc_ai.cli.analyze.analyze_doc", boom)
+    monkeypatch.setattr("doc_ai.cli.analyze.logger.error", fake_error)
+
+    result = runner.invoke(analyze_app, ["sample.pdf"])
+    assert result.exit_code == 1
+    assert any("boom" in m for m in messages)
