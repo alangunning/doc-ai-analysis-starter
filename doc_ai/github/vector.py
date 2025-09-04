@@ -35,14 +35,15 @@ def build_vector_store(src_dir: Path, *, fail_fast: bool = False) -> None:
             next file.
     """
 
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        raise RuntimeError("GITHUB_TOKEN not set")
     base_url = (
         os.getenv("VECTOR_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL
     )
+    api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base_url else "GITHUB_TOKEN"
+    token = os.getenv(api_key_var)
+    if not token:
+        raise RuntimeError(f"Missing required environment variable: {api_key_var}")
     client = OpenAI(api_key=token, base_url=base_url)
 
     for md_file in src_dir.rglob("*.md"):
