@@ -39,3 +39,23 @@ def test_completer_allows_whitelisted_env(monkeypatch):
     completions = list(comp.get_completions(Document("$"), None))
     texts = {c.text for c in completions}
     assert "$MY_API_KEY" in texts
+
+
+def test_completer_suggests_doc_types_and_topics(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data"
+    (data_dir / "invoice").mkdir(parents=True)
+    (data_dir / "invoice" / "analysis_sales.prompt.yaml").write_text("")
+    (data_dir / "report").mkdir()
+    (data_dir / "report" / "report.analysis.finance.prompt.yaml").write_text("")
+    monkeypatch.chdir(tmp_path)
+    cmd = get_command(app)
+    ctx = click.Context(cmd)
+    comp = DocAICompleter(cmd, ctx)
+
+    doc_completions = list(comp.get_completions(Document("pipeline "), None))
+    docs = {c.text for c in doc_completions}
+    assert {"invoice", "report"} <= docs
+
+    topic_completions = list(comp.get_completions(Document("analyze --topic "), None))
+    topics = {c.text for c in topic_completions}
+    assert {"sales", "finance"} <= topics

@@ -217,6 +217,9 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
         interactive_module.PROMPT_KWARGS["message"] = (
             lambda: f"{interactive_module._prompt_name()}>"
         )
+        comp = interactive_module.PROMPT_KWARGS.get("completer")
+        if comp is not None and hasattr(comp, "refresh"):
+            comp.refresh()
 
     # Ensure config submodule uses the new ENV_FILE if already imported
     try:  # pragma: no cover - defensive

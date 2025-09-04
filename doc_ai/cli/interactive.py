@@ -17,6 +17,7 @@ from click_repl.exceptions import CommandLineParserError
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import Completer, WordCompleter
+from prompt_toolkit.document import Document
 import typer
 from typer.main import get_command
 
@@ -44,7 +45,7 @@ __all__ = [
 
 
 class DocAICompleter(Completer):
-    """Completer that hides sensitive environment variables."""
+    """Completer that hides sensitive env vars and suggests doc types/topics."""
 
     def __init__(self, cli: click.BaseCommand, ctx: click.Context) -> None:
         self._click = ClickCompleter(cli, ctx)
@@ -64,12 +65,59 @@ class DocAICompleter(Completer):
             if name in allowed or not pattern.search(name)
         ]
         self._env = WordCompleter(env_words, ignore_case=True)
+        self._doc_types = WordCompleter([], ignore_case=True)
+        self._topics = WordCompleter([], ignore_case=True)
+        self.refresh()
+
+    def refresh(self) -> None:
+        """Refresh cached doc types and topics from the ``data`` directory."""
+
+        data_dir = Path("data")
+        doc_types = [p.name for p in data_dir.iterdir() if p.is_dir()] if data_dir.exists() else []
+        self._doc_types = WordCompleter(sorted(doc_types), ignore_case=True)
+        topics: set[str] = set()
+        for dtype in doc_types:
+            doc_dir = data_dir / dtype
+            for p in doc_dir.glob("analysis_*.prompt.yaml"):
+                m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
+                if m:
+                    topics.add(m.group(1))
+            prefix = f"{dtype}.analysis."
+            for p in doc_dir.glob(f"{dtype}.analysis.*.prompt.yaml"):
+                m = re.match(fr"{re.escape(dtype)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
+                if m:
+                    topics.add(m.group(1))
+        self._topics = WordCompleter(sorted(topics), ignore_case=True)
 
     def get_completions(self, document, complete_event=None):  # type: ignore[override]
-        if document.text_before_cursor.startswith("$"):
+        text = document.text_before_cursor
+        if text.startswith("$"):
             yield from self._env.get_completions(document, complete_event)
-        else:
-            yield from self._click.get_completions(document, complete_event)
+            return
+
+        parts = text.split()
+        if parts:
+            cmd = parts[0]
+            if cmd == "pipeline":
+                if len(parts) == 1 and text.endswith(" "):
+                    yield from self._doc_types.get_completions(Document(""), complete_event)
+                    return
+                if len(parts) == 2 and not parts[1].startswith("-"):
+                    yield from self._doc_types.get_completions(
+                        Document(parts[1]), complete_event
+                    )
+                    return
+            if "--topic" in parts or "-t" in parts:
+                if parts[-1] in {"--topic", "-t"}:
+                    yield from self._topics.get_completions(Document(""), complete_event)
+                    return
+                if len(parts) >= 2 and parts[-2] in {"--topic", "-t"}:
+                    yield from self._topics.get_completions(
+                        Document(parts[-1]), complete_event
+                    )
+                    return
+
+        yield from self._click.get_completions(document, complete_event)
 
 
 def _parse_command(command: str) -> list[str] | None:
