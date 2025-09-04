@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+import logging
 
 import typer
 
 from doc_ai.converter import OutputFormat
+from doc_ai.logging import configure_logging
 from .utils import analyze_doc, suffix as _suffix
 from . import ModelName, _validate_prompt
 
@@ -61,8 +63,32 @@ def analyze(
         "--fail-fast/--keep-going",
         help="Stop processing on first validation or analysis failure",
     ),
+    verbose: bool | None = typer.Option(
+        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
+    ),
+    log_level: str | None = typer.Option(
+        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
+    ),
+    log_file: Path | None = typer.Option(
+        None, "--log-file", help="Write logs to the given file"
+    ),
 ) -> None:
-    """Run an analysis prompt against a converted document."""
+    """Run an analysis prompt against a converted document.
+
+    Examples:
+        doc-ai analyze report.md --verbose
+        doc-ai --log-file run.log analyze report.md
+    """
+    if ctx.obj is None:
+        ctx.obj = {}
+    if any(opt is not None for opt in (verbose, log_level, log_file)):
+        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
+            logging.getLogger().level
+        )
+        configure_logging(level_name, log_file)
+        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
+        ctx.obj["log_level"] = level_name
+        ctx.obj["log_file"] = log_file
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN

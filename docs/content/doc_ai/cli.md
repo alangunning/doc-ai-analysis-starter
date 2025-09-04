@@ -19,7 +19,14 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
 - `pipeline` – convert, validate, analyze and embed supported raw documents in a directory; paths containing `.converted` are ignored
 By default, the `pipeline` command only processes files with extensions supported by Docling (e.g., `.pdf`) and skips any path containing `.converted` to avoid re-processing generated outputs.
 
-Pass `--model` and `--base-model-url` to relevant commands to override model selection. Global options `--log-level` and `--log-file` control logging output, and `--verbose` is a shortcut for `--log-level DEBUG`.
+Pass `--model` and `--base-model-url` to relevant commands to override model selection. Logging flags `--verbose`, `--log-level` and `--log-file` may be placed either before or after subcommands and all commands honour them. For example:
+
+```bash
+doc-ai --log-level INFO convert report.pdf
+doc-ai analyze report.md --log-file analysis.log
+```
+
+`--verbose` is a shortcut for `--log-level DEBUG`.
 
 `doc_ai/cli.py` provides an executable entry point so the interface can be invoked directly:
 
