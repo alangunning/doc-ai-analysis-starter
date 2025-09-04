@@ -29,6 +29,8 @@ from .utils import (
     validate_doc,
 )
 
+from doc_ai import __version__
+
 ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
 
 console = Console()
@@ -42,9 +44,15 @@ SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
 
 @app.callback()
 def _main_callback(
+    version: bool = typer.Option(
+        False, "--version", "-V", help="Show version and exit"
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
 ) -> None:
     """Global options."""
+    if version:
+        console.print(__version__)
+        raise typer.Exit()
     SETTINGS["verbose"] = verbose
 
 
