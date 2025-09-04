@@ -493,7 +493,7 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
         )
     )
 
-    monkeypatch.setenv("VALIDATE_MODEL", "env-model")
+    monkeypatch.setenv("VALIDATE_MODEL", "gpt-4o")
     monkeypatch.setenv("VALIDATE_BASE_MODEL_URL", "https://test.base")
 
     called: dict[str, str] = {}
@@ -503,19 +503,13 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
         called["base_url"] = base_url
         return {"match": True}
 
-    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
-    monkeypatch.setattr(sys, "argv", [
-        str(script_path),
-        str(raw),
-        str(rendered),
-        "--prompt",
-        str(prompt),
-    ])
+    monkeypatch.setattr(sys, "argv", [str(script_path), "--prompt", str(prompt), str(raw), str(rendered)])
 
     runpy.run_path(str(script_path), run_name="__main__")
 
-    assert called["model"] == "env-model"
+    assert called["model"] == "gpt-4o"
     assert called["base_url"] == "https://test.base"
 
 
@@ -537,7 +531,7 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
         )
     )
 
-    monkeypatch.setenv("VALIDATE_MODEL", "env-model")
+    monkeypatch.setenv("VALIDATE_MODEL", "gpt-4o")
     monkeypatch.setenv("VALIDATE_BASE_MODEL_URL", "https://env.base")
 
     called: dict[str, str] = {}
@@ -547,27 +541,13 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
         called["base_url"] = base_url
         return {"match": True}
 
-    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            str(script_path),
-            str(raw),
-            str(rendered),
-            "--prompt",
-            str(prompt),
-            "--model",
-            "cli-model",
-            "--base-model-url",
-            "https://cli.base",
-        ],
-    )
+    monkeypatch.setattr(sys, "argv", [str(script_path), "--prompt", str(prompt), "--model", "gpt-4o-mini", "--base-model-url", "https://cli.base", str(raw), str(rendered)])
 
     runpy.run_path(str(script_path), run_name="__main__")
 
-    assert called["model"] == "cli-model"
+    assert called["model"] == "gpt-4o-mini"
     assert called["base_url"] == "https://cli.base"
 
 
@@ -593,7 +573,7 @@ def test_validate_script_auto_prompt(monkeypatch, tmp_path):
         called["prompt"] = prompt_path
         return {"match": True}
 
-    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
     monkeypatch.setattr(sys, "argv", [str(script_path), str(raw), str(rendered)])
     runpy.run_path(str(script_path), run_name="__main__")
@@ -622,7 +602,7 @@ def test_validate_script_directory_prompt(monkeypatch, tmp_path):
         called["prompt"] = prompt_path
         return {"match": True}
 
-    monkeypatch.setattr("doc_ai.github.validate_file", fake_validate_file)
+    monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
     monkeypatch.setattr(sys, "argv", [str(script_path), str(raw), str(rendered)])
     runpy.run_path(str(script_path), run_name="__main__")

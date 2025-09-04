@@ -5,7 +5,7 @@ sidebar_position: 2
 
 # CLI Module
 
-The `doc_ai.cli` package provides a Typer-based command line interface for orchestrating the document workflow. It reads defaults from environment variables (and a local `.env` file) and exposes subcommands for each major step.
+The `doc_ai.cli` package provides a Typer-based command line interface for orchestrating the document workflow. It reads defaults from environment variables (and a local `.env` file) and exposes subcommands for each major step. Each command lives in its own module within `doc_ai.cli` and is registered with the top-level app.
 
 ## Commands
 

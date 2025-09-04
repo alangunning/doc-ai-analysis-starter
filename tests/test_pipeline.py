@@ -34,7 +34,7 @@ def test_pipeline_keep_going_reports_failures(monkeypatch, tmp_path):
     monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: None)
 
     runner = CliRunner()
-    result = runner.invoke(app, ["pipeline", str(src), "--keep-going"])
+    result = runner.invoke(app, ["pipeline", "--keep-going", str(src)])
 
     assert result.exit_code == 1
     assert "Validation failed" in result.stdout
@@ -65,7 +65,7 @@ def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
     monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: None)
 
     runner = CliRunner()
-    result = runner.invoke(app, ["pipeline", str(src), "--fail-fast"])
+    result = runner.invoke(app, ["pipeline", "--fail-fast", str(src)])
 
     assert result.exit_code == 1
     assert "Validation failed" in result.stdout
