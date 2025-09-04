@@ -103,15 +103,17 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    and `validate.prompt.yaml` based on the default templates under
    `.github/prompts/`.
 
-   Run ``doc-ai`` with no arguments to drop into an interactive shell with
-   tab-completion for commands and options. Use ``--no-interactive`` (or set
-   ``doc-ai config set interactive=false``) to show help and exit instead of
-   starting the REPL.
+Run ``doc-ai`` with no arguments to drop into an interactive shell with
+tab-completion for commands and options. Completions include document types
+under ``data/`` and analysis topics discovered from prompt files. Use
+``--no-interactive`` (or set ``doc-ai config set interactive=false``) to show
+help and exit instead of starting the REPL.
 
    #### cd command
 
-   The shell includes a ``cd`` helper to change directories without leaving the session.
-   It reloads any ``.env`` file and global configuration in the target directory:
+The shell includes a ``cd`` helper to change directories without leaving the session.
+It reloads any ``.env`` file and global configuration in the target directory and
+refreshes completion suggestions for document types and topics:
 
     ```
     doc-ai> cd docs

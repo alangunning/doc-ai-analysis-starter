@@ -15,7 +15,10 @@ TEMPLATE_VALIDATE = Path(".github/prompts/validate-output.validate.prompt.yaml")
 DATA_DIR = Path("data")
 
 
-@app.command("doc-type")
+@app.command(
+    "doc-type",
+    help="Create a new document type directory under data/ with template prompts.",
+)
 def doc_type(name: str) -> None:
     """Create a new document type directory populated with prompt templates."""
     if not TEMPLATE_ANALYSIS.exists() or not TEMPLATE_VALIDATE.exists():
