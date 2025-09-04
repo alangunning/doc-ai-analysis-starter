@@ -1,0 +1,30 @@
+name: AI Repo Review
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  repo-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Run AI Repo Review
+        uses: ./.github/actions/ai-repo-review
+        with:
+          prompt-file: .github/prompts/repo_review/prompt.yaml
+          output-file: ai-review.md
+      - name: Create Pull Request
+        uses: ./.github/actions/create-repo-review-pr
+        with:
+          commit-message: "chore: add AI repo review"
+          title: "AI Repo Review"
+          body: "Automated AI-generated repository review"
+          branch: ai/repo-review
+          token: ${{ secrets.GITHUB_TOKEN }}
