@@ -90,6 +90,19 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    Use `--workers N` to process files concurrently and `--force` to ignore
    cached metadata when rerunning steps.
 
+   Download and convert remote documents directly:
+
+   ```bash
+   doc-ai import --url https://example.com/report.pdf --doc-type sec-form-10q
+   doc-ai import --urls urls.txt --doc-type sec-form-10q
+   ```
+
+   Inside the interactive shell you can add a URL on the fly:
+
+   ```
+   doc-ai> add url https://example.com/report.pdf --doc-type sec-form-10q
+   ```
+
    Scaffold a new document type with template prompts:
 
    ```bash

@@ -256,6 +256,8 @@ from . import analyze as analyze_cmd  # noqa: E402
 from . import config as config_cmd  # noqa: E402
 from . import convert as convert_cmd  # noqa: E402
 from . import embed as embed_cmd  # noqa: E402
+from . import import_cmd  # noqa: E402
+from . import add as add_cmd  # noqa: E402
 pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
 from . import validate as validate_cmd  # noqa: E402
 from . import query as query_cmd  # noqa: E402
@@ -264,6 +266,8 @@ from . import new_doc_type as new_doc_type_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(convert_cmd.app, name="convert")
+app.add_typer(import_cmd.app, name="import")
+app.add_typer(add_cmd.app, name="add")
 app.add_typer(validate_cmd.app, name="validate")
 app.add_typer(analyze_cmd.app, name="analyze")
 app.add_typer(embed_cmd.app, name="embed")
