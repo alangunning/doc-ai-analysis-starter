@@ -28,6 +28,7 @@ def pipeline(
     estimate: bool = True,
     workers: int = 1,
     force: bool = False,
+    dry_run: bool = False,
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
@@ -60,6 +61,12 @@ def pipeline(
 
     def process(raw_file: Path) -> None:
         local_failures: list[tuple[str, Path, Exception]] = []
+        if dry_run:
+            logger.info("Would convert %s to %s", raw_file, ", ".join(f.value for f in fmts))
+            md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
+            logger.info("Would validate %s", md_file)
+            logger.info("Would analyze %s", md_file)
+            return
         try:
             _convert_path(raw_file, fmts, force=force)
         except Exception as exc:  # pragma: no cover - error handling
@@ -128,7 +135,10 @@ def pipeline(
                 for fut in as_completed(futures):
                     fut.result()
                     progress.advance(task)
-    _build_vector_store(source)
+    if dry_run:
+        logger.info("Would build vector store for %s", source)
+    else:
+        _build_vector_store(source)
     if failures:
         logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
         for step, path, exc in failures:
@@ -190,6 +200,12 @@ def _entrypoint(
         help="Re-run steps even if metadata indicates completion",
         is_flag=True,
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Log steps without executing conversion, validation, or analysis",
+        is_flag=True,
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -227,4 +243,5 @@ def _entrypoint(
         estimate,
         workers,
         force,
+        dry_run,
     )

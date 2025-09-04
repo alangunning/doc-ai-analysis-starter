@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 
 from typer.testing import CliRunner
 
@@ -106,3 +107,20 @@ def test_pipeline_workers_option(monkeypatch, tmp_path):
 
     run_pipeline(src, workers=3)
     assert captured['max_workers'] == 3
+
+
+def test_pipeline_dry_run(monkeypatch, tmp_path, caplog):
+    src = _setup_docs(tmp_path)
+    calls: list[str] = []
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: calls.append("convert"))
+    monkeypatch.setattr("doc_ai.cli.validate_doc", lambda *a, **k: calls.append("validate"))
+    monkeypatch.setattr("doc_ai.cli.analyze_doc", lambda *a, **k: calls.append("analyze"))
+    monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: calls.append("build"))
+
+    with caplog.at_level(logging.INFO):
+        run_pipeline(src, dry_run=True)
+
+    assert calls == []
+    assert "Would convert" in caplog.text
+    assert "Would build vector store" in caplog.text
