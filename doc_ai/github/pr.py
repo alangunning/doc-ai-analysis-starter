@@ -5,6 +5,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import questionary
+
 from .prompts import run_prompt
 
 
@@ -22,8 +24,17 @@ def review_pr(
     return output
 
 
-def merge_pr(pr_number: int) -> None:
+def merge_pr(pr_number: int, *, yes: bool = False, dry_run: bool = False) -> None:
     """Merge pull request ``pr_number`` using the GitHub CLI."""
+
+    if not yes:
+        confirm = questionary.confirm(
+            f"Merge PR #{pr_number}?", default=False
+        ).ask()
+        if not confirm:
+            raise RuntimeError("Merge aborted by user")
+    if dry_run:
+        return
     try:
         subprocess.run(["gh", "pr", "merge", str(pr_number), "--merge"], check=True)
     except FileNotFoundError as exc:
