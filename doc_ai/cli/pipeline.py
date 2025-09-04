@@ -3,8 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 
 import typer
+from rich.progress import Progress
 
 from doc_ai.converter import OutputFormat
 from doc_ai.logging import configure_logging
@@ -23,6 +26,8 @@ def pipeline(
     fail_fast: bool = True,
     show_cost: bool = False,
     estimate: bool = True,
+    workers: int = 1,
+    force: bool = False,
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
@@ -33,20 +38,35 @@ def pipeline(
     )
 
     fmts = format or _parse_env_formats() or [OutputFormat.MARKDOWN]
-    _convert_path(source, fmts)
     validation_prompt = Path(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
     failures: list[tuple[str, Path, Exception]] = []
-    candidates = (
+    lock = Lock()
+
+    class PipelineError(Exception):
+        def __init__(self, step: str, path: Path, exc: Exception) -> None:
+            super().__init__(str(exc))
+            self.step = step
+            self.path = path
+            self.exc = exc
+
+    raw_files = [
         f
         for ext in RAW_SUFFIXES
         for f in source.rglob(f"*{ext}")
-        if not any(".converted" in part for part in f.parts)
-    )
-    for raw_file in candidates:
-        if not raw_file.is_file():
-            continue
+        if f.is_file() and not any(".converted" in part for part in f.parts)
+    ]
+
+    def process(raw_file: Path) -> None:
+        local_failures: list[tuple[str, Path, Exception]] = []
+        try:
+            _convert_path(raw_file, fmts, force=force)
+        except Exception as exc:  # pragma: no cover - error handling
+            local_failures.append(("conversion", raw_file, exc))
+            logger.error(
+                "[red]Conversion failed for %s: %s[/red]", raw_file, exc
+            )
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists():
             try:
@@ -57,34 +77,57 @@ def pipeline(
                     validation_prompt,
                     model,
                     base_model_url,
+                    force=force,
                 )
             except Exception as exc:  # pragma: no cover - error handling
-                failures.append(("validation", raw_file, exc))
+                local_failures.append(("validation", raw_file, exc))
                 logger.error(
-                    "[red]Validation failed for %s: %s[/red]",
-                    raw_file,
-                    exc,
+                    "[red]Validation failed for %s: %s[/red]", raw_file, exc
                 )
-                if fail_fast:
-                    break
-            try:
-                _analyze_doc(
-                    md_file,
-                    prompt=prompt,
-                    model=model,
-                    base_url=base_model_url,
-                    show_cost=show_cost,
-                    estimate=estimate,
-                )
-            except Exception as exc:  # pragma: no cover - error handling
-                failures.append(("analysis", md_file, exc))
-                logger.error(
-                    "[red]Analysis failed for %s: %s[/red]",
-                    md_file,
-                    exc,
-                )
-                if fail_fast:
-                    break
+            if not (fail_fast and local_failures):
+                try:
+                    _analyze_doc(
+                        md_file,
+                        prompt=prompt,
+                        model=model,
+                        base_url=base_model_url,
+                        show_cost=show_cost,
+                        estimate=estimate,
+                        force=force,
+                    )
+                except Exception as exc:  # pragma: no cover - error handling
+                    local_failures.append(("analysis", md_file, exc))
+                    logger.error(
+                        "[red]Analysis failed for %s: %s[/red]", md_file, exc
+                    )
+        if local_failures:
+            if fail_fast:
+                step, path, exc = local_failures[0]
+                raise PipelineError(step, path, exc) from exc
+            with lock:
+                failures.extend(local_failures)
+
+    with Progress(transient=True) as progress:
+        task = progress.add_task("Processing documents", total=len(raw_files))
+        if fail_fast:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                for raw_file in raw_files:
+                    fut = executor.submit(process, raw_file)
+                    try:
+                        fut.result()
+                    except PipelineError as pe:  # pragma: no cover - error handling
+                        failures.append((pe.step, pe.path, pe.exc))
+                        break
+                    finally:
+                        progress.advance(task)
+                    if failures:
+                        break
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {executor.submit(process, f): f for f in raw_files}
+                for fut in as_completed(futures):
+                    fut.result()
+                    progress.advance(task)
     _build_vector_store(source)
     if failures:
         logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
@@ -135,6 +178,18 @@ def _entrypoint(
         "--estimate/--no-estimate",
         help="Print pre-run cost estimate",
     ),
+    workers: int = typer.Option(
+        1,
+        "--workers",
+        "-w",
+        help="Number of worker threads",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Re-run steps even if metadata indicates completion",
+        is_flag=True,
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -170,4 +225,6 @@ def _entrypoint(
         fail_fast,
         show_cost,
         estimate,
+        workers,
+        force,
     )

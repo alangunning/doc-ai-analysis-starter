@@ -58,6 +58,12 @@ def analyze(
         "--estimate/--no-estimate",
         help="Print pre-run cost estimate",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Re-run analysis even if metadata is present",
+        is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -102,4 +108,5 @@ def analyze(
         require_json,
         show_cost,
         estimate,
+        force=force,
     )

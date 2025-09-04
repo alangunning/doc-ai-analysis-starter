@@ -105,6 +105,8 @@ class OutputFormat(str, Enum):
     JSON = "json"
     TEXT = "text"
     DOCTAGS = "doctags"
+    CSV = "csv"
+    SUMMARY_TXT = "summary_txt"
 
 
 # Map output formats to the method on the Docling ``DoclingDocument``
@@ -116,6 +118,8 @@ _METHOD_MAP: Dict[OutputFormat, str] = {
     OutputFormat.HTML: "export_to_html",
     OutputFormat.TEXT: "export_to_text",
     OutputFormat.DOCTAGS: "export_to_doctags",
+    OutputFormat.CSV: "export_to_csv",
+    OutputFormat.SUMMARY_TXT: "export_to_summary_txt",
 }
 
 # File extension for each format so callers can write outputs with a
@@ -126,6 +130,8 @@ _SUFFIX_MAP: Dict[OutputFormat, str] = {
     OutputFormat.JSON: ".json",
     OutputFormat.TEXT: ".txt",
     OutputFormat.DOCTAGS: ".doctags",
+    OutputFormat.CSV: ".csv",
+    OutputFormat.SUMMARY_TXT: ".summary.txt",
 }
 
 

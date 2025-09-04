@@ -3,7 +3,7 @@ from doc_ai.cli import app
 
 
 def test_convert_cli_reports_when_no_files(monkeypatch, tmp_path):
-    def fake_convert_path(source, fmts):
+    def fake_convert_path(source, fmts, **kwargs):
         return {}
     monkeypatch.setattr("doc_ai.cli.convert_path", fake_convert_path)
     runner = CliRunner()
