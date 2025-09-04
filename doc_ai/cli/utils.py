@@ -114,9 +114,8 @@ def validate_doc(
         elif dir_prompt.exists():
             prompt_path = dir_prompt
         else:
-            prompt_path = Path(
-                ".github/prompts/validate-output.validate.prompt.yaml"
-            )
+            repo_root = Path(__file__).resolve().parents[2]
+            prompt_path = repo_root / ".github/prompts/validate-output.validate.prompt.yaml"
     verdict = validate_file_func(
         raw,
         rendered,
@@ -192,9 +191,8 @@ def analyze_doc(
         elif dir_prompt.exists():
             prompt_path = dir_prompt
         else:
-            prompt_path = Path(
-                ".github/prompts/doc-analysis.analysis.prompt.yaml"
-            )
+            repo_root = Path(__file__).resolve().parents[2]
+            prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
 
     result = run_prompt_func(
         prompt_path,
