@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+from enum import Enum
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
@@ -17,6 +18,15 @@ from . import RAW_SUFFIXES, ModelName, _validate_prompt
 logger = logging.getLogger(__name__)
 
 
+class PipelineStep(str, Enum):
+    """Named steps within the document pipeline."""
+
+    CONVERT = "convert"
+    VALIDATE = "validate"
+    ANALYZE = "analyze"
+    EMBED = "embed"
+
+
 def pipeline(
     source: Path,
     prompt: Path = Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
@@ -29,6 +39,8 @@ def pipeline(
     workers: int = 1,
     force: bool = False,
     dry_run: bool = False,
+    resume_from: PipelineStep = PipelineStep.CONVERT,
+    skip: list[PipelineStep] | None = None,
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
@@ -44,6 +56,17 @@ def pipeline(
     )
     failures: list[tuple[str, Path, Exception]] = []
     lock = Lock()
+    skip_set = set(skip or [])
+    order = [
+        PipelineStep.CONVERT,
+        PipelineStep.VALIDATE,
+        PipelineStep.ANALYZE,
+        PipelineStep.EMBED,
+    ]
+    resume_idx = order.index(resume_from)
+
+    def should_run(step: PipelineStep) -> bool:
+        return order.index(step) >= resume_idx and step not in skip_set
 
     class PipelineError(Exception):
         def __init__(self, step: str, path: Path, exc: Exception) -> None:
@@ -62,20 +85,28 @@ def pipeline(
     def process(raw_file: Path) -> None:
         local_failures: list[tuple[str, Path, Exception]] = []
         if dry_run:
-            logger.info("Would convert %s to %s", raw_file, ", ".join(f.value for f in fmts))
-            md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
-            logger.info("Would validate %s", md_file)
-            logger.info("Would analyze %s", md_file)
-            return
-        try:
-            _convert_path(raw_file, fmts, force=force)
-        except Exception as exc:  # pragma: no cover - error handling
-            local_failures.append(("conversion", raw_file, exc))
-            logger.error(
-                "[red]Conversion failed for %s: %s[/red]", raw_file, exc
+            if should_run(PipelineStep.CONVERT):
+                logger.info(
+                    "Would convert %s to %s", raw_file, ", ".join(f.value for f in fmts)
+                )
+            md_file = raw_file.with_name(
+                raw_file.name + _suffix(OutputFormat.MARKDOWN)
             )
+            if should_run(PipelineStep.VALIDATE):
+                logger.info("Would validate %s", md_file)
+            if should_run(PipelineStep.ANALYZE):
+                logger.info("Would analyze %s", md_file)
+            return
+        if should_run(PipelineStep.CONVERT):
+            try:
+                _convert_path(raw_file, fmts, force=force)
+            except Exception as exc:  # pragma: no cover - error handling
+                local_failures.append(("conversion", raw_file, exc))
+                logger.error(
+                    "[red]Conversion failed for %s: %s[/red]", raw_file, exc
+                )
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
-        if md_file.exists():
+        if md_file.exists() and should_run(PipelineStep.VALIDATE):
             try:
                 _validate_doc(
                     raw_file,
@@ -91,22 +122,26 @@ def pipeline(
                 logger.error(
                     "[red]Validation failed for %s: %s[/red]", raw_file, exc
                 )
-            if not (fail_fast and local_failures):
-                try:
-                    _analyze_doc(
-                        md_file,
-                        prompt=prompt,
-                        model=model,
-                        base_url=base_model_url,
-                        show_cost=show_cost,
-                        estimate=estimate,
-                        force=force,
-                    )
-                except Exception as exc:  # pragma: no cover - error handling
-                    local_failures.append(("analysis", md_file, exc))
-                    logger.error(
-                        "[red]Analysis failed for %s: %s[/red]", md_file, exc
-                    )
+        if (
+            md_file.exists()
+            and should_run(PipelineStep.ANALYZE)
+            and not (fail_fast and local_failures)
+        ):
+            try:
+                _analyze_doc(
+                    md_file,
+                    prompt=prompt,
+                    model=model,
+                    base_url=base_model_url,
+                    show_cost=show_cost,
+                    estimate=estimate,
+                    force=force,
+                )
+            except Exception as exc:  # pragma: no cover - error handling
+                local_failures.append(("analysis", md_file, exc))
+                logger.error(
+                    "[red]Analysis failed for %s: %s[/red]", md_file, exc
+                )
         if local_failures:
             if fail_fast:
                 step, path, exc = local_failures[0]
@@ -135,10 +170,13 @@ def pipeline(
                 for fut in as_completed(futures):
                     fut.result()
                     progress.advance(task)
-    if dry_run:
-        logger.info("Would build vector store for %s", source)
-    else:
-        _build_vector_store(source, workers=workers)
+
+    if should_run(PipelineStep.EMBED):
+        if dry_run:
+            logger.info("Would build vector store for %s", source)
+        else:
+            _build_vector_store(source, workers=workers)
+                    
     if failures:
         logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
         for step, path, exc in failures:
@@ -206,6 +244,18 @@ def _entrypoint(
         help="Log steps without executing conversion, validation, or analysis",
         is_flag=True,
     ),
+    resume_from: PipelineStep = typer.Option(
+        PipelineStep.CONVERT,
+        "--resume-from",
+        help="Resume processing from a given step (convert, validate, analyze, embed)",
+        case_sensitive=False,
+    ),
+    skip: list[PipelineStep] = typer.Option(
+        None,
+        "--skip",
+        help="Skip one or more steps (convert, validate, analyze, embed)",
+        case_sensitive=False,
+    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -240,8 +290,10 @@ def _entrypoint(
         base_model_url,
         fail_fast,
         show_cost,
-        estimate,
-        workers,
-        force,
-        dry_run,
+       estimate,
+       workers,
+       force,
+       dry_run,
+        resume_from,
+        skip,
     )

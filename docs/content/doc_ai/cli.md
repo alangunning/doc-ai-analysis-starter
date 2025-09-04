@@ -17,6 +17,10 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
 - `analyze` – execute an analysis prompt against a Markdown document
 - `embed` – generate vector embeddings for Markdown files
 - `pipeline` – convert, validate, analyze and embed supported raw documents in a directory; paths containing `.converted` are ignored
+
+  Use `--workers N` to process documents concurrently. Control which steps run with
+  `--resume-from` or `--skip`.
+
   Use `--workers N` to process documents concurrently.
 - `version` – show the installed package version
 
