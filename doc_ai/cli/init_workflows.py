@@ -4,6 +4,8 @@ import shutil
 from pathlib import Path
 import typer
 
+from .utils import resolve_bool, resolve_str
+
 app = typer.Typer(invoke_without_command=True, help="Copy GitHub Actions workflow templates into a project.")
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[2] / ".github" / "workflows"
@@ -11,6 +13,7 @@ TEMPLATE_DIR = Path(__file__).resolve().parents[2] / ".github" / "workflows"
 
 @app.callback()
 def init_workflows(
+    ctx: typer.Context,
     dest: Path = typer.Option(
         Path(".github/workflows"), "--dest", help="Target directory for workflows"
     ),
@@ -33,6 +36,11 @@ def init_workflows(
     if not files:
         typer.echo("No workflow templates found", err=True)
         raise typer.Exit(1)
+    cfg = ctx.obj.get("config", {})
+    dest = Path(resolve_str(ctx, "dest", str(dest), cfg, "DEST"))
+    overwrite = resolve_bool(ctx, "overwrite", overwrite, cfg, "OVERWRITE")
+    dry_run = resolve_bool(ctx, "dry_run", dry_run, cfg, "DRY_RUN")
+    yes = resolve_bool(ctx, "yes", yes, cfg, "YES")
     dest.mkdir(parents=True, exist_ok=True)
     for src in files:
         target = dest / src.name

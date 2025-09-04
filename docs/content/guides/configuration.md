@@ -50,3 +50,44 @@ You can also override the model used for each module. The `.env.example` file li
 ## Logging
 
 Set `LOG_LEVEL` or `LOG_FILE` in any configuration source to control logging. The CLI accepts matching `--log-level` and `--log-file` options to override these values for a single run, and `--verbose` acts as a shortcut for `--log-level DEBUG`.
+
+## CLI Option Environment Variables
+
+Many command options can also be configured through environment variables or entries in `.env` and the global config file. The table below lists the mapping between CLI flags and their corresponding variables:
+
+| Command | Option | Environment variable |
+| --- | --- | --- |
+| `doc-ai analyze` | `--model` | `MODEL` |
+| `doc-ai analyze` | `--base-model-url` | `BASE_MODEL_URL` |
+| `doc-ai analyze` | `--require-structured` | `REQUIRE_STRUCTURED` |
+| `doc-ai analyze` | `--show-cost` | `SHOW_COST` |
+| `doc-ai analyze` | `--estimate` | `ESTIMATE` |
+| `doc-ai analyze` | `--force` | `FORCE` |
+| `doc-ai analyze` | `--fail-fast` | `FAIL_FAST` |
+| `doc-ai convert` | `--format` | `OUTPUT_FORMATS` |
+| `doc-ai convert` | `--force` | `FORCE` |
+| `doc-ai embed` | `--fail-fast` | `FAIL_FAST` |
+| `doc-ai embed` | `--workers` | `WORKERS` |
+| `doc-ai init-workflows` | `--dest` | `DEST` |
+| `doc-ai init-workflows` | `--overwrite` | `OVERWRITE` |
+| `doc-ai init-workflows` | `--dry-run` | `DRY_RUN` |
+| `doc-ai init-workflows` | `--yes` | `YES` |
+| `doc-ai pipeline` | `--format` | `OUTPUT_FORMATS` |
+| `doc-ai pipeline` | `--model` | `MODEL` |
+| `doc-ai pipeline` | `--base-model-url` | `BASE_MODEL_URL` |
+| `doc-ai pipeline` | `--fail-fast` | `FAIL_FAST` |
+| `doc-ai pipeline` | `--show-cost` | `SHOW_COST` |
+| `doc-ai pipeline` | `--estimate` | `ESTIMATE` |
+| `doc-ai pipeline` | `--workers` | `WORKERS` |
+| `doc-ai pipeline` | `--force` | `FORCE` |
+| `doc-ai pipeline` | `--dry-run` | `DRY_RUN` |
+| `doc-ai pipeline` | `--resume-from` | `RESUME_FROM` |
+| `doc-ai query` | `--ask` | `ASK` |
+| `doc-ai query` | `--model` | `MODEL` |
+| `doc-ai validate` | `--model` | `VALIDATE_MODEL` |
+| `doc-ai validate` | `--base-model-url` | `VALIDATE_BASE_MODEL_URL` |
+| `doc-ai validate` | `--force` | `FORCE` |
+| Global | `--log-level` | `LOG_LEVEL` |
+| Global | `--log-file` | `LOG_FILE` |
+| Global | `--verbose` | `VERBOSE` |
+| Global | `--banner/--quiet` | `DOC_AI_BANNER` |
