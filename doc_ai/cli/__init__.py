@@ -10,16 +10,18 @@ from importlib.metadata import entry_points
 from enum import Enum
 from pathlib import Path
 
+import click
 import typer
 from dotenv import find_dotenv, load_dotenv, dotenv_values
 from platformdirs import PlatformDirs
 from rich.console import Console
 import yaml
+from typer.main import get_command
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
 from doc_ai.logging import configure_logging
-from .interactive import interactive_shell  # noqa: F401
+from .interactive import interactive_shell, run_batch  # noqa: F401
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
@@ -273,6 +275,19 @@ def main() -> None:
     """Entry point for running the CLI as a script."""
     load_dotenv(ENV_FILE)
     args = sys.argv[1:]
+    run_path: Path | None = None
+    for i, arg in enumerate(list(args)):
+        if arg == "--run":
+            if i + 1 >= len(args):
+                logger.error("[red]--run requires a path[/red]")
+                raise SystemExit(1)
+            run_path = Path(args[i + 1])
+            del args[i : i + 2]
+            break
+        if arg.startswith("--run="):
+            run_path = Path(arg.split("=", 1)[1])
+            del args[i]
+            break
     init_path: Path | None = None
     for flag in ("--init", "--batch"):
         for i, arg in enumerate(list(args)):
@@ -289,9 +304,18 @@ def main() -> None:
                 break
         if init_path is not None:
             break
-    if init_path is not None and not init_path.exists():
-        logger.error("[red]Batch file not found: %s[/red]", init_path)
-        raise SystemExit(1)
+    for path in (run_path, init_path):
+        if path is not None and not path.exists():
+            logger.error("[red]Batch file not found: %s[/red]", path)
+            raise SystemExit(1)
+    if run_path is not None:
+        cmd = get_command(app)
+        ctx = click.Context(cmd)
+        try:
+            run_batch(ctx, run_path)
+        except typer.Exit as exc:
+            raise SystemExit(exc.exit_code)
+        return
     if args:
         try:
             app(prog_name="cli.py", args=args)
