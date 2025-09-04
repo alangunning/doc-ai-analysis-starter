@@ -9,7 +9,7 @@ from rich.console import Console
 
 from doc_ai.converter import OutputFormat
 from .utils import infer_format as _infer_format, suffix as _suffix, validate_doc
-from . import _validate_prompt, _validate_model
+from . import ModelName, _validate_prompt
 
 app = typer.Typer(invoke_without_command=True, help="Validate converted output against the original file.")
 
@@ -27,12 +27,11 @@ def validate(
         help="Prompt file (overrides auto-detected *.validate.prompt.yaml)",
         callback=_validate_prompt,
     ),
-    model: Optional[str] = typer.Option(
+    model: Optional[ModelName] = typer.Option(
         None,
         "--model",
         envvar="VALIDATE_MODEL",
         help="Model name override",
-        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url",

@@ -6,8 +6,8 @@ import os
 import sys
 import traceback
 import importlib
+from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import typer
 from dotenv import find_dotenv, load_dotenv
@@ -15,9 +15,9 @@ from rich.console import Console
 from typer.completion import Shells, completion_init, get_completion_script
 
 from doc_ai import __version__
-from doc_ai.converter import OutputFormat, convert_path
-from .interactive import get_completions, interactive_shell
-from .utils import (
+from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
+from .interactive import get_completions, interactive_shell  # noqa: F401
+from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
     infer_format as _infer_format,
@@ -58,24 +58,13 @@ RAW_SUFFIXES = {
     ".svg",
 }
 
-# Supported model names for CLI options.
-SUPPORTED_MODELS = {
-    "gpt-4.1",
-    "gpt-4o",
-    "gpt-4o-mini",
-    "o3-mini",
-}
+class ModelName(str, Enum):
+    """Supported model names for CLI options."""
 
-
-def _validate_model(value: str | None) -> str | None:
-    if value is None:
-        return value
-    if value not in SUPPORTED_MODELS:
-        valid = ", ".join(sorted(SUPPORTED_MODELS))
-        raise typer.BadParameter(
-            f"Unknown model '{value}'. Choose from: {valid}"
-        )
-    return value
+    GPT_4_1 = "gpt-4.1"
+    GPT_4O = "gpt-4o"
+    GPT_4O_MINI = "gpt-4o-mini"
+    O3_MINI = "o3-mini"
 
 
 def _validate_prompt(value: Path | None) -> Path | None:
@@ -166,12 +155,12 @@ def completion(shell: Shells):
 
 
 # Register subcommands implemented in dedicated modules.
-from . import analyze as analyze_cmd
-from . import config as config_cmd
-from . import convert as convert_cmd
-from . import embed as embed_cmd
-pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")
-from . import validate as validate_cmd
+from . import analyze as analyze_cmd  # noqa: E402
+from . import config as config_cmd  # noqa: E402
+from . import convert as convert_cmd  # noqa: E402
+from . import embed as embed_cmd  # noqa: E402
+pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
+from . import validate as validate_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(convert_cmd.app, name="convert")
@@ -181,7 +170,7 @@ app.add_typer(embed_cmd.app, name="embed")
 app.add_typer(pipeline_cmd.app, name="pipeline")
 
 # Re-export pipeline callback for tests and external use.
-from .pipeline import pipeline
+from .pipeline import pipeline  # noqa: E402
 
 __all__ = [
     "app",

@@ -15,7 +15,7 @@ def test_pipeline_invalid_model(tmp_path):
     runner = CliRunner()
     result = runner.invoke(app, ["pipeline", str(tmp_path), "--model", "bogus-model"])
     assert result.exit_code != 0
-    assert "Unknown model" in result.output
+    assert "Invalid value for '--model'" in result.output
 
 
 def test_validate_invalid_prompt(tmp_path):
@@ -44,4 +44,4 @@ def test_validate_invalid_model(tmp_path):
         ["validate", str(raw), str(rendered), "--model", "bogus-model"],
     )
     assert result.exit_code != 0
-    assert "Unknown model" in result.output
+    assert "Invalid value for '--model'" in result.output
