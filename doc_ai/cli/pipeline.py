@@ -301,6 +301,11 @@ def _entrypoint(
     workers = resolve_int(ctx, "workers", workers, cfg, "WORKERS")
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     dry_run = resolve_bool(ctx, "dry_run", dry_run, cfg, "DRY_RUN")
+    resume_from_val = resolve_str(ctx, "resume_from", resume_from.value, cfg, "RESUME_FROM")
+    try:
+        resume_from = PipelineStep(resume_from_val)
+    except ValueError as exc:
+        raise typer.BadParameter(f"Invalid resume step '{resume_from_val}'") from exc
     pipeline(
         source,
         prompt,

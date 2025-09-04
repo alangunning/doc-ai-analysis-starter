@@ -7,6 +7,7 @@ import typer
 
 from doc_ai.logging import configure_logging
 from . import build_vector_store
+from .utils import resolve_bool, resolve_int
 
 app = typer.Typer(invoke_without_command=True, help="Generate embeddings for Markdown files.")
 
@@ -47,4 +48,7 @@ def embed(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
+    cfg = ctx.obj.get("config", {})
+    fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
+    workers = resolve_int(ctx, "workers", workers, cfg, "WORKERS")
     build_vector_store(source, fail_fast=fail_fast, workers=workers)

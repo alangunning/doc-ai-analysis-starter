@@ -14,6 +14,7 @@ from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
 from doc_ai.logging import configure_logging
 from doc_ai.openai import create_response
 from . import ModelName
+from .utils import resolve_bool, resolve_str
 
 app = typer.Typer(invoke_without_command=True, help="Query a vector store for similar documents.")
 
@@ -69,6 +70,14 @@ def query(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
+
+    cfg = ctx.obj.get("config", {})
+    ask = resolve_bool(ctx, "ask", ask, cfg, "ASK")
+    model_name = resolve_str(ctx, "model", model.value, cfg, "MODEL")
+    try:
+        model = ModelName(model_name)
+    except ValueError as exc:
+        raise typer.BadParameter(f"Invalid model '{model_name}'") from exc
 
     base_url = (
         os.getenv("VECTOR_BASE_MODEL_URL")

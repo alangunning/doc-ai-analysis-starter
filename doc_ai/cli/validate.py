@@ -9,7 +9,13 @@ from rich.console import Console
 
 from doc_ai.converter import OutputFormat
 from doc_ai.logging import configure_logging
-from .utils import infer_format as _infer_format, suffix as _suffix, validate_doc
+from .utils import (
+    infer_format as _infer_format,
+    suffix as _suffix,
+    validate_doc,
+    resolve_bool,
+    resolve_str,
+)
 from . import ModelName, _validate_prompt
 
 app = typer.Typer(
@@ -35,13 +41,11 @@ def validate(
     model: Optional[ModelName] = typer.Option(
         None,
         "--model",
-        envvar="VALIDATE_MODEL",
         help="Model name override",
     ),
     base_model_url: Optional[str] = typer.Option(
         None,
         "--base-model-url",
-        envvar="VALIDATE_BASE_MODEL_URL",
         help="Model base URL override",
     ),
     force: bool = typer.Option(
@@ -76,6 +80,15 @@ def validate(
         ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
+
+    cfg = ctx.obj.get("config", {})
+    model_name = resolve_str(ctx, "model", model.value if model else None, cfg, "VALIDATE_MODEL")
+    model = ModelName(model_name) if model_name is not None else None
+    base_model_url = resolve_str(
+        ctx, "base_model_url", base_model_url, cfg, "VALIDATE_BASE_MODEL_URL"
+    )
+    force = resolve_bool(ctx, "force", force, cfg, "FORCE")
+
     console_local = Console()
     if rendered is None:
         used_fmt = fmt or OutputFormat.MARKDOWN
