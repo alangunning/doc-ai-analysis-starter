@@ -250,10 +250,6 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
-    fail_fast: bool = typer.Option(
-        True,
-        "--fail-fast/--keep-going",
-        help="Stop processing on first validation or analysis failure",
     ),
 ) -> None:
     """Run an analysis prompt against a converted document."""
@@ -291,10 +287,10 @@ def pipeline(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
-    fail_fast: bool = typer.Option(
-        True,
-        "--fail-fast/--keep-going",
-        help="Stop processing on first validation or analysis failure",
+    keep_going: bool = typer.Option(
+        False,
+        "--keep-going",
+        help="Log failures and continue processing remaining files",
     ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
@@ -304,13 +300,14 @@ def pipeline(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
     failures: list[tuple[str, Path, Exception]] = []
-    for raw_file in source.rglob("*"):
-        if (
-            not raw_file.is_file()
-            or raw_file.suffix.lower() not in RAW_SUFFIXES
-            or any(".converted" in part for part in raw_file.parts)
-        ):
-            continue
+    raw_files = (
+        p
+        for p in source.rglob("*")
+        if p.is_file()
+        and p.suffix.lower() in RAW_SUFFIXES
+        and not any(".converted" in part for part in p.parts)
+    )
+    for raw_file in raw_files:
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists():
             try:
@@ -327,7 +324,7 @@ def pipeline(
                 console.print(
                     f"[red]Validation failed for {raw_file}: {exc}[/red]"
                 )
-                if fail_fast:
+                if not keep_going:
                     break
             try:
                 analyze_doc(
@@ -338,7 +335,7 @@ def pipeline(
                 console.print(
                     f"[red]Analysis failed for {md_file}: {exc}[/red]"
                 )
-                if fail_fast:
+                if not keep_going:
                     break
     build_vector_store(source)
     if failures:
