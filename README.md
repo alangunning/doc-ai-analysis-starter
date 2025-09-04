@@ -92,6 +92,23 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
    reused in other Typer-based projects.
 
+### Shell Completion
+
+Generate and install completion scripts for your preferred shell:
+
+```bash
+# Bash
+doc-ai completion bash > /etc/bash_completion.d/doc-ai
+
+# Zsh
+doc-ai completion zsh > "${ZDOTDIR:-$HOME}/.zsh/completions/_doc-ai"
+
+# Fish
+doc-ai completion fish > ~/.config/fish/completions/doc-ai.fish
+```
+
+Reload your shell after installing to enable tab completion for `doc-ai`.
+
 ## Programmatic Usage
 
 The package exposes a typed API and ships a `py.typed` marker for static type
