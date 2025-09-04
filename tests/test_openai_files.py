@@ -2,11 +2,14 @@ import io
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
+
 from doc_ai.openai import (
     upload_file,
     input_file_from_url,
     input_file_from_path,
     input_file_from_bytes,
+    files,
 )
 
 
@@ -154,3 +157,9 @@ def test_upload_file_env_force_upload(monkeypatch, tmp_path):
         purpose="assistants", filename="file.bin", bytes=4, mime_type="application/octet-stream"
     )
     mock_client.files.create.assert_not_called()
+
+
+def test_open_file_missing_raises(tmp_path):
+    missing = tmp_path / "nope.txt"
+    with pytest.raises(ValueError, match=f"File not found: {missing}"):
+        files._open_file(missing)

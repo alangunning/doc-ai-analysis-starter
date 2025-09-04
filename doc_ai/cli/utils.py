@@ -6,6 +6,7 @@ from typing import Callable
 import logging
 import os
 import re
+import functools
 from datetime import datetime, timezone
 
 import typer
@@ -65,6 +66,7 @@ def parse_env_formats() -> list[OutputFormat] | None:
     return formats
 
 
+@functools.lru_cache()
 def load_env_defaults() -> dict[str, str | None]:
     """Load default settings from the repository's .env.example file."""
     example_path = Path(__file__).resolve().parents[2] / ".env.example"
