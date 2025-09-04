@@ -6,6 +6,7 @@ import logging
 
 import typer
 from rich.table import Table
+from rich.panel import Panel
 from dotenv import set_key, dotenv_values
 
 from doc_ai.logging import configure_logging
@@ -129,3 +130,22 @@ def set_value(
 ) -> None:
     """Update environment configuration."""
     _set_pairs(ctx, pairs, global_scope)
+
+
+def set_defaults(
+    ctx: typer.Context, pairs: list[str] = typer.Argument(..., metavar="VAR=VALUE")
+) -> None:
+    """Update runtime default options for the current session."""
+    root = ctx.find_root()
+    if root.default_map is None:
+        root.default_map = {}
+    for item in pairs:
+        try:
+            key, value = item.split("=", 1)
+        except ValueError as exc:  # pragma: no cover - handled by typer
+            raise typer.BadParameter("Use VAR=VALUE syntax") from exc
+        root.default_map[key] = value
+    table = Table("Option", "Value")
+    for key, value in sorted(root.default_map.items()):
+        table.add_row(key, str(value))
+    console.print(Panel(table, title="Runtime defaults"))
