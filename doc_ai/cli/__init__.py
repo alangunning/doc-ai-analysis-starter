@@ -10,6 +10,7 @@ import warnings
 import logging
 
 import typer
+from typer.completion import completion_init, get_completion_script, Shells
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
@@ -115,6 +116,18 @@ def run_prompt(*args, **kwargs):
     from doc_ai.github.prompts import run_prompt as _run_prompt
 
     return _run_prompt(*args, **kwargs)
+
+
+@app.command()
+def completion(shell: Shells):
+    """Generate shell completion script."""
+    completion_init()
+    prog_name = "doc-ai"
+    complete_var = f"_{prog_name.replace('-', '_').upper()}_COMPLETE"
+    script = get_completion_script(
+        prog_name=prog_name, complete_var=complete_var, shell=shell.value
+    )
+    typer.echo(script)
 
 
 @app.command()
