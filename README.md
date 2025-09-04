@@ -90,9 +90,19 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    Use `--workers N` to process files concurrently and `--force` to ignore
    cached metadata when rerunning steps.
 
-    Run ``doc-ai`` with no arguments to drop into an interactive shell with
-    tab-completion for commands and options. The shell includes a ``cd``
-    helper to change directories without leaving the session:
+   Scaffold a new document type with template prompts:
+
+   ```bash
+   doc-ai new doc-type invoice
+   ```
+
+   This creates `data/invoice/` with `invoice.analysis.prompt.yaml`
+   and `validate.prompt.yaml` based on the default templates under
+   `.github/prompts/`.
+
+   Run ``doc-ai`` with no arguments to drop into an interactive shell with
+   tab-completion for commands and options. The shell includes a ``cd``
+   helper to change directories without leaving the session:
 
     ```
     doc-ai> cd docs
