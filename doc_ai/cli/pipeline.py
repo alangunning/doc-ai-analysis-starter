@@ -34,12 +34,14 @@ def pipeline(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
     failures: list[tuple[str, Path, Exception]] = []
-    for raw_file in source.rglob("*"):
-        if (
-            not raw_file.is_file()
-            or raw_file.suffix.lower() not in RAW_SUFFIXES
-            or any(".converted" in part for part in raw_file.parts)
-        ):
+    candidates = (
+        f
+        for ext in RAW_SUFFIXES
+        for f in source.rglob(f"*{ext}")
+        if not any(".converted" in part for part in f.parts)
+    )
+    for raw_file in candidates:
+        if not raw_file.is_file():
             continue
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists():
