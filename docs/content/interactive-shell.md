@@ -2,28 +2,29 @@
 title: Interactive Shell
 ---
 
-The `doc_ai.cli.interactive` module exposes a small set of **typed, reusable APIs**
-for adding an interactive prompt to any [Typer](https://typer.tiangolo.com/) application.
+Doc AI Starter exposes an interactive shell powered by
+[click-repl](https://github.com/click-contrib/click-repl). Launch it by running
+the `doc-ai` command without arguments:
 
-## Running a shell
-
-```python
-from doc_ai import cli
-
-# Launch the project's own CLI in interactive mode
-cli.interactive_shell(cli.app)
+```bash
+$ doc-ai
+doc-ai> help
+...
+doc-ai> exit
 ```
 
-The shell provides readline based tab-completion, remembers command history
-across sessions, and is safe to reuse in other Typer based projects.
+The shell provides readline tab-completion, remembers command history across
+sessions, and respects the global `--log-level` and `--log-file` options:
 
-## Programmatic completions
+```bash
+$ doc-ai --log-level debug --log-file run.log
+doc-ai>
+```
 
-Completions can also be queried directly for custom tooling:
+For custom tooling, completions can be queried directly:
 
 ```python
-from doc_ai.cli import app
-from doc_ai.cli import get_completions
+from doc_ai.cli import app, get_completions
 
 get_completions(app, "co", "co")
 # ['convert']

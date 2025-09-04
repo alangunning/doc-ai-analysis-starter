@@ -87,22 +87,27 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai pipeline data/sec-form-8k/
    ```
 
-   Run the CLI without arguments to enter an interactive shell with
-   tab-completion for commands and options. The shell helper is provided in
-   ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
-   reused in other Typer-based projects.
+   Run ``doc-ai`` with no arguments to enter an interactive shell powered by
+   ``click-repl``:
+
+   ```bash
+   $ doc-ai
+   doc-ai> convert data/sec-form-8k/apple-sec-8-k.pdf --format markdown
+   doc-ai> exit
+   ```
+
+   Global flags such as ``--log-level`` and ``--log-file`` can be supplied when
+   launching the shell.
 
 ## Programmatic Usage
 
 The package exposes a typed API and ships a `py.typed` marker for static type
-checkers.  You can query completions or launch the interactive shell from your
-own scripts:
+checkers.  You can query completions from your own scripts:
 
 ```python
-from doc_ai.cli import app, get_completions, interactive_shell
+from doc_ai.cli import app, get_completions
 
 get_completions(app, "co", "co")
-interactive_shell(app)
 ```
 
 ## Directory Overview
