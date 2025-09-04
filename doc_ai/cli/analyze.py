@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 import logging
 
 import typer
@@ -42,6 +42,12 @@ def analyze(
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
+    ),
+    topic: List[str] = typer.Option(
+        None,
+        "--topic",
+        "-t",
+        help="Analysis topic (can be repeated)",
     ),
     require_json: bool = typer.Option(
         False,
@@ -104,17 +110,20 @@ def analyze(
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
     try:
-        analyze_doc(
-            markdown_doc,
-            prompt,
-            output,
-            model,
-            base_model_url,
-            require_json,
-            show_cost,
-            estimate,
-            force=force,
-        )
+        topics = list(topic) if topic else [None]
+        for tp in topics:
+            analyze_doc(
+                markdown_doc,
+                prompt,
+                output,
+                model,
+                base_model_url,
+                require_json,
+                show_cost,
+                estimate,
+                topic=tp,
+                force=force,
+            )
     except Exception as exc:
         logger.error("[red]%s[/red]", exc)
         raise typer.Exit(1) from exc

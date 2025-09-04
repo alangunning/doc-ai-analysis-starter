@@ -113,6 +113,38 @@ def test_analyze_force_bypasses_metadata(tmp_path):
     assert calls == [True]
 
 
+def test_analyze_doc_multiple_topics_and_skip(tmp_path):
+    doc_dir = tmp_path / "sample"
+    doc_dir.mkdir()
+    prompt_a = doc_dir / "analysis_alpha.prompt.yaml"
+    prompt_b = doc_dir / "analysis_beta.prompt.yaml"
+    content = yaml.dump({"model": "test", "messages": []})
+    prompt_a.write_text(content)
+    prompt_b.write_text(content)
+    raw = doc_dir / "doc.pdf"
+    raw.write_text("raw")
+    md = doc_dir / "doc.pdf.converted.md"
+    md.write_text("sample")
+    with patch("doc_ai.cli.run_prompt", return_value=("{}", 0.0)):
+        analyze_doc(md, topic="alpha")
+        analyze_doc(md, topic="beta")
+    out_a = doc_dir / "doc.pdf.analysis.alpha.json"
+    out_b = doc_dir / "doc.pdf.analysis.beta.json"
+    assert out_a.exists() and out_b.exists()
+    meta = load_metadata(raw)
+    assert meta.extra["outputs"]["analysis:alpha"] == [out_a.name]
+    assert meta.extra["outputs"]["analysis:beta"] == [out_b.name]
+    calls: list[bool] = []
+
+    def tracker(*args, **kwargs):
+        calls.append(True)
+        return "{}", 0.0
+
+    with patch("doc_ai.cli.run_prompt", side_effect=tracker):
+        analyze_doc(md, topic="alpha")
+    assert calls == []
+
+
 def test_analyze_cli_handles_generic_error(monkeypatch):
     runner = CliRunner()
 
@@ -130,3 +162,23 @@ def test_analyze_cli_handles_generic_error(monkeypatch):
     result = runner.invoke(analyze_app, ["sample.pdf"])
     assert result.exit_code == 1
     assert any("boom" in m for m in messages)
+
+
+def test_analyze_cli_runs_topics(monkeypatch, tmp_path):
+    src = tmp_path / "doc.pdf"
+    src.write_text("raw")
+    md = tmp_path / "doc.pdf.converted.md"
+    md.write_text("sample")
+    calls: list[str | None] = []
+
+    def fake_analyze_doc(path, *args, topic=None, **kwargs):
+        calls.append(topic)
+
+    monkeypatch.setattr("doc_ai.cli.analyze.analyze_doc", fake_analyze_doc)
+    runner = CliRunner()
+    result = runner.invoke(
+        analyze_app,
+        ["--topic", "alpha", "--topic", "beta", str(src)],
+    )
+    assert result.exit_code == 0
+    assert calls == ["alpha", "beta"]
