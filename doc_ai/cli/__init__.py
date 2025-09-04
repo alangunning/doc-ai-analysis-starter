@@ -190,6 +190,13 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
         raise typer.Exit(code=1)
 
 
+@app.command("version")
+def _version_command() -> None:
+    """Show the installed ``doc-ai`` version."""
+    typer.echo(__version__)
+    raise typer.Exit()
+
+
 def validate_file(*args, **kwargs):
     from doc_ai.github.validator import validate_file as _validate_file
 
