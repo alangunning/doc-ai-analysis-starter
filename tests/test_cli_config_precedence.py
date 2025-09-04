@@ -216,3 +216,81 @@ def test_env_overrides_init_workflows_dest(monkeypatch):
         assert Path("wf").exists()
         assert not Path(".github/workflows").exists()
         assert copied["called"] is False
+
+
+def test_global_config_used_without_env(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        monkeypatch.delenv("FAIL_FAST", raising=False)
+        src = Path("docs")
+        src.mkdir()
+        global_cfg = Path("config.json")
+        global_cfg.write_text(json.dumps({"FAIL_FAST": True}))
+        cli = importlib.reload(importlib.import_module("doc_ai.cli"))
+        monkeypatch.setattr(cli, "GLOBAL_CONFIG_PATH", global_cfg)
+        embed_mod = importlib.reload(importlib.import_module("doc_ai.cli.embed"))
+
+        called = {}
+
+        def fake_build_vector_store(source, fail_fast=False, workers=1):
+            called["fail_fast"] = fail_fast
+
+        monkeypatch.setattr(embed_mod, "build_vector_store", fake_build_vector_store)
+        result = runner.invoke(cli.app, ["embed", "docs"])
+        assert result.exit_code == 0
+        assert called["fail_fast"] is True
+
+
+def test_project_env_overrides_global_config(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        monkeypatch.delenv("FAIL_FAST", raising=False)
+        src = Path("docs")
+        src.mkdir()
+        global_cfg = Path("config.json")
+        global_cfg.write_text(json.dumps({"FAIL_FAST": True}))
+        cli = importlib.reload(importlib.import_module("doc_ai.cli"))
+        monkeypatch.setattr(cli, "GLOBAL_CONFIG_PATH", global_cfg)
+        Path(".env").write_text("FAIL_FAST=false\n")
+        embed_mod = importlib.reload(importlib.import_module("doc_ai.cli.embed"))
+
+        called = {}
+
+        def fake_build_vector_store(source, fail_fast=False, workers=1):
+            called["fail_fast"] = fail_fast
+
+        monkeypatch.setattr(embed_mod, "build_vector_store", fake_build_vector_store)
+        result = runner.invoke(cli.app, ["embed", "docs"])
+        assert result.exit_code == 0
+        assert called["fail_fast"] is False
+
+
+def test_config_set_parses_bool_and_validates(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        monkeypatch.delenv("FAIL_FAST", raising=False)
+        config_mod = importlib.reload(importlib.import_module("doc_ai.cli.config"))
+        saved = {}
+        monkeypatch.setattr(config_mod, "save_global_config", lambda c: saved.update(c))
+        monkeypatch.setattr(config_mod, "read_configs", lambda: ({}, {}, {}))
+        result = runner.invoke(config_mod.app, ["set", "--global", "FAIL_FAST=true"])
+        assert result.exit_code == 0
+        assert saved["FAIL_FAST"] is True
+        result = runner.invoke(config_mod.app, ["set", "--global", "UNKNOWN=true"])
+        assert result.exit_code != 0
+
+
+def test_config_toggle(monkeypatch):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        monkeypatch.delenv("FAIL_FAST", raising=False)
+        config_mod = importlib.reload(importlib.import_module("doc_ai.cli.config"))
+        saved = {}
+        monkeypatch.setattr(config_mod, "save_global_config", lambda c: saved.update(c))
+        monkeypatch.setattr(config_mod, "read_configs", lambda: ({}, {}, {}))
+        result = runner.invoke(config_mod.app, ["toggle", "--global", "FAIL_FAST"])
+        assert result.exit_code == 0
+        assert saved["FAIL_FAST"] is True
+        result = runner.invoke(config_mod.app, ["toggle", "--global", "FAIL_FAST"])
+        assert result.exit_code == 0
+        assert saved["FAIL_FAST"] is False

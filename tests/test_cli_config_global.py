@@ -1,5 +1,6 @@
 import json
 import re
+import json
 import importlib
 from pathlib import Path
 
@@ -21,25 +22,26 @@ def test_global_config_precedence(monkeypatch):
         cli = importlib.reload(importlib.import_module("doc_ai.cli"))
         monkeypatch.setattr(cli, "ENV_FILE", ".env")
 
-        result = runner.invoke(cli.app, ["config", "set", "--global", "FOO=global", "BOTH=global_g"])
+        result = runner.invoke(cli.app, ["config", "set", "--global", "MODEL=global", "FAIL_FAST=true"])
         assert result.exit_code == 0
         from platformdirs import PlatformDirs
         cfg_file = Path(PlatformDirs("doc_ai").user_config_dir) / "config.json"
         data = json.loads(cfg_file.read_text())
-        assert data["FOO"] == "global"
+        assert data["MODEL"] == "global"
+        assert data["FAIL_FAST"] is True
 
-        result = runner.invoke(cli.app, ["config", "set", "FOO=local", "BOTH=local_l"])
+        result = runner.invoke(cli.app, ["config", "set", "MODEL=local", "FAIL_FAST=false"])
         assert result.exit_code == 0
-        assert "FOO=local" in Path(".env").read_text()
+        assert "MODEL=local" in Path(".env").read_text()
 
-        monkeypatch.setenv("FOO", "env")
+        monkeypatch.setenv("MODEL", "env")
         result = runner.invoke(cli.app, ["config", "show"])
         assert result.exit_code == 0
-        foo = _parse_line(result.stdout, "FOO")
+        foo = _parse_line(result.stdout, "MODEL")
         assert foo[1] == "env"
         assert foo[2] == "local"
         assert foo[3] == "global"
-        both = _parse_line(result.stdout, "BOTH")
-        assert both[1] == "local_l"
-        assert both[2] == "local_l"
-        assert both[3] == "global_g"
+        both = _parse_line(result.stdout, "FAIL_FAST")
+        assert both[1] == "false"
+        assert both[2] == "false"
+        assert both[3] == "True"

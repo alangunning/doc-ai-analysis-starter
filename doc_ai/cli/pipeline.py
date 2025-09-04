@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -20,6 +20,8 @@ from .utils import (
 )
 from . import RAW_SUFFIXES, ModelName, _validate_prompt
 
+import re
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,9 +34,41 @@ class PipelineStep(str, Enum):
     EMBED = "embed"
 
 
+def _discover_topics(doc_dir: Path) -> list[str | None]:
+    """Return analysis topics available for a document directory.
+
+    Topics are inferred from prompt filenames matching
+    ``analysis_<topic>.prompt.yaml`` or ``<type>.analysis.<topic>.prompt.yaml``.
+    If no topic-specific prompts are found but generic analysis prompts exist,
+    a ``None`` topic is returned.
+    """
+    topics: list[str | None] = []
+    for p in doc_dir.glob("analysis_*.prompt.yaml"):
+        m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
+        if m:
+            topics.append(m.group(1))
+    prefix = f"{doc_dir.name}.analysis."
+    for p in doc_dir.glob(f"{doc_dir.name}.analysis.*.prompt.yaml"):
+        if p.name.startswith(prefix) and p.name.endswith(".prompt.yaml"):
+            topic = p.name[len(prefix) : -len(".prompt.yaml")]
+            topics.append(topic)
+    if (
+        (doc_dir / "analysis.prompt.yaml").exists()
+        or (doc_dir / f"{doc_dir.name}.analysis.prompt.yaml").exists()
+    ):
+        topics.append(None)
+    if not topics:
+        topics.append(None)
+    seen = []
+    for t in topics:
+        if t not in seen:
+            seen.append(t)
+    return seen
+
+
 def pipeline(
     source: Path,
-    prompt: Path = Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
+    prompt: Path | None = None,
     format: list[OutputFormat] | None = None,
     model: Optional[ModelName] = None,
     base_model_url: Optional[str] = None,
@@ -46,6 +80,7 @@ def pipeline(
     dry_run: bool = False,
     resume_from: PipelineStep = PipelineStep.CONVERT,
     skip: list[PipelineStep] | None = None,
+    topics: list[str] | None = None,
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
@@ -100,7 +135,12 @@ def pipeline(
             if should_run(PipelineStep.VALIDATE):
                 logger.info("Would validate %s", md_file)
             if should_run(PipelineStep.ANALYZE):
-                logger.info("Would analyze %s", md_file)
+                topic_list = topics if topics else _discover_topics(md_file.parent)
+                for tp in topic_list:
+                    if tp is None:
+                        logger.info("Would analyze %s", md_file)
+                    else:
+                        logger.info("Would analyze %s (topic: %s)", md_file, tp)
             return
         if should_run(PipelineStep.CONVERT):
             try:
@@ -132,21 +172,24 @@ def pipeline(
             and should_run(PipelineStep.ANALYZE)
             and not (fail_fast and local_failures)
         ):
-            try:
-                _analyze_doc(
-                    md_file,
-                    prompt=prompt,
-                    model=model,
-                    base_url=base_model_url,
-                    show_cost=show_cost,
-                    estimate=estimate,
-                    force=force,
-                )
-            except Exception as exc:  # pragma: no cover - error handling
-                local_failures.append(("analysis", md_file, exc))
-                logger.error(
-                    "[red]Analysis failed for %s: %s[/red]", md_file, exc
-                )
+            topic_list = topics if topics else _discover_topics(md_file.parent)
+            for tp in topic_list:
+                try:
+                    _analyze_doc(
+                        md_file,
+                        prompt=prompt if tp is None else None,
+                        model=model,
+                        base_url=base_model_url,
+                        show_cost=show_cost,
+                        estimate=estimate,
+                        topic=tp,
+                        force=force,
+                    )
+                except Exception as exc:  # pragma: no cover - error handling
+                    local_failures.append(("analysis", md_file, exc))
+                    logger.error(
+                        "[red]Analysis failed for %s: %s[/red]", md_file, exc
+                    )
         if local_failures:
             if fail_fast:
                 step, path, exc = local_failures[0]
@@ -199,8 +242,8 @@ app = typer.Typer(invoke_without_command=True, help="Run the full pipeline: conv
 def _entrypoint(
     ctx: typer.Context,
     source: Path = typer.Argument(..., help="Directory with raw documents"),
-    prompt: Path = typer.Option(
-        Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
+    prompt: Path | None = typer.Option(
+        None,
         help="Analysis prompt file",
         callback=_validate_prompt,
     ),
@@ -264,6 +307,12 @@ def _entrypoint(
         help="Skip one or more steps (convert, validate, analyze, embed)",
         case_sensitive=False,
     ),
+    topic: List[str] = typer.Option(
+        None,
+        "--topic",
+        "-t",
+        help="Analysis topic(s) to run; defaults to all discovered",
+    ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed.
 
@@ -287,18 +336,21 @@ def _entrypoint(
         resume_from = PipelineStep(resume_from_val)
     except ValueError as exc:
         raise typer.BadParameter(f"Invalid resume step '{resume_from_val}'") from exc
-    pipeline(
-        source,
-        prompt,
-        format,
-        model,
-        base_model_url,
-        fail_fast,
-        show_cost,
-        estimate,
-        workers,
-        force,
-        dry_run,
-        resume_from,
-        skip,
+    kwargs = dict(
+        source=source,
+        prompt=prompt,
+        format=format,
+        model=model,
+        base_model_url=base_model_url,
+        fail_fast=fail_fast,
+        show_cost=show_cost,
+        estimate=estimate,
+        workers=workers,
+        force=force,
+        dry_run=dry_run,
+        resume_from=resume_from,
+        skip=skip,
     )
+    if topic:
+        kwargs["topics"] = list(topic)
+    pipeline(**kwargs)
