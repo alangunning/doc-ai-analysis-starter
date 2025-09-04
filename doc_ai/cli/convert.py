@@ -59,6 +59,7 @@ def convert(
         ctx.obj["log_level"] = level_name
         ctx.obj["log_file"] = log_file
     from . import convert_path as _convert_path
+
     cfg = ctx.obj.get("config", {})
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
@@ -66,5 +67,6 @@ def convert(
         results = _convert_path(source, fmts, force=force)
     else:
         results = _convert_path(Path(source), fmts, force=force)
+
     if not results:
         logger.warning("No new files to process.")

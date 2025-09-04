@@ -11,6 +11,8 @@ from doc_ai.logging import configure_logging
 from .utils import analyze_doc, suffix as _suffix, resolve_bool, resolve_str
 from . import ModelName, _validate_prompt
 
+logger = logging.getLogger(__name__)
+
 app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt against a converted document.")
 
 
@@ -107,14 +109,18 @@ def analyze(
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
-    analyze_doc(
-        markdown_doc,
-        prompt,
-        output,
-        model,
-        base_model_url,
-        require_json,
-        show_cost,
-        estimate,
-        force=force,
-    )
+    try:
+        analyze_doc(
+            markdown_doc,
+            prompt,
+            output,
+            model,
+            base_model_url,
+            require_json,
+            show_cost,
+            estimate,
+            force=force,
+        )
+    except ValueError as exc:
+        logger.error("[red]%s[/red]", exc)
+        raise typer.Exit(1) from exc
