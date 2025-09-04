@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import logging
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -10,6 +11,8 @@ import yaml
 from openai import OpenAI
 
 from doc_ai.pricing import estimate_cost, estimate_tokens
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL_BASE_URL = "https://models.github.ai/inference"
 
@@ -57,8 +60,10 @@ def run_prompt(
     user_tokens = estimate_tokens(input_text, model_name)
     if show_cost and estimate:
         est = estimate_cost(model_name, prompt_tokens, user_tokens)
-        print(
-            f"Estimated cost: ${est:.6f} ({prompt_tokens + user_tokens} input tokens)"
+        logger.info(
+            "Estimated cost: $%.6f (%d input tokens)",
+            est,
+            prompt_tokens + user_tokens,
         )
 
     base = (
@@ -93,9 +98,11 @@ def run_prompt(
     output_tokens = getattr(getattr(response, "usage", {}), "output_tokens", 0)
     actual_cost = estimate_cost(model_name, 0, input_tokens, output_tokens)
     if show_cost:
-        print(
-            "Actual cost: $" +
-            f"{actual_cost:.6f} ({input_tokens} in, {output_tokens} out tokens)"
+        logger.info(
+            "Actual cost: $%.6f (%d in, %d out tokens)",
+            actual_cost,
+            input_tokens,
+            output_tokens,
         )
     return response.output_text, actual_cost
 

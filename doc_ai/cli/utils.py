@@ -23,6 +23,8 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
+logger = logging.getLogger(__name__)
+
 # Mapping of file extensions to output formats used across commands
 EXTENSION_MAP = {
     ".md": OutputFormat.MARKDOWN,
@@ -229,9 +231,10 @@ def analyze_doc(
         out_path.write_text(json.dumps(parsed, indent=2) + "\n", encoding="utf-8")
     else:
         out_path.write_text(result + "\n", encoding="utf-8")
-    from doc_ai.cli import console as _console
-    _console.print(
-        f"[green]Analyzed {markdown_doc} -> {out_path} (SUCCESS)[/]"
+    logger.info(
+        "[green]Analyzed %s -> %s (SUCCESS)[/]",
+        markdown_doc,
+        out_path,
     )
     mark_step(
         meta,

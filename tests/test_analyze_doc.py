@@ -1,8 +1,7 @@
 import json
-from io import StringIO
 from unittest.mock import patch
 import yaml
-from rich.console import Console
+import logging
 import pytest
 
 from doc_ai.cli import analyze_doc
@@ -32,7 +31,7 @@ def test_analyze_doc_strips_fences_and_updates_metadata(tmp_path):
     assert meta.extra["steps"]["analysis"] is True
 
 
-def test_analyze_doc_reports_success(tmp_path, monkeypatch):
+def test_analyze_doc_reports_success(tmp_path, caplog):
     doc_dir = tmp_path / "sec-form-4"
     doc_dir.mkdir()
     prompt = doc_dir / "sec-form-4.analysis.prompt.yaml"
@@ -42,12 +41,9 @@ def test_analyze_doc_reports_success(tmp_path, monkeypatch):
     md = doc_dir / "apple-sec-form-4.pdf.converted.md"
     md.write_text("sample")
     with patch("doc_ai.cli.run_prompt", return_value=("{}", 0.0)):
-        buf = StringIO()
-        monkeypatch.setattr(
-            "doc_ai.cli.console", Console(file=buf, force_terminal=False, color_system=None)
-        )
-        analyze_doc(md)
-        output = buf.getvalue()
+        with caplog.at_level(logging.INFO):
+            analyze_doc(md)
+    output = caplog.text
     assert "Analyzed" in output
     assert "apple-sec-form-4.pdf.analysis.json" in output
     assert "(SUCCESS)" in output

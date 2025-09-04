@@ -1,6 +1,7 @@
 import logging
 import sys
 import importlib
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -80,15 +81,17 @@ def test_interactive_startup_with_banner_env(monkeypatch):
 
 def test_logging_configuration(monkeypatch):
     runner = CliRunner()
-    recorded = {}
+    recorded: dict[str, object] = {}
 
-    def fake_basicConfig(level=None, **kwargs):
+    def fake_configure(level, log_file=None):  # pragma: no cover - simple proxy
         recorded["level"] = level
+        recorded["log_file"] = log_file
 
-    monkeypatch.setattr(logging, "basicConfig", fake_basicConfig)
-    result = runner.invoke(app, ["--log-level", "DEBUG", "config", "show"])
+    monkeypatch.setattr(cli_module, "configure_logging", fake_configure)
+    result = runner.invoke(app, ["--log-level", "DEBUG", "--log-file", "x.log", "config", "show"])
     assert result.exit_code == 0
-    assert recorded["level"] == logging.DEBUG
+    assert recorded["level"] == "DEBUG"
+    assert recorded["log_file"] == Path("x.log")
     recorded.clear()
     result = runner.invoke(app, ["--verbose", "config", "show"])
-    assert recorded["level"] == logging.DEBUG
+    assert recorded["level"] == "DEBUG"

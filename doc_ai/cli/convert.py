@@ -4,9 +4,12 @@ from pathlib import Path
 
 import typer
 
+import logging
+
 from doc_ai.converter import OutputFormat
 from .utils import parse_env_formats as _parse_env_formats
-from . import console
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer(invoke_without_command=True, help="Convert files using Docling.")
 
@@ -32,4 +35,4 @@ def convert(
     else:
         results = _convert_path(Path(source), fmts)
     if not results:
-        console.print("No new files to process.")
+        logger.warning("No new files to process.")

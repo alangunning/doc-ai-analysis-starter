@@ -15,6 +15,7 @@ import json
 from contextlib import nullcontext
 import threading
 
+import logging
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -40,6 +41,7 @@ _DoclingConverter = None
 _converter_instance = None
 _CACHE_MARKER = Path.home() / ".cache" / "doc_ai" / "docling_ready"
 _console = Console()
+logger = logging.getLogger(__name__)
 _converter_lock = threading.Lock()
 
 
@@ -59,7 +61,7 @@ def _ensure_models_downloaded() -> None:
 
         download_models(progress=True)
     except Exception as exc:  # pragma: no cover - network/availability issues
-        _console.print(f"[yellow]Model pre-download failed: {exc}[/yellow]")
+        logger.warning("Model pre-download failed: %s", exc)
 
 
 def _get_docling_converter():
@@ -200,11 +202,15 @@ def convert_files(
     if status is not None:
         status_name = getattr(status, "name", str(status))
         style = "green" if str(status_name).upper() == "SUCCESS" else "yellow"
-        _console.print(
-            f"[{style}]Converted {input_path} -> {paths} ({status_name})[/]"
+        logger.info(
+            "[%s]Converted %s -> %s (%s)[/]",
+            style,
+            input_path,
+            paths,
+            status_name,
         )
     else:
-        _console.print(f"Converted {input_path} -> {paths}")
+        logger.info("Converted %s -> %s", input_path, paths)
 
     if return_status:
         return written, status
