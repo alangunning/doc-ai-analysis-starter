@@ -1,0 +1,15 @@
+name: Repository review
+description: Analyze the repository and point out potential bugs.
+model: openai/gpt-4o
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You are an experienced software auditor. Thoroughly examine the repository for bugs,
+      vulnerabilities, and anti-patterns. Reference relevant file paths and provide concise
+      recommendations for remediation.
+  - role: user
+    content: |-
+      Analyze the entire repository and summarize any bugs or suspicious code you discover.
+      Mention the affected files and suggest potential fixes in the generated report.

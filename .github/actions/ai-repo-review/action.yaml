@@ -1,0 +1,17 @@
+name: Run AI Repo Review
+description: Execute GitHub Models prompt to review repository.
+inputs:
+  prompt-file:
+    description: Path to prompt file.
+    required: true
+  output-file:
+    description: File to write model output.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Run GitHub Models
+      uses: github/ai@83af9a6bf7456d2f6a1f57c7c3ea55c51814c83c
+      with:
+        prompt-file: ${{ inputs.prompt-file }}
+        output-file: ${{ inputs.output-file }}
