@@ -90,6 +90,7 @@ app = typer.Typer(invoke_without_command=True, help="Run the full pipeline: conv
 
 @app.callback()
 def _entrypoint(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Directory with raw documents"),
     prompt: Path = typer.Option(
         Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),

@@ -11,6 +11,7 @@ app = typer.Typer(invoke_without_command=True, help="Generate embeddings for Mar
 
 @app.callback()
 def embed(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Directory containing Markdown files"),
     fail_fast: bool = typer.Option(
         False, "--fail-fast", help="Abort immediately on the first HTTP error"

@@ -16,6 +16,7 @@ app = typer.Typer(invoke_without_command=True, help="Validate converted output a
 
 @app.callback()
 def validate(
+    ctx: typer.Context,
     raw: Path = typer.Argument(..., help="Path to raw document"),
     rendered: Path | None = typer.Argument(
         None, help="Path to converted file"

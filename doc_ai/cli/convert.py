@@ -13,6 +13,7 @@ app = typer.Typer(invoke_without_command=True, help="Convert files using Docling
 
 @app.callback()
 def convert(
+    ctx: typer.Context,
     source: str = typer.Argument(
         ..., help="Path or URL to raw document or folder"
     ),

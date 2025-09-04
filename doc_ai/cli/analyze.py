@@ -14,6 +14,7 @@ app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt agai
 
 @app.callback()
 def analyze(
+    ctx: typer.Context,
     source: Path = typer.Argument(..., help="Raw or converted document"),
     fmt: Optional[OutputFormat] = typer.Option(
         None, "--format", "-f", help="Format of converted file"
