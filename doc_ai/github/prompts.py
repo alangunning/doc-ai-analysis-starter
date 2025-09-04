@@ -44,7 +44,6 @@ def run_prompt(
 
     base = (
         base_url
-        or os.getenv("PROMPT_BASE_MODEL_URL")
         or os.getenv("BASE_MODEL_URL")
         or DEFAULT_MODEL_BASE_URL
     )

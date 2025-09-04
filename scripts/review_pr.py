@@ -18,8 +18,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--base-model-url",
-        default=os.getenv("PR_REVIEW_BASE_MODEL_URL")
-        or os.getenv("BASE_MODEL_URL"),
+        default=os.getenv("BASE_MODEL_URL"),
         help="Model base URL override",
     )
     args = parser.parse_args()
