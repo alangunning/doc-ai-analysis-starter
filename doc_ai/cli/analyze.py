@@ -66,11 +66,6 @@ def analyze(
         help="Re-run analysis even if metadata is present",
         is_flag=True,
     ),
-    fail_fast: bool = typer.Option(
-        True,
-        "--fail-fast/--keep-going",
-        help="Stop processing on first validation or analysis failure",
-    ),
     verbose: bool | None = typer.Option(
         None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
     ),
@@ -104,7 +99,6 @@ def analyze(
     show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
     estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
-    fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
