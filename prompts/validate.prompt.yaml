@@ -1,0 +1,22 @@
+name: Gettysburg Address validation
+description: Check that converted Markdown matches the original PDF.
+model: gpt-4o-mini
+modelParameters:
+  temperature: 0
+  text:
+    format:
+      type: json_schema
+      name: ValidationResult
+      schema:
+        type: object
+        properties:
+          match:
+            type: boolean
+        required: [match]
+messages:
+  - role: system
+    content: |-
+      You verify that the Markdown represents the source PDF without hallucinations.
+  - role: user
+    content: |-
+      Return {"match": true} if the Markdown matches the PDF; otherwise return {"match": false}.

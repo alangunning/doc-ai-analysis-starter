@@ -1,0 +1,12 @@
+name: Gettysburg Address summary
+description: Summarize the Gettysburg Address in one bullet point.
+model: openai/gpt-4o-mini
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You summarize Markdown documents.
+  - role: user
+    content: |-
+      Summarize the document in one bullet point.

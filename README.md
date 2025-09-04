@@ -6,6 +6,8 @@ Doc AI Starter is a **showcase template** for building end‑to‑end document p
 The project targets both beginners and experienced developers who are new to document analysis or GitHub's AI models. Everything runs inside the GitHub ecosystem so you can see the entire pipeline—from source files to pull‑request review—in one place.
 A simple commit under `data/` triggers the full pipeline—conversion, validation, analysis, and embedding—automatically.
 
+For a hands-on example, the repository includes a one-page public-domain PDF at `data/raw/gettysburg-address.pdf` with companion prompts in `prompts/analysis.prompt.yaml` and `prompts/validate.prompt.yaml`. Commit those files (or run `doc-ai pipeline data/raw/`) to see conversion, validation, and analysis in a single run.
+
 > **Note:** The repository stores small example documents directly in Git for clarity. For production use or large datasets, extend the workflows to handle big files with [Git LFS](https://git-lfs.com/) and back them with an object storage service.
 
 Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
