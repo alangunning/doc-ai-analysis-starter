@@ -109,6 +109,8 @@ def resolve_bool(
         val = cfg.get(key)
         if isinstance(val, str):
             return val.lower() in TRUE_SET
+        if isinstance(val, bool):
+            return val
     return value
 
 

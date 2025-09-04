@@ -13,10 +13,63 @@ from doc_ai.logging import configure_logging
 from .utils import load_env_defaults
 from . import ENV_FILE, save_global_config, read_configs, console
 
+TRUE_SET = {"1", "true", "yes"}
+FALSE_SET = {"0", "false", "no"}
+
+# Known configuration keys and booleans for validation
+_defaults = load_env_defaults()
+BOOLEAN_KEYS = {
+    "FAIL_FAST",
+    "VERBOSE",
+    "INTERACTIVE",
+    "ASK",
+    "FORCE",
+    "SHOW_COST",
+    "ESTIMATE",
+    "REQUIRE_STRUCTURED",
+    "DRY_RUN",
+    "YES",
+    "DOC_AI_BANNER",
+} | {k for k, v in _defaults.items() if isinstance(v, str) and v.lower() in TRUE_SET | FALSE_SET}
+
+KNOWN_KEYS = set(_defaults) | {
+    "MODEL",
+    "BASE_MODEL_URL",
+    "REQUIRE_STRUCTURED",
+    "SHOW_COST",
+    "ESTIMATE",
+    "FORCE",
+    "FAIL_FAST",
+    "OUTPUT_FORMATS",
+    "WORKERS",
+    "DEST",
+    "OVERWRITE",
+    "DRY_RUN",
+    "YES",
+    "RESUME_FROM",
+    "ASK",
+    "VALIDATE_MODEL",
+    "VALIDATE_BASE_MODEL_URL",
+    "LOG_LEVEL",
+    "LOG_FILE",
+    "VERBOSE",
+    "DOC_AI_BANNER",
+    "INTERACTIVE",
+}
+
 logger = logging.getLogger(__name__)
 
 
 app = typer.Typer(help="Show or update runtime configuration.")
+
+
+def _parse_value(value: str) -> bool | str:
+    low = value.lower()
+    if low in TRUE_SET:
+        return True
+    if low in FALSE_SET:
+        return False
+    return value
 
 
 def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
@@ -31,8 +84,13 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
                 key, value = item.split("=", 1)
             except ValueError as exc:  # pragma: no cover - handled by typer
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
-            os.environ[key] = value
-            cfg[key] = value
+            key = key.strip().upper()
+            if key not in KNOWN_KEYS:
+                raise typer.BadParameter(f"Unknown config key '{key}'")
+            parsed = _parse_value(value)
+            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            os.environ[key] = env_val
+            cfg[key] = parsed
         save_global_config(cfg)
         ctx.obj["global_config"] = cfg
     else:
@@ -44,8 +102,13 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
                 key, value = item.split("=", 1)
             except ValueError as exc:  # pragma: no cover - handled by typer
                 raise typer.BadParameter("Use VAR=VALUE syntax") from exc
-            os.environ[key] = value
-            set_key(str(env_path), key, value, quote_mode="never")
+            key = key.strip().upper()
+            if key not in KNOWN_KEYS:
+                raise typer.BadParameter(f"Unknown config key '{key}'")
+            parsed = _parse_value(value)
+            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            os.environ[key] = env_val
+            set_key(str(env_path), key, env_val, quote_mode="never")
             env_path.chmod(0o600)
     global_cfg, _env_vals, merged = read_configs()
     ctx.obj.update({"global_config": global_cfg, "config": merged})
@@ -110,10 +173,10 @@ def _print_settings(ctx: typer.Context) -> None:
         for var in sorted(keys):
             table.add_row(
                 var,
-                os.getenv(var, "") or "-",
-                env_cfg.get(var, "-") or "-",
-                global_cfg.get(var, "-") or "-",
-                defaults.get(var, "-") or "-",
+                str(os.getenv(var, "") or "-"),
+                str(env_cfg.get(var, "-") or "-"),
+                str(global_cfg.get(var, "-") or "-"),
+                str(defaults.get(var, "-") or "-"),
             )
         console.print(table)
 
@@ -134,6 +197,22 @@ def set_value(
 ) -> None:
     """Update environment configuration."""
     _set_pairs(ctx, pairs, global_scope)
+
+@app.command()
+def toggle(
+    ctx: typer.Context,
+    key: str = typer.Argument(..., metavar="KEY"),
+    global_scope: bool = typer.Option(
+        False, "--global", help="Modify global config instead of project .env",
+    ),
+) -> None:
+    """Toggle a boolean configuration value."""
+    key = key.strip().upper()
+    if key not in BOOLEAN_KEYS:
+        raise typer.BadParameter(f"Unknown boolean config key '{key}'")
+    current = os.getenv(key, "")
+    new_val = "false" if current.lower() in TRUE_SET else "true"
+    _set_pairs(ctx, [f"{key}={new_val}"], global_scope)
 
 
 def set_defaults(
