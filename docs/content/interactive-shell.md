@@ -23,12 +23,25 @@ in other Typer-based projects.
 
 The interactive prompt includes a minimal set of shell-like commands.
 Use ``cd <path>`` to change the current working directory for subsequent
-commands:
+commands. The command reloads any ``.env`` file and global configuration
+in the target directory so project-specific settings take effect:
 
 ```
 doc-ai> cd docs
 docs>
 ```
+
+Switching directories lets you pick up new settings without restarting:
+
+```
+doc-ai> config show OPENAI_MODEL
+gpt-4o-mini
+doc-ai> cd ../another-project
+another-project> config show OPENAI_MODEL
+gpt-4o
+```
+
+See the [cd command](https://github.com/alangunning/doc-ai-analysis-starter#cd-command) in the project README for more details.
 
 The package ships a ``py.typed`` marker so these functions are fully typed when
 used with static type checkers such as ``mypy`` or ``pyright``.
