@@ -28,9 +28,9 @@ def test_main_no_tty_shows_help(monkeypatch, capsys):
 def test_banner_flag_control():
     runner = CliRunner()
     banner_line = ASCII_ART.splitlines()[1]
-    result = runner.invoke(app, ["config"])
+    result = runner.invoke(app, ["config", "show"])
     assert banner_line not in result.stdout
-    result = runner.invoke(app, ["--banner", "config"])
+    result = runner.invoke(app, ["--banner", "config", "show"])
     assert banner_line in result.stdout
 
 
@@ -42,9 +42,9 @@ def test_logging_configuration(monkeypatch):
         recorded["level"] = level
 
     monkeypatch.setattr(logging, "basicConfig", fake_basicConfig)
-    result = runner.invoke(app, ["--log-level", "DEBUG", "config"])
+    result = runner.invoke(app, ["--log-level", "DEBUG", "config", "show"])
     assert result.exit_code == 0
     assert recorded["level"] == logging.DEBUG
     recorded.clear()
-    result = runner.invoke(app, ["--verbose", "config"])
+    result = runner.invoke(app, ["--verbose", "config", "show"])
     assert recorded["level"] == logging.DEBUG
