@@ -11,6 +11,15 @@ uploads through `/v1/uploads`, reference remote URLs directly, or encode
 in-memory bytes—returning `file_id` values that integrate with the
 Responses API.
 
+## PDF usage considerations
+
+When using PDF files as model inputs keep these OpenAI constraints in mind:
+
+- **Token usage** – each page contributes extracted text *and* an image, so costs can grow quickly.
+- **File size limits** – each upload must be smaller than 10 MB and total content per request cannot exceed 32 MB.
+- **Supported models** – only text+image models like `gpt-4o`, `gpt-4o-mini`, or `o1` accept PDFs.
+- **File purpose** – uploads can use any purpose, though `user_data` is recommended for model inputs.
+
 ### Environment overrides
 
 Two environment variables adjust the default behaviour:

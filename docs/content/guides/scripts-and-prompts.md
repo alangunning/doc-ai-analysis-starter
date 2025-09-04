@@ -76,6 +76,19 @@ sequenceDiagram
     V-->>U: success or mismatch
 ```
 
+## generate_prompts.py
+
+Upload a PDF once and let the model craft validation and analysis prompts:
+
+```bash
+python scripts/generate_prompts.py path/to/document.pdf
+```
+
+The command uploads the PDF to OpenAI, infers the document type, and writes
+`<name>.validate.prompt.yaml` and `<name>.analysis.prompt.yaml` next to the
+source (or to `--output-dir`). Each YAML conforms to the GitHub Models
+schema and can be used with `validate.py` and `run_analysis.py`.
+
 ## run_analysis.py
 Run a prompt definition against a Markdown document and save JSON output:
 
