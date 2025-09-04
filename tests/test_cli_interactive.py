@@ -20,7 +20,12 @@ def test_interactive_shell_uses_click_repl(monkeypatch):
 
     pk = called["prompt_kwargs"]
     assert callable(pk["message"])
-    assert pk["message"]() == f"{Path.cwd().name}>"
+    expected = (
+        "doc-ai>"
+        if Path.cwd().name == "doc-ai-analysis-starter"
+        else f"{Path.cwd().name}>"
+    )
+    assert pk["message"]() == expected
     assert isinstance(pk["history"], FileHistory)
     assert isinstance(pk["completer"], DocAICompleter)
     assert isinstance(called["ctx"], click.Context)

@@ -95,7 +95,7 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
     helper to change directories without leaving the session:
 
     ```
-    doc-ai-analysis-starter> cd docs
+    doc-ai> cd docs
     docs>
     ```
 
