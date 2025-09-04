@@ -267,6 +267,7 @@ from . import validate as validate_cmd  # noqa: E402
 from . import query as query_cmd  # noqa: E402
 from . import init_workflows as init_workflows_cmd  # noqa: E402
 from . import new_doc_type as new_doc_type_cmd  # noqa: E402
+from . import prompt as prompt_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(convert_cmd.app, name="convert")
@@ -278,6 +279,26 @@ app.add_typer(query_cmd.app, name="query")
 app.add_typer(init_workflows_cmd.app, name="init-workflows")
 app.add_typer(new_doc_type_cmd.app, name="new")
 app.command("set")(config_cmd.set_defaults)
+
+# Prompt inspection and editing
+show_app = typer.Typer(help="Display resources")
+edit_app = typer.Typer(help="Modify resources")
+
+
+@show_app.command("prompt")
+def show_prompt(doc_type: str, topic: str | None = typer.Option(None, "--topic")) -> None:
+    """Print the contents of a prompt file for the given document type."""
+    typer.echo(prompt_cmd.show_prompt(doc_type, topic))
+
+
+@edit_app.command("prompt")
+def edit_prompt(doc_type: str, topic: str | None = typer.Option(None, "--topic")) -> None:
+    """Open the prompt file in ``$EDITOR`` (falls back to ``vi``/``nano``)."""
+    prompt_cmd.edit_prompt(doc_type, topic)
+
+
+app.add_typer(show_app, name="show")
+app.add_typer(edit_app, name="edit")
 
 
 _LOADED_PLUGINS: dict[str, typer.Typer] = {}
