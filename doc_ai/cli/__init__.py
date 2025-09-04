@@ -238,13 +238,19 @@ def analyze(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
+    require_json: bool = typer.Option(
+        False,
+        "--require-structured",
+        help="Fail if analysis output is not valid JSON",
+        is_flag=True,
+    ),
 ) -> None:
     """Run an analysis prompt against a converted document."""
     markdown_doc = source
     if ".converted" not in "".join(markdown_doc.suffixes):
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
-    analyze_doc(markdown_doc, prompt, output, model, base_model_url)
+    analyze_doc(markdown_doc, prompt, output, model, base_model_url, require_json)
 
 
 @app.command()
