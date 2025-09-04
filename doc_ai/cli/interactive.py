@@ -6,9 +6,9 @@ other tooling to query available completions.
 """
 from __future__ import annotations
 
+import logging
 import os
 import shlex
-import traceback
 import atexit
 from pathlib import Path
 from typing import Callable
@@ -21,6 +21,9 @@ from rich.console import Console
 from .utils import load_env_defaults
 
 __all__ = ["interactive_shell", "get_completions"]
+
+
+logger = logging.getLogger(__name__)
 
 
 # Environment variable completion filtering
@@ -172,7 +175,6 @@ def interactive_shell(
     prog_name: str = "cli.py",
     console: Console | None = None,
     print_banner: Callable[[], None] | None = None,
-    verbose: bool = False,
 ) -> None:
     """Run an interactive CLI loop for the given Typer application.
 
@@ -186,9 +188,6 @@ def interactive_shell(
         Optional rich console for output.
     print_banner:
         Callback to print a startup banner before the shell prompt appears.
-    verbose:
-        If ``True``, include ``--verbose`` in executed commands and show full
-        tracebacks on errors.
 
     The loop provides readline-based tab completion for commands and options and
     supports simple built-in commands like ``cd`` and ``exit``.
@@ -258,11 +257,8 @@ def interactive_shell(
             except OSError as exc:
                 console.print(f"[red]{exc}[/red]")
             continue
-        full_cmd = command
-        if verbose:
-            full_cmd += " --verbose"
         try:
-            args = shlex.split(full_cmd)
+            args = shlex.split(command)
         except ValueError as exc:
             console.print(f"[red]Parse error: {exc}[/red]")
             continue
@@ -271,7 +267,8 @@ def interactive_shell(
         except SystemExit:
             pass
         except Exception as exc:  # pragma: no cover - runtime error display
-            if verbose:
-                traceback.print_exc()
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.exception("Unhandled exception")
             else:
+                logger.error("%s", exc)
                 console.print(f"[red]{exc}[/red]")
