@@ -11,7 +11,6 @@ import typer
 from rich.progress import Progress
 
 from doc_ai.converter import OutputFormat
-from doc_ai.logging import configure_logging
 from .utils import (
     parse_config_formats as _parse_config_formats,
     resolve_bool,
@@ -314,32 +313,14 @@ def _entrypoint(
         "-t",
         help="Analysis topic(s) to run; defaults to all discovered",
     ),
-    verbose: bool | None = typer.Option(
-        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
-    ),
-    log_level: str | None = typer.Option(
-        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
-    ),
-    log_file: Path | None = typer.Option(
-        None, "--log-file", help="Write logs to the given file"
-    ),
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed.
 
     Examples:
-        doc-ai pipeline docs/ --verbose
-        doc-ai --log-file pipeline.log pipeline docs/
+        doc-ai pipeline docs/
     """
     if ctx.obj is None:
         ctx.obj = {}
-    if any(opt is not None for opt in (verbose, log_level, log_file)):
-        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
-            logging.getLogger().level
-        )
-        configure_logging(level_name, log_file)
-        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
-        ctx.obj["log_level"] = level_name
-        ctx.obj["log_file"] = log_file
     cfg = ctx.obj.get("config", {})
     format = format or _parse_config_formats(cfg)
     model = resolve_str(ctx, "model", model, cfg, "MODEL")

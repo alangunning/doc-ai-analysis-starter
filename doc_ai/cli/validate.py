@@ -8,7 +8,6 @@ import typer
 from rich.console import Console
 
 from doc_ai.converter import OutputFormat
-from doc_ai.logging import configure_logging
 from .utils import (
     infer_format as _infer_format,
     suffix as _suffix,
@@ -54,32 +53,14 @@ def validate(
         help="Re-run validation even if metadata is present",
         is_flag=True,
     ),
-    verbose: bool | None = typer.Option(
-        None, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
-    ),
-    log_level: str | None = typer.Option(
-        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
-    ),
-    log_file: Path | None = typer.Option(
-        None, "--log-file", help="Write logs to the given file"
-    ),
 ) -> None:
     """Validate converted output against the original file.
 
     Examples:
-        doc-ai validate report.pdf --verbose
-        doc-ai --log-file validate.log validate report.pdf converted.md
+        doc-ai validate report.pdf
     """
     if ctx.obj is None:
         ctx.obj = {}
-    if any(opt is not None for opt in (verbose, log_level, log_file)):
-        level_name = "DEBUG" if verbose else log_level or logging.getLevelName(
-            logging.getLogger().level
-        )
-        configure_logging(level_name, log_file)
-        ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
-        ctx.obj["log_level"] = level_name
-        ctx.obj["log_file"] = log_file
 
     cfg = ctx.obj.get("config", {})
     model_name = resolve_str(ctx, "model", model.value if model else None, cfg, "VALIDATE_MODEL")
