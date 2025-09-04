@@ -63,6 +63,19 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
    ```
 
+   Download and convert remote documents in one step:
+
+   ```bash
+   doc-ai convert --doc-type reports \
+       --url https://example.com/a.pdf --url https://example.com/b.pdf
+   ```
+
+   In the interactive shell, you can add a URL directly:
+
+   ```bash
+   doc-ai> add url https://example.com/a.pdf --doc-type reports
+   ```
+
    The validator searches for a prompt file next to the inputs:
 
    - `<name>.validate.prompt.yaml` for a single document
