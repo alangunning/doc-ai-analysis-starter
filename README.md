@@ -88,10 +88,17 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai pipeline data/sec-form-8k/
    ```
 
-   Run the CLI without arguments to enter an interactive shell with
-   tab-completion for commands and options. The shell helper is provided in
-   ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
-   reused in other Typer-based projects.
+    Run ``doc-ai`` with no arguments to drop into an interactive shell with
+    tab-completion for commands and options. The shell includes a ``cd``
+    helper to change directories without leaving the session:
+
+    ```
+    doc-ai> cd docs
+    doc-ai/docs>
+    ```
+
+    The shell helper lives in ``doc_ai.cli.interactive`` and is re-exported
+    from ``doc_ai.cli`` so it can be reused in other Typer-based projects.
 
 ### Shell Completion
 
