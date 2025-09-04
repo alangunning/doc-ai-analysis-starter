@@ -33,7 +33,7 @@ Issues = "https://github.com/alangunning/doc-ai-analysis-starter/issues"
 Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
 
 [project.scripts]
-"doc-ai" = "doc_ai.cli:app"
+"doc-ai" = "doc_ai.cli:main"
 
 [project.optional-dependencies]
 dev = ["ruff", "pytest"]
