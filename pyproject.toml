@@ -39,6 +39,8 @@ Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
 [project.scripts]
 "doc-ai" = "doc_ai.cli:main"
 
+[project.entry-points."doc_ai.plugins"]
+
 [project.optional-dependencies]
 dev = [
     "ruff>=0.1,<1",
