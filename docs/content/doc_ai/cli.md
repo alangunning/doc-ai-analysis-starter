@@ -21,6 +21,12 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
   Use `--workers N` to process documents concurrently. Control which steps run with
   `--resume-from` or `--skip`.
 
+  The `analyze` and `pipeline` commands accept `--topic` to run one or more
+  topic-specific prompts. When no topic is supplied, the CLI searches for
+  prompt files matching `analysis_<topic>.prompt.yaml` or
+  `*.analysis.<topic>.prompt.yaml` and writes results to
+  `<doc>.analysis.<topic>.json`.
+
   Use `--workers N` to process documents concurrently.
 - `version` – show the installed package version
 
@@ -33,6 +39,7 @@ Pass `--model` and `--base-model-url` to relevant commands to override model sel
 ```bash
 doc-ai --log-level INFO convert report.pdf
 doc-ai analyze report.md --log-file analysis.log
+doc-ai analyze report.md --topic finance --topic risk
 ```
 
 `--verbose` is a shortcut for `--log-level DEBUG`.

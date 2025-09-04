@@ -161,3 +161,22 @@ def test_pipeline_dry_run(monkeypatch, tmp_path, caplog):
     assert calls == []
     assert "Would convert" in caplog.text
     assert "Would build vector store" in caplog.text
+
+
+def test_pipeline_runs_topics(monkeypatch, tmp_path):
+    src = _setup_docs(tmp_path)
+    calls: list[tuple[str, str | None]] = []
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: None)
+    monkeypatch.setattr("doc_ai.cli.validate_doc", lambda *a, **k: None)
+    monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: None)
+
+    def fake_analyze(md, *, topic=None, **kwargs):
+        calls.append((Path(md).name, topic))
+
+    monkeypatch.setattr("doc_ai.cli.analyze_doc", fake_analyze)
+
+    run_pipeline(src, topics=["alpha", "beta"])
+    for name in ["a.pdf.converted.md", "b.pdf.converted.md"]:
+        assert (name, "alpha") in calls
+        assert (name, "beta") in calls

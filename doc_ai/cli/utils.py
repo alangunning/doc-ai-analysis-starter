@@ -268,6 +268,7 @@ def analyze_doc(
     require_json: bool = False,
     show_cost: bool = False,
     estimate: bool = True,
+    topic: str | None = None,
     run_prompt_func: Callable | None = None,
     *,
     force: bool = False,
@@ -276,7 +277,7 @@ def analyze_doc(
     if run_prompt_func is None:
         from doc_ai.cli import run_prompt as run_prompt_func  # type: ignore
 
-    step_name = "analysis"
+    step_name = "analysis" if topic is None else f"analysis:{topic}"
     raw_doc = markdown_doc
     if ".converted" in markdown_doc.suffixes:
         raw_doc = raw_doc.with_suffix("").with_suffix("")
@@ -294,17 +295,34 @@ def analyze_doc(
 
     prompt_path = prompt
     if prompt_path is None:
-        type_prompt = markdown_doc.parent / (
-            f"{markdown_doc.parent.name}.analysis.prompt.yaml"
-        )
-        dir_prompt = markdown_doc.parent / "analysis.prompt.yaml"
-        if type_prompt.exists():
-            prompt_path = type_prompt
-        elif dir_prompt.exists():
-            prompt_path = dir_prompt
+        parent = markdown_doc.parent
+        if topic:
+            type_prompt = parent / f"{parent.name}.analysis.{topic}.prompt.yaml"
+            topic_prompt = parent / f"analysis_{topic}.prompt.yaml"
+            if type_prompt.exists():
+                prompt_path = type_prompt
+            elif topic_prompt.exists():
+                prompt_path = topic_prompt
+            else:
+                repo_root = Path(__file__).resolve().parents[2]
+                alt1 = repo_root / f".github/prompts/doc-analysis.analysis.{topic}.prompt.yaml"
+                alt2 = repo_root / f".github/prompts/doc-analysis.analysis_{topic}.prompt.yaml"
+                if alt1.exists():
+                    prompt_path = alt1
+                elif alt2.exists():
+                    prompt_path = alt2
+                else:
+                    prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
         else:
-            repo_root = Path(__file__).resolve().parents[2]
-            prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
+            type_prompt = parent / f"{parent.name}.analysis.prompt.yaml"
+            dir_prompt = parent / "analysis.prompt.yaml"
+            if type_prompt.exists():
+                prompt_path = type_prompt
+            elif dir_prompt.exists():
+                prompt_path = dir_prompt
+            else:
+                repo_root = Path(__file__).resolve().parents[2]
+                prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
 
     result, _ = run_prompt_func(
         prompt_path,
@@ -332,7 +350,10 @@ def analyze_doc(
             base = base.with_suffix("")
         if base.suffix == ".converted":
             base = base.with_suffix("")
-        suffix = ".analysis.json" if parsed is not None else ".analysis.txt"
+        topic_part = f".{topic}" if topic else ""
+        suffix = (
+            f".analysis{topic_part}.json" if parsed is not None else f".analysis{topic_part}.txt"
+        )
         out_path = base.with_name(f"{base.name}{suffix}")
     if parsed is not None:
         out_path.write_text(json.dumps(parsed, indent=2) + "\n", encoding="utf-8")
@@ -351,6 +372,7 @@ def analyze_doc(
             "prompt": prompt_path.name,
             "markdown": markdown_doc.name,
             "markdown_blake2b": md_hash,
+            "topic": topic,
         },
     )
     save_metadata(raw_doc, meta)
