@@ -35,10 +35,13 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 3. **Configure**
 
    Copy `.env.example` to `.env` and adjust variables as needed. Environment
-   variables from the runtime override values in the file and command-line
-   flags override both. Use `doc-ai config set VAR=VALUE` to update the `.env`
-   file from the CLI and `doc-ai config show` to display current settings. The
-   CLI creates or updates the file with `0600` permissions for security. See the
+   variables from the runtime override values in the file, the project `.env`
+   overrides the global configuration file (usually
+   `~/.config/doc_ai/config.json`), and command-line flags override everything.
+   Use `doc-ai config set VAR=VALUE` to update the `.env` file from the CLI,
+   `doc-ai config toggle KEY` to flip common booleans, and
+   `doc-ai config show` to display current settings. The CLI creates or updates
+   the file with `0600` permissions for security. See the
    [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md)
    for details on workflow toggles and model settings.
 
