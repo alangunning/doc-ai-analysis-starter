@@ -68,7 +68,7 @@ def convert(
             results = _convert_path(source, fmts, force=force)
         else:
             results = _convert_path(Path(source), fmts, force=force)
-    except ValueError as exc:
+    except Exception as exc:  # pragma: no cover - error handling
         logger.error(str(exc))
         raise typer.Exit(1)
 
