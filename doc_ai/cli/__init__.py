@@ -42,6 +42,7 @@ app = typer.Typer(
 )
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+DEFAULT_LOG_LEVEL = "DEBUG" if SETTINGS["verbose"] else "WARNING"
 
 # File extensions considered raw inputs for the pipeline.
 RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
@@ -52,13 +53,30 @@ def _main_callback(
     version: bool = typer.Option(
         False, "--version", "-V", help="Show version and exit"
     ),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Shortcut for --log-level DEBUG"
+    ),
+    log_level: str | None = typer.Option(
+        None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
+    ),
+    banner: bool = typer.Option(
+        False, "--banner/--quiet", help="Display ASCII banner before command"
+    ),
 ) -> None:
     """Global options."""
     if version:
         console.print(__version__)
         raise typer.Exit()
-    SETTINGS["verbose"] = verbose
+    level_name = log_level
+    if verbose:
+        level_name = "DEBUG"
+    if level_name is None:
+        level_name = DEFAULT_LOG_LEVEL
+    level = getattr(logging, level_name.upper(), logging.WARNING)
+    logging.basicConfig(level=level)
+    SETTINGS["verbose"] = level <= logging.DEBUG
+    if banner:
+        _print_banner()
 
 
 ASCII_ART = r"""
@@ -250,6 +268,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -364,11 +383,8 @@ __all__ = [
 def main() -> None:
     """Entry point for running the CLI as a script."""
     load_dotenv(ENV_FILE)
-    if len(sys.argv) > 1:
-        _print_banner()
-        args = sys.argv[1:]
-        if SETTINGS["verbose"] and "--verbose" not in args and "-v" not in args:
-            args.append("--verbose")
+    args = sys.argv[1:]
+    if args:
         try:
             app(prog_name="cli.py", args=args)
         except Exception as exc:  # pragma: no cover - runtime error display
@@ -376,14 +392,17 @@ def main() -> None:
                 traceback.print_exc()
             else:
                 console.print(f"[red]{exc}[/red]")
-    else:
-        console.print(
-            "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
-        )
-        interactive_shell(
-            app,
-            console=console,
-            print_banner=_print_banner,
-            verbose=SETTINGS["verbose"],
-        )
-        console.print("Goodbye!")
+        return
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        app(prog_name="cli.py", args=["--help"])
+        return
+    console.print(
+        "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
+    )
+    interactive_shell(
+        app,
+        console=console,
+        print_banner=_print_banner,
+        verbose=SETTINGS["verbose"],
+    )
+    console.print("Goodbye!")
