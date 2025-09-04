@@ -50,3 +50,4 @@ You can also override the model used for each module. The `.env.example` file li
 ## Logging
 
 Set `LOG_LEVEL` or `LOG_FILE` in any configuration source to control logging. The CLI accepts matching `--log-level` and `--log-file` options to override these values for a single run, and `--verbose` acts as a shortcut for `--log-level DEBUG`.
+Secrets that resemble OpenAI or GitHub tokens are partially masked in logs, keeping the first and last four characters and replacing the middle with `*`.

@@ -29,7 +29,13 @@ class RedactFilter(logging.Filter):
 
     def _redact(self, value: str) -> str:
         for pat in self.patterns:
-            value = pat.sub("<redacted>", value)
+            def mask(match: re.Match[str]) -> str:
+                token = match.group(0)
+                if len(token) <= 8:
+                    return "<redacted>"
+                return token[:4] + "*" * (len(token) - 8) + token[-4:]
+
+            value = pat.sub(mask, value)
         return value
 
     def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover - exercised via tests
