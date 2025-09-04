@@ -23,8 +23,10 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
-# Mapping of file extensions to output formats used across commands
-EXTENSION_MAP = {
+# Mapping of file extensions to output formats used across commands.
+# Only the `.doctags` suffix maps to the DOCTAGS format; a legacy `.dogtags`
+# extension is intentionally unsupported.
+EXTENSION_MAP: dict[str, OutputFormat] = {
     ".md": OutputFormat.MARKDOWN,
     ".html": OutputFormat.HTML,
     ".json": OutputFormat.JSON,
@@ -195,22 +197,27 @@ def analyze_doc(
             repo_root = Path(__file__).resolve().parents[2]
             prompt_path = repo_root / ".github/prompts/doc-analysis.analysis.prompt.yaml"
 
-    result = run_prompt_func(
+    raw_output = run_prompt_func(
         prompt_path,
         markdown_doc.read_text(),
         model=model,
         base_url=base_url,
-    )
-    result = result.strip()
-    fence = re.match(r"```(?:json)?\n([\s\S]*?)\n```", result)
+    ).strip()
+
+    fence = re.match(r"```(?:json)?\n([\s\S]*?)\n```", raw_output)
     if fence:
-        result = fence.group(1).strip()
-    parsed: dict | list | None = None
+        raw_output = fence.group(1).strip()
+
     try:
-        parsed = json.loads(result)
+        parsed = json.loads(raw_output)
+        suffix = ".analysis.json"
+        output_text = json.dumps(parsed, indent=2) + "\n"
     except json.JSONDecodeError:
         if require_json:
             raise ValueError("Analysis result is not valid JSON")
+        suffix = ".analysis.txt"
+        output_text = raw_output + "\n"
+
     if output:
         out_path = output
     else:
@@ -219,12 +226,9 @@ def analyze_doc(
             base = base.with_suffix("")
         if base.suffix == ".converted":
             base = base.with_suffix("")
-        suffix = ".analysis.json" if parsed is not None else ".analysis.txt"
         out_path = base.with_name(f"{base.name}{suffix}")
-    if parsed is not None:
-        out_path.write_text(json.dumps(parsed, indent=2) + "\n", encoding="utf-8")
-    else:
-        out_path.write_text(result + "\n", encoding="utf-8")
+
+    out_path.write_text(output_text, encoding="utf-8")
     from doc_ai.cli import console as _console
     _console.print(
         f"[green]Analyzed {markdown_doc} -> {out_path} (SUCCESS)[/]"
