@@ -43,7 +43,11 @@ def save_metadata(doc_path: Path, meta: DublinCoreDocument) -> None:
 
 def compute_hash(doc_path: Path) -> str:
     """Return a blake2b checksum of the file at ``doc_path``."""
-    return hashlib.blake2b(doc_path.read_bytes()).hexdigest()
+    hasher = hashlib.blake2b()
+    with doc_path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(128 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 def is_step_done(meta: DublinCoreDocument, step: str) -> bool:
