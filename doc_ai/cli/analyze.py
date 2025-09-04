@@ -7,7 +7,7 @@ import typer
 
 from doc_ai.converter import OutputFormat
 from .utils import analyze_doc, suffix as _suffix
-from . import _validate_prompt, _validate_model
+from . import ModelName, _validate_prompt
 
 app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt against a converted document.")
 
@@ -30,11 +30,10 @@ def analyze(
         "--output",
         help="Optional output file; defaults to <doc>.analysis.json",
     ),
-    model: Optional[str] = typer.Option(
+    model: Optional[ModelName] = typer.Option(
         None,
         "--model",
         help="Model name override",
-        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"

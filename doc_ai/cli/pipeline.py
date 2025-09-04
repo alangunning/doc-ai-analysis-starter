@@ -7,14 +7,14 @@ import typer
 
 from doc_ai.converter import OutputFormat
 from .utils import parse_env_formats as _parse_env_formats, suffix as _suffix
-from . import RAW_SUFFIXES, _validate_model, _validate_prompt, console
+from . import RAW_SUFFIXES, ModelName, _validate_prompt, console
 
 
 def pipeline(
     source: Path,
     prompt: Path = Path(".github/prompts/doc-analysis.analysis.prompt.yaml"),
     format: list[OutputFormat] | None = None,
-    model: Optional[str] = None,
+    model: Optional[ModelName] = None,
     base_model_url: Optional[str] = None,
     fail_fast: bool = True,
 ) -> None:
@@ -93,11 +93,10 @@ def _entrypoint(
         "-f",
         help="Desired output format(s) for conversion",
     ),
-    model: Optional[str] = typer.Option(
+    model: Optional[ModelName] = typer.Option(
         None,
         "--model",
         help="Model name override",
-        callback=_validate_model,
     ),
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
