@@ -72,7 +72,14 @@ def _parse_command(command: str) -> list[str] | None:
         click.echo(result)
         return None
     try:
-        return split_arg_string(command, posix=False)
+        parts = split_arg_string(command, posix=False)
+        cleaned = []
+        for part in parts:
+            if len(part) >= 2 and part[0] == part[-1] and part[0] in {'"', "'"}:
+                cleaned.append(part[1:-1])
+            else:
+                cleaned.append(part)
+        return cleaned
     except ValueError as exc:  # pragma: no cover - handled by caller
         raise CommandLineParserError(str(exc)) from exc
 
