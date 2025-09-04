@@ -17,6 +17,7 @@ import yaml
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
+from doc_ai.logging import configure_logging
 from .interactive import interactive_shell  # noqa: F401
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
@@ -122,13 +123,16 @@ def _main_callback(
     log_level: str | None = typer.Option(
         None, "--log-level", help="Logging level (e.g. INFO, DEBUG)"
     ),
+    log_file: Path | None = typer.Option(
+        None, "--log-file", help="Write logs to the given file"
+    ),
     banner: bool | None = typer.Option(
         None, "--banner/--quiet", help="Display ASCII banner before command"
     ),
 ) -> None:
     """Global options."""
     if version:
-        console.print(__version__)
+        typer.echo(__version__)
         raise typer.Exit()
 
     global_cfg, _env_vals, merged = read_configs()
@@ -146,15 +150,9 @@ def _main_callback(
         level_name = "DEBUG"
     if level_name is None:
         level_name = "DEBUG" if verbose_default else "WARNING"
-    level = getattr(logging, level_name.upper(), logging.WARNING)
-    logging.basicConfig(level=level, force=True)
-    logging.captureWarnings(True)
-    pywarn = logging.getLogger("py.warnings")
-    if level <= logging.DEBUG:
-        pywarn.setLevel(logging.WARNING)
-    else:
-        pywarn.setLevel(logging.ERROR)
-    ctx.obj["verbose"] = level <= logging.DEBUG
+    log_file_val = log_file if log_file is not None else merged.get("LOG_FILE")
+    configure_logging(level_name, log_file_val)
+    ctx.obj["verbose"] = logging.getLogger().level <= logging.DEBUG
     banner_flag = banner if banner is not None else banner_default
     ctx.obj["banner"] = banner_flag
     if banner_flag:
@@ -187,7 +185,7 @@ def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
     try:
         os.chdir(path)
     except OSError as exc:  # pragma: no cover - just error display
-        console.print(f"[red]{exc}[/red]")
+        logger.error("[red]%s[/red]", exc)
         raise typer.Exit(code=1)
 
 
@@ -252,8 +250,7 @@ def main() -> None:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.exception("Unhandled exception")
             else:
-                logger.error("%s", exc)
-                console.print(f"[red]{exc}[/red]")
+                logger.error("[red]%s[/red]", exc)
         return
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         app(prog_name="cli.py", args=["--help"])
@@ -265,6 +262,8 @@ def main() -> None:
             app(prog_name="cli.py", args=["--help"])
         except SystemExit:
             pass
-    console.print("Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave.")
+    logger.info(
+        "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
+    )
     interactive_shell(app)
-    console.print("Goodbye!")
+    logger.info("Goodbye!")

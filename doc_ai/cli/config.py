@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import logging
 
 import typer
 from rich.table import Table
 from dotenv import set_key, dotenv_values
 
 from .utils import load_env_defaults
-from . import ENV_FILE, console, save_global_config, read_configs
+from . import ENV_FILE, save_global_config, read_configs, console
+
+logger = logging.getLogger(__name__)
 
 
 app = typer.Typer(help="Show or update runtime configuration.")
@@ -61,8 +64,8 @@ def config(
 
 
 def _print_settings(ctx: typer.Context) -> None:
-    console.print("Current settings:")
-    console.print(f"  verbose: {ctx.obj.get('verbose')}")
+    logger.info("Current settings:")
+    logger.info("  verbose: %s", ctx.obj.get("verbose"))
     defaults = load_env_defaults()
     for key in os.environ:
         if key.startswith("MODEL_PRICE_") and key not in defaults:

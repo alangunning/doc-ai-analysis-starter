@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+import logging
 
 import typer
 
 from doc_ai.converter import OutputFormat
 from .utils import parse_env_formats as _parse_env_formats, suffix as _suffix
-from . import RAW_SUFFIXES, ModelName, _validate_prompt, console
+from . import RAW_SUFFIXES, ModelName, _validate_prompt
+
+logger = logging.getLogger(__name__)
 
 
 def pipeline(
@@ -56,8 +59,10 @@ def pipeline(
                 )
             except Exception as exc:  # pragma: no cover - error handling
                 failures.append(("validation", raw_file, exc))
-                console.print(
-                    f"[red]Validation failed for {raw_file}: {exc}[/red]"
+                logger.error(
+                    "[red]Validation failed for %s: %s[/red]",
+                    raw_file,
+                    exc,
                 )
                 if fail_fast:
                     break
@@ -72,16 +77,18 @@ def pipeline(
                 )
             except Exception as exc:  # pragma: no cover - error handling
                 failures.append(("analysis", md_file, exc))
-                console.print(
-                    f"[red]Analysis failed for {md_file}: {exc}[/red]"
+                logger.error(
+                    "[red]Analysis failed for %s: %s[/red]",
+                    md_file,
+                    exc,
                 )
                 if fail_fast:
                     break
     _build_vector_store(source)
     if failures:
-        console.print("[bold red]Failures encountered during pipeline:[/bold red]")
+        logger.error("[bold red]Failures encountered during pipeline:[/bold red]")
         for step, path, exc in failures:
-            console.print(f"- {step} {path}: {exc}")
+            logger.error("- %s %s: %s", step, path, exc)
         raise typer.Exit(code=1)
 
 
