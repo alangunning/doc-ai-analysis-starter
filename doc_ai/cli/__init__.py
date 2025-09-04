@@ -38,7 +38,10 @@ app = typer.Typer(
     add_completion=False,
 )
 
-SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+SETTINGS = {
+    "verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"},
+    "banner": os.getenv("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"},
+}
 DEFAULT_LOG_LEVEL = "DEBUG" if SETTINGS["verbose"] else "WARNING"
 
 logger = logging.getLogger(__name__)
@@ -101,6 +104,7 @@ def _main_callback(
     level = getattr(logging, level_name.upper(), logging.WARNING)
     logging.basicConfig(level=level)
     SETTINGS["verbose"] = level <= logging.DEBUG
+    SETTINGS["banner"] = banner
     if banner:
         _print_banner()
 
@@ -211,5 +215,6 @@ def main() -> None:
         app,
         console=console,
         print_banner=_print_banner,
+        banner=SETTINGS["banner"],
     )
     console.print("Goodbye!")

@@ -175,6 +175,7 @@ def interactive_shell(
     prog_name: str = "cli.py",
     console: Console | None = None,
     print_banner: Callable[[], None] | None = None,
+    banner: bool = False,
 ) -> None:
     """Run an interactive CLI loop for the given Typer application.
 
@@ -188,6 +189,8 @@ def interactive_shell(
         Optional rich console for output.
     print_banner:
         Callback to print a startup banner before the shell prompt appears.
+    banner:
+        If ``True``, invoke ``print_banner`` before showing the prompt.
 
     The loop provides readline-based tab completion for commands and options and
     supports simple built-in commands like ``cd`` and ``exit``.
@@ -234,7 +237,7 @@ def interactive_shell(
             readline.parse_and_bind("tab: complete")
         except Exception:
             pass
-    if print_banner:
+    if banner and print_banner:
         try:
             print_banner()
             app(prog_name=prog_name, args=["--help"])

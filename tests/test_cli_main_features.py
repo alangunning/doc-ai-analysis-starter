@@ -1,9 +1,11 @@
 import logging
 import sys
+import importlib
 
 import pytest
 from typer.testing import CliRunner
 
+import doc_ai.cli as cli_module
 from doc_ai.cli import app, main, ASCII_ART
 
 
@@ -32,6 +34,38 @@ def test_banner_flag_control():
     assert banner_line not in result.stdout
     result = runner.invoke(app, ["--banner", "config", "show"])
     assert banner_line in result.stdout
+
+
+def test_interactive_startup_without_banner(monkeypatch):
+    monkeypatch.delenv("DOC_AI_BANNER", raising=False)
+    importlib.reload(cli_module)
+    monkeypatch.setattr(sys, "argv", ["cli.py"])
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    recorded = {}
+
+    def fake_shell(app, *, console, print_banner, banner, **kwargs):
+        recorded["banner"] = banner
+
+    monkeypatch.setattr(cli_module, "interactive_shell", fake_shell)
+    cli_module.main()
+    assert recorded["banner"] is False
+
+
+def test_interactive_startup_with_banner_env(monkeypatch):
+    monkeypatch.setenv("DOC_AI_BANNER", "1")
+    importlib.reload(cli_module)
+    monkeypatch.setattr(sys, "argv", ["cli.py"])
+    monkeypatch.setattr(sys.stdin, "isatty", lambda: True)
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    recorded = {}
+
+    def fake_shell(app, *, console, print_banner, banner, **kwargs):
+        recorded["banner"] = banner
+
+    monkeypatch.setattr(cli_module, "interactive_shell", fake_shell)
+    cli_module.main()
+    assert recorded["banner"] is True
 
 
 def test_logging_configuration(monkeypatch):
