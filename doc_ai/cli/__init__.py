@@ -220,6 +220,7 @@ app.add_typer(validate_cmd.app, name="validate")
 app.add_typer(analyze_cmd.app, name="analyze")
 app.add_typer(embed_cmd.app, name="embed")
 app.add_typer(pipeline_cmd.app, name="pipeline")
+app.command("set")(config_cmd.set_defaults)
 
 # Re-export pipeline callback for tests and external use.
 from .pipeline import pipeline  # noqa: E402
