@@ -13,7 +13,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 from dotenv import load_dotenv, set_key, find_dotenv
-from .interactive import interactive_shell, get_completions
+import click_repl
+from prompt_toolkit.history import FileHistory
 
 # Ensure project root is first on sys.path when running as a script.
 if __package__ in (None, ""):
@@ -250,6 +251,7 @@ def analyze(
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
         is_flag=True,
+    ),
     fail_fast: bool = typer.Option(
         True,
         "--fail-fast/--keep-going",
@@ -355,8 +357,6 @@ __all__ = [
     "convert_path",
     "validate_file",
     "run_prompt",
-    "interactive_shell",
-    "get_completions",
     "main",
 ]
 
@@ -377,13 +377,20 @@ def main() -> None:
             else:
                 console.print(f"[red]{exc}[/red]")
     else:
+        _print_banner()
+        app(prog_name="cli.py", args=["--help"])
+        history_path = Path("~/.doc_ai_history").expanduser()
+        try:
+            history_path.touch(mode=0o600, exist_ok=True)
+        except Exception:
+            pass
         console.print(
             "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
         )
-        interactive_shell(
-            app,
-            console=console,
-            print_banner=_print_banner,
-            verbose=SETTINGS["verbose"],
-        )
+        with app.make_context("cli.py", []) as ctx:
+            click_repl.repl(
+                ctx,
+                prompt="doc-ai> ",
+                history=FileHistory(str(history_path)),
+            )
         console.print("Goodbye!")

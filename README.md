@@ -88,21 +88,18 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    ```
 
    Run the CLI without arguments to enter an interactive shell with
-   tab-completion for commands and options. The shell helper is provided in
-   ``doc_ai.cli.interactive`` and re-exported from ``doc_ai.cli`` so it can be
-   reused in other Typer-based projects.
+   tab-completion for commands and options, powered by
+   [`click-repl`](https://github.com/click-contrib/click-repl).
 
 ## Programmatic Usage
 
 The package exposes a typed API and ships a `py.typed` marker for static type
-checkers.  You can query completions or launch the interactive shell from your
-own scripts:
+checkers. You can invoke the CLI programmatically from your own scripts:
 
 ```python
-from doc_ai.cli import app, get_completions, interactive_shell
+from doc_ai.cli import app
 
-get_completions(app, "co", "co")
-interactive_shell(app)
+app(prog_name="cli.py", args=["--help"])
 ```
 
 ## Directory Overview
