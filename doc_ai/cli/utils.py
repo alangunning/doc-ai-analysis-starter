@@ -10,6 +10,7 @@ import json
 import functools
 from datetime import datetime, timezone
 
+import click
 import typer
 from rich.console import Console
 from dotenv import dotenv_values
@@ -157,7 +158,7 @@ def validate_doc(
     )
     save_metadata(raw, meta)
     if not match:
-        raise RuntimeError(f"Mismatch detected: {verdict}")
+        raise click.ClickException(f"Mismatch detected: {verdict}")
 
 
 def analyze_doc(
