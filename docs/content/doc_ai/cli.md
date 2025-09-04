@@ -14,7 +14,8 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
 - `validate` – compare a converted file with its source using an AI model
 - `analyze` – execute an analysis prompt against a Markdown document
 - `embed` – generate vector embeddings for Markdown files
-- `pipeline` – convert, validate, analyze and embed an entire directory
+- `pipeline` – convert, validate, analyze and embed supported raw documents in a directory; paths containing `.converted` are ignored
+By default, the `pipeline` command only processes files with extensions supported by Docling (e.g., `.pdf`) and skips any path containing `.converted` to avoid re-processing generated outputs.
 
 Pass `--model` and `--base-model-url` to relevant commands to override model selection. Add `--verbose` for debug logging.
 

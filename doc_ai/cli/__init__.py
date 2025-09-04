@@ -20,7 +20,9 @@ if __package__ in (None, ""):
     sys.path[0] = str(Path(__file__).resolve().parent.parent)
 
 from doc_ai.converter import OutputFormat, convert_path
+from doc_ai.converter.path import SUPPORTED_SUFFIXES
 from .utils import (
+    EXTENSION_MAP,
     analyze_doc,
     infer_format as _infer_format,
     load_env_defaults,
@@ -40,6 +42,9 @@ app = typer.Typer(
 )
 
 SETTINGS = {"verbose": os.getenv("VERBOSE", "").lower() in {"1", "true", "yes"}}
+
+# File extensions considered raw inputs for the pipeline.
+RAW_SUFFIXES = {s for s in SUPPORTED_SUFFIXES if s not in EXTENSION_MAP}
 
 
 @app.callback()
@@ -282,7 +287,11 @@ def pipeline(
         ".github/prompts/validate-output.validate.prompt.yaml"
     )
     for raw_file in source.rglob("*"):
-        if not raw_file.is_file():
+        if (
+            not raw_file.is_file()
+            or raw_file.suffix.lower() not in RAW_SUFFIXES
+            or any(".converted" in part for part in raw_file.parts)
+        ):
             continue
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists():
