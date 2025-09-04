@@ -44,12 +44,17 @@ def test_interactive_startup_without_banner(monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     recorded = {}
 
-    def fake_shell(app, *, console, print_banner, banner, **kwargs):
-        recorded["banner"] = banner
+    def fake_shell(app):
+        recorded["shell"] = True
+
+    def fake_print_banner():
+        recorded["banner"] = True
 
     monkeypatch.setattr(cli_module, "interactive_shell", fake_shell)
+    monkeypatch.setattr(cli_module, "_print_banner", fake_print_banner)
     cli_module.main()
-    assert recorded["banner"] is False
+    assert recorded.get("banner") is None
+    assert recorded.get("shell") is True
 
 
 def test_interactive_startup_with_banner_env(monkeypatch):
@@ -60,12 +65,17 @@ def test_interactive_startup_with_banner_env(monkeypatch):
     monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
     recorded = {}
 
-    def fake_shell(app, *, console, print_banner, banner, **kwargs):
-        recorded["banner"] = banner
+    def fake_shell(app):
+        recorded["shell"] = True
+
+    def fake_print_banner():
+        recorded["banner"] = True
 
     monkeypatch.setattr(cli_module, "interactive_shell", fake_shell)
+    monkeypatch.setattr(cli_module, "_print_banner", fake_print_banner)
     cli_module.main()
-    assert recorded["banner"] is True
+    assert recorded.get("banner") is True
+    assert recorded.get("shell") is True
 
 
 def test_logging_configuration(monkeypatch):
