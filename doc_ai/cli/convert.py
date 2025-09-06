@@ -13,7 +13,11 @@ from doc_ai.converter import OutputFormat
 from doc_ai.utils import http_get, sanitize_filename
 from rich.progress import Progress
 
-from .utils import parse_config_formats as _parse_config_formats, resolve_bool
+from .utils import (
+    parse_config_formats as _parse_config_formats,
+    resolve_bool,
+    prompt_for_missing,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +71,8 @@ def download_and_convert(
 def convert(
     ctx: typer.Context,
     source: str | None = typer.Argument(
-        None, help="Path or URL to raw document or folder",
+        None,
+        help="Path or URL to raw document or folder",
     ),
     url: list[str] = typer.Option(
         None,
@@ -80,7 +85,9 @@ def convert(
         help="File containing URLs to download (one per line).",
     ),
     doc_type: str | None = typer.Option(
-        None, "--doc-type", help="Document type for downloaded URLs",
+        None,
+        "--doc-type",
+        help="Document type for downloaded URLs",
     ),
     format: list[OutputFormat] = typer.Option(
         None,
@@ -94,7 +101,6 @@ def convert(
         help="Re-run conversion even if metadata is present",
         is_flag=True,
     ),
-
 ) -> None:
     """Convert files using Docling.
 
@@ -117,6 +123,7 @@ def convert(
         )
     if url:
         url_list.extend(url)
+    source = prompt_for_missing(source, "Path or URL to raw document or folder")
     results: dict[Path, tuple[dict[OutputFormat, Path], object]] = {}
     if url_list:
         if doc_type is None:
@@ -124,14 +131,15 @@ def convert(
         results.update(download_and_convert(url_list, doc_type, fmts, force))
     if source is not None:
         try:
-            if source.startswith(("http://", "https://")):
+            if isinstance(source, str) and source.startswith(("http://", "https://")):
                 results.update(_convert_path(source, fmts, force=force))
             else:
-                results.update(_convert_path(Path(source), fmts, force=force))
+                results.update(_convert_path(Path(str(source)), fmts, force=force))
         except Exception as exc:  # pragma: no cover - error handling
             logger.error(str(exc))
             raise typer.Exit(1)
 
     if not results:
+        if source is None and not url_list:
+            raise typer.BadParameter("SOURCE is required")
         logger.warning("No new files to process.")
-

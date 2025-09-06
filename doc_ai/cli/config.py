@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 import logging
 
@@ -30,7 +31,11 @@ BOOLEAN_KEYS = {
     "DRY_RUN",
     "YES",
     "DOC_AI_BANNER",
-} | {k for k, v in _defaults.items() if isinstance(v, str) and v.lower() in TRUE_SET | FALSE_SET}
+} | {
+    k
+    for k, v in _defaults.items()
+    if isinstance(v, str) and v.lower() in TRUE_SET | FALSE_SET
+}
 
 KNOWN_KEYS = set(_defaults) | {
     "MODEL",
@@ -74,9 +79,7 @@ def _parse_value(value: str) -> bool | str:
 
 def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
     """Persist ``VAR=VALUE`` pairs to config sources."""
-    force_global = use_global or any(
-        p.split("=", 1)[0] == "interactive" for p in pairs
-    )
+    force_global = use_global or any(p.split("=", 1)[0] == "interactive" for p in pairs)
     if force_global:
         cfg = dict(ctx.obj.get("global_config", {}))
         for item in pairs:
@@ -88,7 +91,11 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
             if key not in KNOWN_KEYS:
                 raise typer.BadParameter(f"Unknown config key '{key}'")
             parsed = _parse_value(value)
-            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            env_val = (
+                "true"
+                if parsed is True
+                else "false" if parsed is False else str(parsed)
+            )
             os.environ[key] = env_val
             cfg[key] = parsed
         save_global_config(cfg)
@@ -106,7 +113,11 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
             if key not in KNOWN_KEYS:
                 raise typer.BadParameter(f"Unknown config key '{key}'")
             parsed = _parse_value(value)
-            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            env_val = (
+                "true"
+                if parsed is True
+                else "false" if parsed is False else str(parsed)
+            )
             os.environ[key] = env_val
             set_key(str(env_path), key, env_val, quote_mode="never")
             env_path.chmod(0o600)
@@ -184,12 +195,15 @@ def set_value(
     """Update environment configuration."""
     _set_pairs(ctx, pairs, global_scope)
 
+
 @app.command()
 def toggle(
     ctx: typer.Context,
     key: str = typer.Argument(..., metavar="KEY"),
     global_scope: bool = typer.Option(
-        False, "--global", help="Modify global config instead of project .env",
+        False,
+        "--global",
+        help="Modify global config instead of project .env",
     ),
 ) -> None:
     """Toggle a boolean configuration value."""
@@ -218,3 +232,32 @@ def set_defaults(
     for key, value in sorted(root.default_map.items()):
         table.add_row(key, str(value))
     console.print(Panel(table, title="Runtime defaults"))
+
+
+@app.command()
+def wizard(
+    ctx: typer.Context,
+    global_scope: bool = typer.Option(
+        False,
+        "--global",
+        help="Modify global config instead of project .env",
+    ),
+) -> None:
+    """Run an interactive configuration wizard."""
+    if os.getenv("INTERACTIVE", "true").lower() not in TRUE_SET:
+        return
+    if not sys.stdin.isatty():  # pragma: no cover - depends on environment
+        return
+    try:  # pragma: no cover - import error guarded
+        import questionary
+    except Exception:
+        return
+    defaults = load_env_defaults()
+    pairs: list[str] = []
+    for key in sorted(defaults):
+        default = defaults[key] or ""
+        ans = questionary.text(key, default=default).ask()
+        if ans:
+            pairs.append(f"{key}={ans}")
+    if pairs:
+        _set_pairs(ctx, pairs, global_scope)

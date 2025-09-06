@@ -7,18 +7,27 @@ import logging
 import typer
 
 from doc_ai.converter import OutputFormat
-from .utils import analyze_doc, suffix as _suffix, resolve_bool, resolve_str
+from .utils import (
+    analyze_doc,
+    suffix as _suffix,
+    resolve_bool,
+    resolve_str,
+    prompt_for_missing,
+)
 from . import ModelName, _validate_prompt
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt against a converted document.")
+app = typer.Typer(
+    invoke_without_command=True,
+    help="Run an analysis prompt against a converted document.",
+)
 
 
 @app.callback()
 def analyze(
     ctx: typer.Context,
-    source: Path = typer.Argument(..., help="Raw or converted document"),
+    source: Path | None = typer.Argument(None, help="Raw or converted document"),
     fmt: Optional[OutputFormat] = typer.Option(
         None, "--format", "-f", help="Format of converted file"
     ),
@@ -79,10 +88,17 @@ def analyze(
     """
     if ctx.obj is None:
         ctx.obj = {}
+    source = prompt_for_missing(source, "Document to analyze", path=True)
+    if source is None:
+        raise typer.BadParameter("SOURCE is required")
     cfg = ctx.obj.get("config", {})
     model = resolve_str(ctx, "model", model, cfg, "MODEL")
-    base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
-    require_json = resolve_bool(ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED")
+    base_model_url = resolve_str(
+        ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL"
+    )
+    require_json = resolve_bool(
+        ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED"
+    )
     show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
     estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")

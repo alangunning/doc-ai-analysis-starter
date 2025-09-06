@@ -12,6 +12,7 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
 - `config` – manage runtime configuration
 - `config show` – display current settings
 - `config set` – update environment variables
+- `config wizard` – interactively set configuration values
 - `convert` – run Docling to convert raw documents into text formats
 - `validate` – compare a converted file with its source using an AI model
 - `analyze` – execute an analysis prompt against a Markdown document
@@ -55,6 +56,10 @@ python doc_ai/cli.py convert report.pdf --format markdown
 ```
 
 After installation, the same commands are available via the `doc-ai` console script. Run `doc-ai` with no arguments to enter an interactive shell.
+
+When run in an interactive terminal, `convert`, `analyze` and `pipeline`
+will ask for missing paths instead of failing immediately. Set the
+`INTERACTIVE` environment variable to `false` to disable prompting.
 
 ## Global configuration and logging
 
