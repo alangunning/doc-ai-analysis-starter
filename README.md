@@ -194,8 +194,9 @@ refreshes completion suggestions for document types and topics:
 
     Prefix commands with ``!`` to execute them in the system shell. Output from
     the command is echoed back to the REPL and the exit status is stored in
-    ``doc_ai.cli.interactive.LAST_EXIT_CODE``. Set ``DOC_AI_ALLOW_SHELL=false``
-    to disable shell escapes and emit a warning when ``!`` is used.
+    ``doc_ai.cli.interactive.LAST_EXIT_CODE``. Shell escapes are disabled by
+    default; set ``DOC_AI_ALLOW_SHELL=true`` to enable them (the REPL warns when
+    enabled). When disabled, using ``!`` emits a warning.
 
 ### Shell Completion
 

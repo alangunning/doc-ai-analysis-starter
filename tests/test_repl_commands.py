@@ -2,6 +2,8 @@ import click
 from prompt_toolkit.history import FileHistory
 from typer.main import get_command
 
+import pytest
+
 from doc_ai.cli import app
 import doc_ai.cli.interactive as interactive
 from doc_ai.cli.interactive import _register_repl_commands
@@ -52,7 +54,8 @@ def test_history_outputs_entries(tmp_path, capsys):
     assert "2: second" in out
 
 
-def test_bang_executes_shell_command(capsys):
+def test_bang_executes_shell_command(capsys, monkeypatch):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
     _setup()
     _parse_command("!python -c \"print('hi')\"")
     out = capsys.readouterr().out
@@ -60,11 +63,20 @@ def test_bang_executes_shell_command(capsys):
     assert interactive.LAST_EXIT_CODE == 0
 
 
-def test_bang_preserves_exit_status(capsys):
+def test_bang_preserves_exit_status(capsys, monkeypatch):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
     _setup()
-    _parse_command("!python -c \"import sys; sys.exit(3)\"")
+    _parse_command('!python -c "import sys; sys.exit(3)"')
     capsys.readouterr()
     assert interactive.LAST_EXIT_CODE == 3
+
+
+def test_bang_warns_when_shell_disabled(monkeypatch):
+    monkeypatch.delenv("DOC_AI_ALLOW_SHELL", raising=False)
+    _setup()
+    with pytest.warns(UserWarning, match="Shell escapes disabled"):
+        _parse_command("!python -c \"print('hi')\"")
+    assert interactive.LAST_EXIT_CODE == 1
 
 
 def test_chmod_failure_is_handled(monkeypatch, tmp_path):
