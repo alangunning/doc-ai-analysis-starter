@@ -65,7 +65,7 @@ else:
     GLOBAL_CONFIG_PATH = GLOBAL_CONFIG_DIR / "config.json"
 
 
-def load_global_config() -> dict[str, str]:
+def load_global_config() -> dict[str, object]:
     if GLOBAL_CONFIG_PATH.exists():
         try:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
@@ -73,7 +73,11 @@ def load_global_config() -> dict[str, str]:
             else:
                 data = json.loads(GLOBAL_CONFIG_PATH.read_text())
             if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+                cleaned: dict[str, object] = {}
+                for k, v in data.items():
+                    if isinstance(v, (str, bool)):
+                        cleaned[str(k)] = v
+                return cleaned
         except Exception as exc:
             logger.warning(
                 "Failed to load global config from %s: %s",
@@ -92,7 +96,7 @@ def save_global_config(cfg: dict[str, str]) -> None:
         GLOBAL_CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
 
 
-def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+def read_configs() -> tuple[dict[str, object], dict[str, str], dict[str, object]]:
     global_cfg = load_global_config()
     env_vals: dict[str, str] = {}
     if Path(ENV_FILE).exists():

@@ -9,6 +9,14 @@ import re
 import stat
 import warnings
 import subprocess
+import questionary
+
+
+def _textarea(message: str, **kwargs: Any):
+    """Return a multiline text question."""
+    if hasattr(questionary, "textarea"):
+        return questionary.textarea(message, **kwargs)  # type: ignore[attr-defined]
+    return questionary.text(message, **kwargs)
 from platformdirs import PlatformDirs
 
 import click
@@ -236,11 +244,11 @@ def _repl_clear_history(args: list[str]) -> None:
 
 
 def _repl_edit_prompt(args: list[str]) -> None:
-    """Edit prompt for the current or given doc type/topic."""
+    """Edit prompt for the current or given doc type/topic inline."""
     if _REPL_CTX is None:
         click.echo("Prompt editing unavailable.")
         return
-    from .prompt import edit_prompt
+    from .prompt import resolve_prompt_path
 
     cfg = _REPL_CTX.obj.get("config", {}) if _REPL_CTX.obj else {}
     doc_type = args[0] if args else cfg.get("default_doc_type")
@@ -249,9 +257,18 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo("Document type required")
         return
     try:
-        edit_prompt(doc_type, topic)
+        path = resolve_prompt_path(doc_type, topic)
     except click.ClickException as exc:
         click.echo(exc.format_message())
+        return
+    existing = path.read_text()
+    try:
+        updated = _textarea("Edit prompt", default=existing).ask()
+    except Exception:
+        updated = None
+    if updated is None or updated == existing:
+        return
+    path.write_text(updated.rstrip() + "\n")
 
 
 def _repl_new_doc_type(args: list[str]) -> None:
@@ -364,6 +381,125 @@ def _repl_urls(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_edit_url_list(args: list[str]) -> None:
+    """Bulk edit URLs for a document type."""
+    if _REPL_CTX is None:
+        click.echo("URL list editing unavailable.")
+        return
+    from .manage_urls import _url_file, save_urls, _valid_url
+
+    doc_types, _ = discover_doc_types_topics()
+    doc_q = (
+        questionary.select("Document type", choices=doc_types)
+        if doc_types
+        else questionary.text("Document type")
+    )
+    try:
+        answers = questionary.form(
+            doc_type=doc_q,
+            urls=_textarea("Enter URLs (one per line)", default=""),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers:
+        return
+    doc_type = answers.get("doc_type")
+    if not doc_type:
+        click.echo("Document type required")
+        return
+    raw = answers.get("urls") or ""
+    path = _url_file(doc_type)
+    existing: list[str] = []
+    if path.exists():
+        existing = [
+            line.strip() for line in path.read_text().splitlines() if line.strip()
+        ]
+    urls = existing[:]
+    for url in raw.split():
+        url = url.strip()
+        if not _valid_url(url):
+            click.echo(f"Skipping invalid URL: {url}")
+            continue
+        if url in urls:
+            continue
+        urls.append(url)
+    save_urls(path, urls)
+    refresh_completer()
+
+
+def _wizard_new_doc_type() -> None:
+    """Run wizard to create a new document type."""
+    if _REPL_CTX is None:
+        click.echo("Document type creation unavailable.")
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    try:
+        answers = questionary.form(
+            name=questionary.text("Document type name"),
+            description=_textarea(
+                "Description (optional)", default=""
+            ),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers or not answers.get("name"):
+        return
+    new_doc_type_mod.doc_type(
+        cast(typer.Context, _REPL_CTX),
+        answers["name"],
+        description=answers.get("description", ""),
+    )
+
+
+def _wizard_new_topic() -> None:
+    """Run wizard to create a new topic prompt."""
+    if _REPL_CTX is None:
+        click.echo("Topic creation unavailable.")
+        return
+    from . import new_topic as new_topic_mod
+
+    doc_types, _ = discover_doc_types_topics()
+    doc_q = (
+        questionary.select("Document type", choices=doc_types)
+        if doc_types
+        else questionary.text("Document type")
+    )
+    try:
+        answers = questionary.form(
+            doc_type=doc_q,
+            topic=questionary.text("Topic"),
+            description=_textarea(
+                "Description (optional)", default=""
+            ),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers or not answers.get("doc_type") or not answers.get("topic"):
+        return
+    new_topic_mod.topic(
+        cast(typer.Context, _REPL_CTX),
+        answers["topic"],
+        doc_type=answers["doc_type"],
+        description=answers.get("description", ""),
+    )
+
+
+def _repl_wizard(args: list[str]) -> None:
+    """Invoke interactive wizards."""
+    if not args:
+        click.echo("Available wizards: new-doc-type, new-topic")
+        return
+    cmd = args[0]
+    if cmd == "new-doc-type":
+        _wizard_new_doc_type()
+        return
+    if cmd == "new-topic":
+        _wizard_new_topic()
+        return
+    click.echo(f"Unknown wizard: {cmd}")
+
+
 def _repl_set_default(args: list[str]) -> None:
     """Set default document type and optional topic."""
     if _REPL_CTX is None:
@@ -400,6 +536,7 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":clear-history", _repl_clear_history)
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
+    plugins.register_repl_command(":edit-url-list", _repl_edit_url_list)
     plugins.register_repl_command(":urls", _repl_urls)
     plugins.register_repl_command(":manage-urls", _repl_urls)
     plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
@@ -409,6 +546,7 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":rename-topic", _repl_rename_topic)
     plugins.register_repl_command(":delete-topic", _repl_delete_topic)
     plugins.register_repl_command(":set-default", _repl_set_default)
+    plugins.register_repl_command(":wizard", _repl_wizard)
 
 
 def discover_topics(doc_type: str, data_dir: Path = Path("data")) -> list[str]:
