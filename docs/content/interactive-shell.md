@@ -7,6 +7,12 @@ an interactive prompt to any [Typer](https://typer.tiangolo.com/) application.
 
 ## Running a shell
 
+Install Doc AI with the `repl` extra to include the REPL dependencies:
+
+```bash
+pip install "doc-ai[repl]"
+```
+
 Start the REPL by running the `doc-ai` console script with no arguments:
 
 ```bash

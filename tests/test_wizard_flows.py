@@ -2,11 +2,16 @@ import shutil
 from pathlib import Path
 
 import click
+import pytest
 from typer.main import get_command
 
+pytest.importorskip("click_repl")
+pytest.importorskip("prompt_toolkit")
+pytest.importorskip("questionary")
+
 import doc_ai.cli.interactive as interactive
-from doc_ai.cli import app
 from doc_ai import plugins
+from doc_ai.cli import app
 
 
 def _setup_ctx() -> click.Context:
@@ -93,4 +98,3 @@ def test_wizard_flows_update_files_and_completions(monkeypatch, tmp_path):
         "https://example.com",
         "https://example.org",
     ]
-

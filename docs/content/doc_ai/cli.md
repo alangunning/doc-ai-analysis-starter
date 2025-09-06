@@ -63,7 +63,11 @@ doc-ai analyze report.md --topic finance --topic risk
 python doc_ai/cli.py convert report.pdf --format markdown
 ```
 
-After installation, the same commands are available via the `doc-ai` console script. Run `doc-ai` with no arguments to enter an interactive shell.
+After installation, the same commands are available via the `doc-ai` console script. Install the optional REPL dependencies and run `doc-ai` with no arguments to enter an interactive shell:
+
+```bash
+pip install "doc-ai[repl]"
+```
 
 ## Global configuration and logging
 

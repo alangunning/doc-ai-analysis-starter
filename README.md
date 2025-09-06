@@ -140,6 +140,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai new delete-topic invoice risk
    ```
 
+Install the optional REPL dependencies to enable the interactive shell:
+
+```bash
+pip install "doc-ai[repl]"
+```
+
 Run ``doc-ai`` with no arguments to drop into an interactive shell with
 tab-completion for commands and options. Completions include document types
 under ``data/`` and analysis topics discovered from prompt files. Use

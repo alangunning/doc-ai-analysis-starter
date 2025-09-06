@@ -1,9 +1,15 @@
 import importlib
 
 import click
+import pytest
+from typer.testing import CliRunner
+
+pytest.importorskip("click_repl")
+pytest.importorskip("prompt_toolkit")
+pytest.importorskip("questionary")
+
 from prompt_toolkit.document import Document
 from typer.main import get_command
-from typer.testing import CliRunner
 
 from doc_ai.cli.interactive import DocAICompleter
 
