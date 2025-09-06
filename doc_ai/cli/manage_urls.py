@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -8,6 +9,8 @@ import typer
 
 from .interactive import refresh_completer
 from .utils import select_doc_type
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer(
     help="Manage stored URLs; paste or import multiple entries.",
@@ -80,7 +83,8 @@ def add_urls(
     if not url:
         try:
             raw = questionary.text("Enter URL(s)").ask()
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to read URL input: %s", exc)
             raw = None
         if not raw:
             raise typer.BadParameter("URL required")
@@ -114,7 +118,8 @@ def import_urls(
     if file is None:
         try:
             path_str = questionary.text("Path to file with URLs").ask()
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to read path input: %s", exc)
             path_str = None
         if not path_str:
             raise typer.BadParameter("Path to file with URLs required")
@@ -155,7 +160,8 @@ def remove_url(
     if url is None:
         try:
             url = questionary.select("Select URL to remove", choices=urls).ask()
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to select URL to remove: %s", exc)
             url = None
         if not url:
             raise typer.BadParameter("URL to remove required")
@@ -187,7 +193,8 @@ def manage_urls(ctx: typer.Context) -> None:
                 "Choose action",
                 choices=["list", "add", "import", "remove", "done"],
             ).ask()
-        except Exception:
+        except Exception as exc:
+            logger.debug("Failed to prompt for action: %s", exc)
             action = "done"
         if action in (None, "done"):
             break
@@ -197,7 +204,8 @@ def manage_urls(ctx: typer.Context) -> None:
         if action == "add":
             try:
                 raw = questionary.text("Enter URL(s)").ask()
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to read URL input: %s", exc)
                 raw = None
             if not raw:
                 continue
@@ -219,7 +227,8 @@ def manage_urls(ctx: typer.Context) -> None:
         if action == "import":
             try:
                 import_path = questionary.text("Path to file with URLs").ask()
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to read path input: %s", exc)
                 import_path = None
             if not import_path:
                 continue
@@ -251,7 +260,8 @@ def manage_urls(ctx: typer.Context) -> None:
                 to_remove = questionary.select(
                     "Select URL to remove", choices=urls
                 ).ask()
-            except Exception:
+            except Exception as exc:
+                logger.debug("Failed to select URL to remove: %s", exc)
                 to_remove = None
             if not to_remove:
                 continue
