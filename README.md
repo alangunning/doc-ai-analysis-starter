@@ -123,7 +123,17 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
    This creates `data/invoice/` with `invoice.analysis.prompt.yaml`
    and `validate.prompt.yaml` based on the default templates under
-   `.github/prompts/`.
+   `.github/prompts/`. Any description you enter during creation is
+   saved to `data/invoice/description.txt` for future reference. Use
+   related commands to manage existing entries:
+
+   ```bash
+   doc-ai new rename-doc-type invoice bill
+   doc-ai new delete-doc-type bill
+   doc-ai new topic invoice finance
+   doc-ai new rename-topic invoice finance risk
+   doc-ai new delete-topic invoice risk
+   ```
 
 Run ``doc-ai`` with no arguments to drop into an interactive shell with
 tab-completion for commands and options. Completions include document types

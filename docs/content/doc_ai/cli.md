@@ -20,6 +20,12 @@ The `doc_ai.cli` package provides a Typer-based command line interface for orche
 - `show doc-types` – list discovered document types under the `data/` directory
 - `show topics` – list analysis topics inferred from prompt files
 - `edit prompt <doc-type> [--topic <name>]` – open the prompt file in `$EDITOR` (falls back to `vi`/`nano`)
+- `new doc-type <name>` – scaffold a document type and save an optional description
+- `new topic <doc-type> <name>` – create a topic prompt with an optional description
+- `new rename-doc-type <old> <new>` – rename a document type and its prompts
+- `new delete-doc-type <name>` – remove a document type directory
+- `new rename-topic <doc-type> <old> <new>` – rename a topic prompt
+- `new delete-topic <doc-type> <name>` – delete a topic prompt
 - `pipeline` – convert, validate, analyze and embed supported raw documents in a directory; paths containing `.converted` are ignored
 
   Use `--workers N` to process documents concurrently. Control which steps run with

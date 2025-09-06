@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from .interactive import refresh_completer
+from .interactive import refresh_after
 
 app = typer.Typer(help="Scaffold a new document type with template prompts")
 
@@ -21,7 +21,15 @@ DATA_DIR = Path("data")
     "doc-type",
     help="Create a new document type directory under data/ with template prompts.",
 )
-def doc_type(name: str) -> None:
+@refresh_after
+def doc_type(
+    name: str,
+    description: str = typer.Option(
+        "",
+        "--description",
+        help="Optional description or notes saved to description.txt",
+    ),
+) -> None:
     """Create a new document type directory populated with prompt templates."""
     if not TEMPLATE_ANALYSIS.exists() or not TEMPLATE_VALIDATE.exists():
         typer.echo("Template prompt files not found.", err=True)
@@ -38,13 +46,66 @@ def doc_type(name: str) -> None:
     shutil.copyfile(TEMPLATE_ANALYSIS, analysis_target)
     shutil.copyfile(TEMPLATE_VALIDATE, validate_target)
 
-    if sys.stdin.isatty():
+    if description:
+        (target_dir / "description.txt").write_text(description + "\n")
+    elif sys.stdin.isatty():
         # Interactively gather optional description or notes.
         typer.echo("Created new document type directory and prompt templates.")
         typer.echo(f"  {analysis_target}")
         typer.echo(f"  {validate_target}")
         typer.echo("Edit these files to customize prompts for your document type.")
-        typer.prompt("Optional description or notes", default="", show_default=False)
+        desc = typer.prompt(
+            "Optional description or notes", default="", show_default=False
+        ).strip()
+        if desc:
+            (target_dir / "description.txt").write_text(desc + "\n")
     else:
         typer.echo(f"Created {target_dir}")
-    refresh_completer()
+
+
+@app.command("rename-doc-type", help="Rename a document type and its prompt files.")
+@refresh_after
+def rename_doc_type(old: str, new: str) -> None:
+    """Rename existing document type *old* to *new*."""
+
+    old_dir = DATA_DIR / old
+    new_dir = DATA_DIR / new
+    if not old_dir.exists():
+        typer.echo(f"Directory {old_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+    if new_dir.exists():
+        typer.echo(f"Directory {new_dir} already exists", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty():
+        if not typer.confirm(f"Rename {old} to {new}?", default=True):
+            typer.echo("Aborted")
+            return
+
+    old_dir.rename(new_dir)
+    for p in new_dir.glob(f"{old}.analysis*.prompt.yaml"):
+        new_name = p.name.replace(f"{old}.analysis", f"{new}.analysis", 1)
+        new_path = new_dir / new_name
+        p.rename(new_path)
+        desc_old = p.with_suffix(".description.txt")
+        if desc_old.exists():
+            desc_old.rename(new_path.with_suffix(".description.txt"))
+
+
+@app.command("delete-doc-type", help="Delete a document type directory.")
+@refresh_after
+def delete_doc_type(name: str) -> None:
+    """Remove the document type directory named *name*."""
+
+    target_dir = DATA_DIR / name
+    if not target_dir.exists():
+        typer.echo(f"Directory {target_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty():
+        if not typer.confirm(f"Delete {target_dir}?", default=False):
+            typer.echo("Aborted")
+            return
+
+    shutil.rmtree(target_dir)
+
