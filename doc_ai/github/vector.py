@@ -76,8 +76,16 @@ def build_vector_store(
                 dims = int(EMBED_DIMENSIONS)
                 if dims > 0:
                     kwargs["dimensions"] = dims
+                else:
+                    _log.warning(
+                        "EMBED_DIMENSIONS must be a positive integer; got %s",
+                        EMBED_DIMENSIONS,
+                    )
             except ValueError:
-                pass
+                _log.warning(
+                    "EMBED_DIMENSIONS must be a positive integer; got %s",
+                    EMBED_DIMENSIONS,
+                )
 
         success = False
         max_attempts = 3
