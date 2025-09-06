@@ -619,6 +619,7 @@ def main() -> None:
                 logger.exception("Unhandled exception")
             else:
                 logger.error("[red]%s[/red]", exc)
+            raise SystemExit(1)
         return
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         app(prog_name="cli.py", args=["--help"])
