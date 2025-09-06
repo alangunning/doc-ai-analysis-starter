@@ -118,13 +118,14 @@ def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
         def ask(self) -> str:
             return self.response
 
+    selections = iter(["sample", "old"])
     monkeypatch.setattr(
-        "doc_ai.cli.new_topic.questionary.select",
-        lambda *a, **k: DummyPrompt("old"),
+        "doc_ai.cli.utils.questionary.select",
+        lambda *a, **k: DummyPrompt(next(selections)),
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["new", "delete-topic", "--doc-type", "sample"])
+    result = runner.invoke(app, ["new", "delete-topic"])
     assert result.exit_code == 0, result.output
     assert not target_file.exists()
 

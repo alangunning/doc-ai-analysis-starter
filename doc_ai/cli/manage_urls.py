@@ -6,8 +6,8 @@ from urllib.parse import urlparse
 import questionary
 import typer
 
-from .interactive import refresh_completer, discover_doc_types_topics
-from .utils import prompt_if_missing
+from .interactive import refresh_completer
+from .utils import select_doc_type
 
 
 app = typer.Typer(
@@ -60,18 +60,7 @@ def manage_urls(
     Use "add" to enter one or more URLs separated by whitespace or newlines, or
     "import" to load URLs from a text file.
     """
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select("Select document type", choices=doc_types).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
+    doc_type = select_doc_type(ctx, doc_type)
 
     path, urls = show_urls(doc_type)
 

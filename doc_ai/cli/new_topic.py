@@ -6,11 +6,15 @@ import sys
 import shutil
 from pathlib import Path
 
-import questionary
 import typer
 
-from .interactive import refresh_after, discover_doc_types_topics, discover_topics
-from .utils import prompt_if_missing, sanitize_name
+from .interactive import refresh_after
+from .utils import (
+    prompt_if_missing,
+    sanitize_name,
+    select_doc_type,
+    select_topic,
+)
 
 app = typer.Typer(help="Scaffold a new analysis topic prompt for a document type")
 
@@ -38,21 +42,7 @@ def topic(
         typer.echo("Template prompt file not found.", err=True)
         raise typer.Exit(code=1)
 
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
-    doc_type = sanitize_name(doc_type)
+    doc_type = select_doc_type(ctx, doc_type)
     topic = prompt_if_missing(ctx, topic, "Topic")
     if topic is None:
         raise typer.BadParameter("Topic required")
@@ -98,33 +88,8 @@ def rename_topic(
 ) -> None:
     """Rename topic *old* to *new* under *doc_type*."""
 
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
-    doc_type = sanitize_name(doc_type)
-    topics = discover_topics(doc_type)
-    old = old or cfg.get("default_topic")
-    if old is None:
-        if topics:
-            try:
-                old = questionary.select("Select topic", choices=topics).ask()
-            except Exception:
-                old = None
-        old = prompt_if_missing(ctx, old, "Topic")
-    if old is None:
-        raise typer.BadParameter("Topic required")
-    old = sanitize_name(old)
+    doc_type = select_doc_type(ctx, doc_type)
+    old = select_topic(ctx, old, doc_type)
     new = prompt_if_missing(ctx, new, "New topic name")
     if new is None:
         raise typer.BadParameter("New topic name required")
@@ -168,33 +133,8 @@ def delete_topic(
 ) -> None:
     """Delete the topic prompt *topic* under *doc_type*."""
 
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
-    doc_type = sanitize_name(doc_type)
-    topics = discover_topics(doc_type)
-    topic = topic or cfg.get("default_topic")
-    if topic is None:
-        if topics:
-            try:
-                topic = questionary.select("Select topic", choices=topics).ask()
-            except Exception:
-                topic = None
-        topic = prompt_if_missing(ctx, topic, "Topic")
-    if topic is None:
-        raise typer.BadParameter("Topic required")
-    topic = sanitize_name(topic)
+    doc_type = select_doc_type(ctx, doc_type)
+    topic = select_topic(ctx, topic, doc_type)
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
