@@ -122,3 +122,45 @@ def test_chmod_failure_is_handled(monkeypatch, tmp_path):
     monkeypatch.setattr(interactive, "repl", lambda *a, **k: None)
     interactive.interactive_shell(app)
     assert (tmp_path / "history").exists()
+
+
+def test_edit_prompt_external_editor(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data" / "invoice"
+    data_dir.mkdir(parents=True)
+    prompt = data_dir / "invoice.analysis.prompt.yaml"
+    prompt.write_text("old")
+    monkeypatch.chdir(tmp_path)
+    _setup()
+    captured: dict[str, str] = {}
+
+    def fake_edit(text: str) -> str:
+        captured["text"] = text
+        return "new text"
+
+    monkeypatch.setattr(click, "edit", fake_edit)
+    _parse_command(":edit-prompt invoice")
+    assert captured["text"].strip() == "old"
+    assert prompt.read_text() == "new text\n"
+
+
+def test_edit_url_list_external_editor(tmp_path, monkeypatch):
+    data_dir = tmp_path / "data" / "invoice"
+    data_dir.mkdir(parents=True)
+    urls_file = data_dir / "urls.txt"
+    urls_file.write_text("http://a.com\n")
+    monkeypatch.chdir(tmp_path)
+    _setup()
+    edited = "http://b.com\ninvalid\nhttp://a.com\n"
+    captured: dict[str, str] = {}
+
+    def fake_edit(text: str) -> str:
+        captured["text"] = text
+        return edited
+
+    monkeypatch.setattr(click, "edit", fake_edit)
+    called: list[bool] = []
+    monkeypatch.setattr(interactive, "refresh_completer", lambda: called.append(True))
+    _parse_command(":edit-url-list invoice")
+    assert captured["text"].strip() == "http://a.com"
+    assert urls_file.read_text() == "http://b.com\nhttp://a.com\n"
+    assert called
