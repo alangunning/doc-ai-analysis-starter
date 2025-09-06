@@ -17,4 +17,3 @@ def test_failing_subcommand_exits_with_status_one(monkeypatch):
         cli_module.main()
 
     assert excinfo.value.code == 1
-

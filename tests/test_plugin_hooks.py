@@ -11,7 +11,7 @@ from doc_ai.cli.interactive import DocAICompleter
 
 def test_example_plugin_repl_and_completion(capsys):
     plugins._reset()
-    module = runpy.run_path("docs/examples/plugin_example.py")
+    module = runpy.run_path("docs/content/examples/plugin_example.py")
 
     assert "ping" in plugins.iter_repl_commands()
     _parse_command("ping")
