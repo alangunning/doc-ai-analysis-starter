@@ -82,3 +82,35 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
             )
 
     subprocess.run(editor_cmd + [str(path)], check=True)
+
+
+def edit_prompt_inline(doc_type: str, topic: str | None) -> None:
+    """Edit the prompt file using an inline text area.
+
+    Falls back to :func:`typer.edit` if ``questionary`` is unable to render a
+    text area (for example, in non-interactive environments). The edited
+    content is written back to the prompt file, preserving a trailing newline
+    when the buffer is not empty.
+    """
+
+    import questionary
+
+    path = resolve_prompt_path(doc_type, topic)
+    initial = path.read_text() if path.exists() else ""
+
+    edited: str | None = None
+    textarea = getattr(questionary, "textarea", None)
+    if callable(textarea):
+        try:
+            edited = textarea("Edit prompt", default=initial).ask()
+        except Exception:
+            edited = None
+    if edited is None:
+        edited = typer.edit(initial)
+
+    if edited is None:
+        return
+
+    # Ensure file ends with a single trailing newline if there is content
+    text = edited.rstrip("\n") + ("\n" if edited else "")
+    path.write_text(text)

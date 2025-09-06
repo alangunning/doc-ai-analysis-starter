@@ -51,6 +51,86 @@ def _valid_url(url: str) -> bool:
     return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
 
+@app.command("wizard", help="Bulk add URLs using a form.")
+def url_wizard(ctx: typer.Context) -> None:
+    """Prompt for a document type and URLs to append via a textarea."""
+
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_types, _ = discover_doc_types_topics()
+    doc_q = (
+        questionary.select("Document type", choices=doc_types)
+        if doc_types
+        else questionary.text("Document type")
+    )
+    textarea = getattr(questionary, "textarea", None)
+    try:
+        answers = questionary.form(
+            doc_type=doc_q,
+            urls=textarea("Enter URLs, one per line") if callable(textarea) else questionary.text("Enter URLs"),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers:
+        return
+
+    doc_type = answers.get("doc_type") or cfg.get("default_doc_type")
+    if not doc_type:
+        raise typer.BadParameter("Document type required")
+    doc_type = str(doc_type)
+    path, existing = show_urls(doc_type)
+    raw = answers.get("urls") or ""
+    for url in raw.splitlines():
+        url = url.strip()
+        if not url or not _valid_url(url) or url in existing:
+            continue
+        existing.append(url)
+    save_urls(path, existing)
+    refresh_completer()
+
+
+def edit_url_list(ctx: typer.Context, doc_type: str | None = None) -> None:
+    """Edit the persistent URL list for *doc_type* via an inline editor."""
+
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        doc_types, _ = discover_doc_types_topics()
+        if doc_types:
+            try:
+                doc_type = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
+            except Exception:
+                doc_type = None
+        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
+
+    path, urls = show_urls(doc_type)
+    default = "\n".join(urls)
+    textarea = getattr(questionary, "textarea", None)
+    edited: str | None = None
+    if callable(textarea):
+        try:
+            edited = textarea("Edit URLs", default=default).ask()
+        except Exception:
+            edited = None
+    if edited is None:
+        edited = typer.edit(default)
+    if edited is None:
+        return
+
+    new_urls: list[str] = []
+    for line in edited.splitlines():
+        u = line.strip()
+        if not u or not _valid_url(u):
+            continue
+        if u not in new_urls:
+            new_urls.append(u)
+    save_urls(path, new_urls)
+    refresh_completer()
+
+
 @app.callback()
 def manage_urls(
     ctx: typer.Context, doc_type: str | None = typer.Argument(None, help="Document type")

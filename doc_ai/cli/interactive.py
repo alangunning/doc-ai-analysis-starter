@@ -240,7 +240,7 @@ def _repl_edit_prompt(args: list[str]) -> None:
     if _REPL_CTX is None:
         click.echo("Prompt editing unavailable.")
         return
-    from .prompt import edit_prompt
+    from .prompt import edit_prompt_inline
 
     cfg = _REPL_CTX.obj.get("config", {}) if _REPL_CTX.obj else {}
     doc_type = args[0] if args else cfg.get("default_doc_type")
@@ -249,7 +249,7 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo("Document type required")
         return
     try:
-        edit_prompt(doc_type, topic)
+        edit_prompt_inline(doc_type, topic)
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -364,6 +364,48 @@ def _repl_urls(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_edit_url_list(args: list[str]) -> None:
+    """Edit the URL list for a document type using an inline editor."""
+    if _REPL_CTX is None:
+        click.echo("URL editing unavailable.")
+        return
+    from . import manage_urls as manage_urls_mod
+
+    doc_type = args[0] if args else None
+    try:
+        manage_urls_mod.edit_url_list(cast(typer.Context, _REPL_CTX), doc_type)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_wizard(args: list[str]) -> None:
+    """Run interactive wizards for common scaffolding tasks."""
+    if _REPL_CTX is None:
+        click.echo("Wizard unavailable.")
+        return
+    if not args:
+        click.echo("Usage: :wizard [new-doc-type|new-topic|urls]")
+        return
+    cmd = args[0]
+    try:
+        if cmd == "new-topic":
+            from . import new_topic as new_topic_mod
+
+            new_topic_mod.wizard(cast(typer.Context, _REPL_CTX))
+        elif cmd == "new-doc-type":
+            from . import new_doc_type as new_doc_type_mod
+
+            new_doc_type_mod.wizard(cast(typer.Context, _REPL_CTX))
+        elif cmd in {"urls", "url-list"}:
+            from . import manage_urls as manage_urls_mod
+
+            manage_urls_mod.url_wizard(cast(typer.Context, _REPL_CTX))
+        else:
+            click.echo(f"Unknown wizard: {cmd}")
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
 def _repl_set_default(args: list[str]) -> None:
     """Set default document type and optional topic."""
     if _REPL_CTX is None:
@@ -402,6 +444,8 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
     plugins.register_repl_command(":urls", _repl_urls)
     plugins.register_repl_command(":manage-urls", _repl_urls)
+    plugins.register_repl_command(":edit-url-list", _repl_edit_url_list)
+    plugins.register_repl_command(":wizard", _repl_wizard)
     plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
     plugins.register_repl_command(":delete-doc-type", _repl_delete_doc_type)
     plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)

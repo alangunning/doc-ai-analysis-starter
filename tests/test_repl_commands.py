@@ -21,6 +21,8 @@ def test_help_lists_repl_commands(capsys):
     out = capsys.readouterr().out
     assert ":new-doc-type" in out
     assert ":manage-urls" in out
+    assert ":edit-url-list" in out
+    assert ":wizard" in out
 
 
 def test_help_lists_subcommands(capsys):

@@ -71,6 +71,28 @@ def doc_type(
         typer.echo(f"Created {target_dir}")
 
 
+@app.command("wizard", help="Interactive form to create a new document type.")
+@refresh_after  # type: ignore[misc]
+def wizard(ctx: typer.Context) -> None:
+    """Run a multi-step questionary form to scaffold a document type."""
+
+    if not sys.stdin.isatty():
+        typer.echo("Interactive wizard requires a TTY", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        answers = questionary.form(
+            name=questionary.text("Document type"),
+            description=questionary.text("Description", default=""),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers:
+        return
+
+    doc_type(ctx, answers.get("name"), description=answers.get("description", ""))
+
+
 @app.command("rename-doc-type", help="Rename a document type and its prompt files.")
 @refresh_after  # type: ignore[misc]
 def rename_doc_type(

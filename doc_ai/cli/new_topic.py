@@ -83,6 +83,45 @@ def topic(
         typer.echo(f"Created {target_file}")
 
 
+@app.command("wizard", help="Interactive form to create a new topic prompt.")
+@refresh_after  # type: ignore[misc]
+def wizard(ctx: typer.Context) -> None:
+    """Run a multi-step questionary form for creating a topic."""
+
+    if not TEMPLATE_TOPIC.exists():
+        typer.echo("Template prompt file not found.", err=True)
+        raise typer.Exit(code=1)
+
+    if not sys.stdin.isatty():
+        typer.echo("Interactive wizard requires a TTY", err=True)
+        raise typer.Exit(code=1)
+
+    doc_types, _ = discover_doc_types_topics()
+    doc_q = (
+        questionary.select("Document type", choices=doc_types)
+        if doc_types
+        else questionary.text("Document type")
+    )
+
+    try:
+        answers = questionary.form(
+            doc_type=doc_q,
+            topic=questionary.text("Topic"),
+            description=questionary.text("Description", default=""),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers:
+        return
+
+    topic(
+        ctx,
+        answers.get("topic"),
+        doc_type=answers.get("doc_type"),
+        description=answers.get("description", ""),
+    )
+
+
 @app.command("rename-topic", help="Rename a topic prompt for a document type.")
 @refresh_after  # type: ignore[misc]
 def rename_topic(
