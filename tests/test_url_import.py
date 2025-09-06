@@ -14,7 +14,9 @@ class DummyResp:
     def raise_for_status(self) -> None:  # pragma: no cover - no errors
         return
 
-    def iter_content(self, chunk_size: int = 8192):  # pragma: no cover - simple iterator
+    def iter_content(
+        self, chunk_size: int = 8192
+    ):  # pragma: no cover - simple iterator
         yield self.data
 
     def close(self) -> None:  # pragma: no cover - nothing to close
@@ -103,12 +105,19 @@ def test_add_urls_command(tmp_path, monkeypatch):
     monkeypatch.setattr("doc_ai.cli.convert_path", fake_convert_path)
 
     url_file = tmp_path / "urls.txt"
-    url_file.write_text("\n".join(urls))
+    url_file.write_text(
+        "\n".join(
+            [
+                "http://example.com/a.txt",
+                "not-a-url",
+                "http://example.com/a.txt",
+                "http://example.com/b.txt",
+            ]
+        )
+    )
 
     runner = CliRunner()
-    result = runner.invoke(
-        app, ["add", "urls", str(url_file), "--doc-type", "letters"]
-    )
+    result = runner.invoke(app, ["add", "urls", str(url_file), "--doc-type", "letters"])
     assert result.exit_code == 0, result.output
     dest = Path("data/letters")
     assert (dest / "a.txt").read_bytes() == b"a"
@@ -123,11 +132,22 @@ def test_manage_urls_command(tmp_path, monkeypatch):
     url_file = doc_dir / "urls.txt"
     url_file.write_text("http://a\nhttp://b\n")
     runner = CliRunner()
+    # Attempt to add an invalid URL and a duplicate, then remove entry 2
     result = runner.invoke(
-        app, ["add", "manage-urls", "reports"], input="http://c\n2\n\n"
+        app,
+        ["add", "manage-urls", "reports"],
+        input="notaurl\nhttp://c\nhttp://a\n2\n\n",
     )
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://a", "http://c"]
+
+
+def test_add_url_rejects_invalid(monkeypatch):
+    runner = CliRunner()
+    result = runner.invoke(
+        app, ["add", "url", "notaurl", "--doc-type", "letters"], input=""
+    )
+    assert result.exit_code != 0
 
 
 def test_download_sanitizes_and_uniquifies(tmp_path, monkeypatch):
@@ -180,4 +200,3 @@ def test_download_parallel_execution(tmp_path, monkeypatch):
     download_and_convert(urls, "reports", [], False)
     elapsed = time.perf_counter() - start
     assert elapsed < 0.35
-

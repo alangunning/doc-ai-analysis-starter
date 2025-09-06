@@ -15,9 +15,10 @@ doc-ai> help
 ```
 
 The prompt updates to reflect the current working directory and command
-history is stored in ``~/.doc-ai-history`` for future sessions. Under the hood
-the shell leverages ``click-repl`` to provide tab completion and can be reused
-in other Typer-based projects.
+history is stored in the user data directory provided by
+``platformdirs`` (for example ``~/.local/share/doc_ai/history`` on Linux)
+for future sessions. Under the hood the shell leverages ``click-repl`` to
+provide tab completion and can be reused in other Typer-based projects.
 
 Use `show doc-types` and `show topics` to list document types under the
 ``data/`` directory and analysis topics discovered from prompt files.

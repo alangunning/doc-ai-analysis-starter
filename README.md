@@ -78,7 +78,8 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai> add url https://example.com/a.pdf --doc-type reports
    ```
 
-   Load a list of links from a file or manage a stored URL list:
+   Load a list of links from a file or manage a stored URL list. ``manage-urls``
+   validates entries and prevents duplicates:
 
    ```bash
    doc-ai> add urls links.txt --doc-type reports
@@ -154,7 +155,9 @@ refreshes completion suggestions for document types and topics:
     ```
 
     The prompt reflects the current working directory and command history is
-    stored in ``~/.doc-ai-history`` for future sessions. The shell helper lives
+    stored under the user data directory provided by ``platformdirs`` (for
+    example ``~/.local/share/doc_ai/history`` on Linux) for future sessions. The
+    shell helper lives
     in ``doc_ai.cli.interactive`` and is re-exported from ``doc_ai.cli`` so it
     can be reused in other Typer-based projects.
 

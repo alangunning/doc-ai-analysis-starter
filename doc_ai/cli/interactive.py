@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import os
 import re
+from platformdirs import PlatformDirs
 
 import click
 from click_repl import repl, ClickCompleter
@@ -239,7 +240,11 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     ctx = click.Context(cmd)
     if init is not None:
         run_batch(ctx, init)
-    history_path = Path.home() / ".doc-ai-history"
+    dirs = PlatformDirs("doc_ai")
+    data_dir = dirs.user_data_path
+    data_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.chmod(0o700)
+    history_path = data_dir / "history"
     exists = history_path.exists()
     history_path.touch(mode=0o600, exist_ok=True)
     if exists:
