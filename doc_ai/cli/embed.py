@@ -6,7 +6,7 @@ from pathlib import Path
 import typer
 
 from . import build_vector_store
-from .utils import resolve_bool, resolve_int
+from .utils import resolve_bool, resolve_int, prompt_if_missing
 
 app = typer.Typer(
     invoke_without_command=True, help="Generate embeddings for Markdown files."
@@ -16,7 +16,9 @@ app = typer.Typer(
 @app.callback()
 def embed(
     ctx: typer.Context,
-    source: Path = typer.Argument(..., help="Directory containing Markdown files"),
+    source: Path | None = typer.Argument(
+        None, help="Directory containing Markdown files"
+    ),
     fail_fast: bool = typer.Option(
         False, "--fail-fast", help="Abort immediately on the first HTTP error"
     ),
@@ -30,6 +32,14 @@ def embed(
     if ctx.obj is None:
         ctx.obj = {}
     cfg = ctx.obj.get("config", {})
+    src_val = prompt_if_missing(
+        ctx,
+        str(source) if source is not None else None,
+        "Directory containing Markdown files",
+    )
+    if src_val is None:
+        raise typer.BadParameter("Missing argument 'source'")
+    source = Path(src_val)
     fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
     workers = resolve_int(ctx, "workers", workers, cfg, "WORKERS")
     build_vector_store(source, fail_fast=fail_fast, workers=workers)

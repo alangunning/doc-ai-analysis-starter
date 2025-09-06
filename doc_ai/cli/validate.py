@@ -13,6 +13,7 @@ from .utils import (
     validate_doc,
     resolve_bool,
     resolve_str,
+    prompt_if_missing,
 )
 from . import ModelName, _validate_prompt
 
@@ -25,7 +26,7 @@ app = typer.Typer(
 @app.callback()
 def validate(
     ctx: typer.Context,
-    raw: Path = typer.Argument(..., help="Path to raw document"),
+    raw: Path | None = typer.Argument(None, help="Path to raw document"),
     rendered: Path | None = typer.Argument(
         None, help="Path to converted file"
     ),
@@ -62,7 +63,15 @@ def validate(
         ctx.obj = {}
 
     cfg = ctx.obj.get("config", {})
-    model_name = resolve_str(ctx, "model", model.value if model else None, cfg, "VALIDATE_MODEL")
+    raw_val = prompt_if_missing(
+        ctx, str(raw) if raw is not None else None, "Path to raw document"
+    )
+    if raw_val is None:
+        raise typer.BadParameter("Missing argument 'raw'")
+    raw = Path(raw_val)
+    model_name = resolve_str(
+        ctx, "model", model.value if model else None, cfg, "VALIDATE_MODEL"
+    )
     model = ModelName(model_name) if model_name is not None else None
     base_model_url = resolve_str(
         ctx, "base_model_url", base_model_url, cfg, "VALIDATE_BASE_MODEL_URL"

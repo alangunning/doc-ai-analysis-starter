@@ -13,7 +13,7 @@ from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
 from doc_ai.openai import create_response
 from . import ModelName
-from .utils import resolve_bool, resolve_str
+from .utils import resolve_bool, resolve_str, prompt_if_missing
 
 app = typer.Typer(invoke_without_command=True, help="Query a vector store for similar documents.")
 
@@ -32,10 +32,10 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 @app.callback()
 def query(
     ctx: typer.Context,
-    store: Path = typer.Argument(
-        ..., help="Directory containing .embedding.json files", file_okay=False
+    store: Path | None = typer.Argument(
+        None, help="Directory containing .embedding.json files", file_okay=False
     ),
-    text: str = typer.Argument(..., help="Query text"),
+    text: str | None = typer.Argument(None, help="Query text"),
     k: int = typer.Option(5, "--k", help="Number of matches to display"),
     ask: bool = typer.Option(
         False,
@@ -54,6 +54,17 @@ def query(
         ctx.obj = {}
 
     cfg = ctx.obj.get("config", {})
+    store_val = prompt_if_missing(
+        ctx,
+        str(store) if store is not None else None,
+        "Directory containing .embedding.json files",
+    )
+    if store_val is None:
+        raise typer.BadParameter("Missing argument 'store'")
+    store = Path(store_val)
+    text = prompt_if_missing(ctx, text, "Query text")
+    if text is None:
+        raise typer.BadParameter("Missing argument 'text'")
     ask = resolve_bool(ctx, "ask", ask, cfg, "ASK")
     model_name = resolve_str(ctx, "model", model.value, cfg, "MODEL")
     try:

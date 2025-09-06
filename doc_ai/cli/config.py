@@ -11,7 +11,7 @@ from rich.panel import Panel
 from dotenv import set_key, dotenv_values
 import questionary
 
-from .utils import get_logging_options, load_env_defaults
+from .utils import get_logging_options, load_env_defaults, prompt_if_missing
 from . import ENV_FILE, save_global_config, read_configs, console
 from .interactive import refresh_completer, SAFE_ENV_VARS_ENV, _parse_allow_deny
 
@@ -102,10 +102,18 @@ def list_safe_env(ctx: typer.Context) -> None:
 
 
 @safe_env_app.command("add")
-def add_safe_env(ctx: typer.Context, names: list[str] = typer.Argument(..., metavar="NAME")) -> None:
+def add_safe_env(
+    ctx: typer.Context, names: list[str] | None = typer.Argument(None, metavar="NAME")
+) -> None:
     """Allow environment variables (prefix with '-' to deny)."""
     allow, deny = _read_safe_env(ctx)
-    for raw in names:
+    items = list(names or [])
+    if not items:
+        name = prompt_if_missing(ctx, None, "Environment variable name")
+        if name is None:
+            raise typer.BadParameter("NAME required")
+        items = [name]
+    for raw in items:
         a, d = _parse_allow_deny(raw)
         allow |= a
         deny |= d
@@ -113,10 +121,18 @@ def add_safe_env(ctx: typer.Context, names: list[str] = typer.Argument(..., meta
 
 
 @safe_env_app.command("remove")
-def remove_safe_env(ctx: typer.Context, names: list[str] = typer.Argument(..., metavar="NAME")) -> None:
+def remove_safe_env(
+    ctx: typer.Context, names: list[str] | None = typer.Argument(None, metavar="NAME")
+) -> None:
     """Remove environment variables from allow/deny lists."""
     allow, deny = _read_safe_env(ctx)
-    for name in names:
+    items = list(names or [])
+    if not items:
+        name = prompt_if_missing(ctx, None, "Environment variable name")
+        if name is None:
+            raise typer.BadParameter("NAME required")
+        items = [name]
+    for name in items:
         allow.discard(name.lstrip("+-"))
         deny.discard(name.lstrip("+-"))
     _write_safe_env(ctx, allow, deny)
@@ -235,23 +251,32 @@ def show(ctx: typer.Context) -> None:
 @app.command("set")
 def set_value(
     ctx: typer.Context,
-    pairs: list[str] = typer.Argument(..., metavar="VAR=VALUE"),
+    pairs: list[str] | None = typer.Argument(None, metavar="VAR=VALUE"),
     global_scope: bool = typer.Option(
         False, "--global", help="Modify global config instead of project .env"
     ),
 ) -> None:
     """Update environment configuration."""
-    _set_pairs(ctx, pairs, global_scope)
+    items = list(pairs or [])
+    if not items:
+        pair = prompt_if_missing(ctx, None, "VAR=VALUE")
+        if pair is None:
+            raise typer.BadParameter("VAR=VALUE required")
+        items = [pair]
+    _set_pairs(ctx, items, global_scope)
 
 @app.command()
 def toggle(
     ctx: typer.Context,
-    key: str = typer.Argument(..., metavar="KEY"),
+    key: str | None = typer.Argument(None, metavar="KEY"),
     global_scope: bool = typer.Option(
         False, "--global", help="Modify global config instead of project .env",
     ),
 ) -> None:
     """Toggle a boolean configuration value."""
+    key = prompt_if_missing(ctx, key, "KEY")
+    if key is None:
+        raise typer.BadParameter("KEY required")
     key = key.strip().upper()
     if key not in BOOLEAN_KEYS:
         raise typer.BadParameter(f"Unknown boolean config key '{key}'")
@@ -299,13 +324,19 @@ def default_topic(
 
 
 def set_defaults(
-    ctx: typer.Context, pairs: list[str] = typer.Argument(..., metavar="VAR=VALUE")
+    ctx: typer.Context, pairs: list[str] | None = typer.Argument(None, metavar="VAR=VALUE")
 ) -> None:
     """Update runtime default options for the current session."""
+    items = list(pairs or [])
+    if not items:
+        pair = prompt_if_missing(ctx, None, "VAR=VALUE")
+        if pair is None:
+            raise typer.BadParameter("VAR=VALUE required")
+        items = [pair]
     root = ctx.find_root()
     if root.default_map is None:
         root.default_map = {}
-    for item in pairs:
+    for item in items:
         try:
             key, value = item.split("=", 1)
         except ValueError as exc:  # pragma: no cover - handled by typer

@@ -38,6 +38,7 @@ from .utils import (  # noqa: F401
     parse_env_formats as _parse_env_formats,
     suffix as _suffix,
     validate_doc,
+    prompt_if_missing,
 )
 
 # Ensure project root is first on sys.path when running as a script.
@@ -228,8 +229,12 @@ def _exit_command(ctx: typer.Context) -> None:
 
 
 @app.command()
-def cd(ctx: typer.Context, path: Path = typer.Argument(...)) -> None:
+def cd(ctx: typer.Context, path: Path | None = typer.Argument(None)) -> None:
     """Change the current working directory."""
+    path_val = prompt_if_missing(ctx, str(path) if path is not None else None, "Path")
+    if path_val is None:
+        raise typer.BadParameter("Missing argument 'path'")
+    path = Path(path_val)
     try:
         os.chdir(path)
     except OSError as exc:  # pragma: no cover - just error display
