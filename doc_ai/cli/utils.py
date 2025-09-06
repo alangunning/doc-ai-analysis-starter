@@ -15,6 +15,11 @@ import typer
 from click.core import ParameterSource
 from dotenv import dotenv_values
 
+try:
+    QuestionaryError = questionary.QuestionaryError  # type: ignore[attr-defined]
+except AttributeError:  # pragma: no cover - older questionary releases
+    QuestionaryError = questionary.ValidationError  # type: ignore[assignment]
+
 from doc_ai.converter import OutputFormat, suffix_for_format
 from doc_ai.metadata import (
     compute_hash,
@@ -203,13 +208,14 @@ def prompt_if_missing(
         return value
     try:
         interactive = bool(ctx.obj.get("interactive", True)) and sys.stdin.isatty()
-    except Exception:
+    except (OSError, AttributeError):
         interactive = False
     if not interactive:
         return value
     try:
         answer = questionary.text(message).ask()
-    except Exception:  # pragma: no cover - best effort
+    except QuestionaryError as exc:  # pragma: no cover - best effort
+        logger.warning("Prompt failed: %s", exc)
         return value
     return answer or value
 
@@ -225,7 +231,8 @@ def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
                 doc_type = questionary.select(
                     "Select document type", choices=doc_types
                 ).ask()
-            except Exception:
+            except QuestionaryError as exc:
+                logger.warning("Failed to select document type: %s", exc)
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
@@ -242,7 +249,8 @@ def select_topic(ctx: typer.Context, doc_type: str, topic: str | None) -> str:
         if topics:
             try:
                 topic = questionary.select("Select topic", choices=topics).ask()
-            except Exception:
+            except QuestionaryError as exc:
+                logger.warning("Failed to select topic: %s", exc)
                 topic = None
         topic = prompt_if_missing(ctx, topic, "Topic")
     if topic is None:
