@@ -10,8 +10,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from openai import OpenAI
 from rich.console import Console
+import httpx
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter
@@ -26,7 +27,7 @@ from ..metadata import (
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
-EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
+EMBED_DIMENSIONS = int(os.environ["EMBED_DIMENSIONS"])
 
 _log = logging.getLogger(__name__)
 _log.addFilter(RedactFilter())
@@ -75,22 +76,8 @@ def build_vector_store(
             "model": EMBED_MODEL,
             "input": text,
             "encoding_format": "float",
+            "dimensions": EMBED_DIMENSIONS,
         }
-        if EMBED_DIMENSIONS:
-            try:
-                dims = int(EMBED_DIMENSIONS)
-                if dims > 0:
-                    kwargs["dimensions"] = dims
-                else:
-                    _log.warning(
-                        "EMBED_DIMENSIONS must be a positive integer; got %s",
-                        EMBED_DIMENSIONS,
-                    )
-            except ValueError:
-                _log.warning(
-                    "EMBED_DIMENSIONS must be a positive integer; got %s",
-                    EMBED_DIMENSIONS,
-                )
 
         success = False
         max_attempts = 3
@@ -99,21 +86,62 @@ def build_vector_store(
                 resp = client.embeddings.create(**kwargs)
                 success = True
                 break
-            except Exception as exc:  # pragma: no cover - network error
+            except RateLimitError as exc:  # pragma: no cover - network error
                 wait = 2**attempt
                 _log.error(
-                    "Embedding request failed for %s (attempt %s/%s): %s",
+                    "Rate limit error for %s (attempt %s/%s): %s",
                     md_file,
                     attempt,
                     max_attempts,
                     exc,
+                    exc_info=True,
                 )
-                if attempt == max_attempts:
-                    if fail_fast:
-                        raise
-                    _log.error("Skipping %s after repeated failures", md_file)
-                    break
-                time.sleep(wait)
+            except APIError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "OpenAI API error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except APIConnectionError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Connection error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except httpx.TimeoutException as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Timeout during embedding for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except Exception as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Unexpected error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            if attempt == max_attempts:
+                if fail_fast:
+                    raise
+                _log.warning("Exceeded max retries for %s", md_file)
+                break
+            time.sleep(wait)
 
         if not success:
             return

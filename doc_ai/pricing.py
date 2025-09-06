@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Dict
 
@@ -43,12 +44,28 @@ def estimate_tokens(text: str, model: str) -> int:
 
     Uses ``tiktoken`` if available; otherwise falls back to ``len(text) // 4``.
     """
+    logger = logging.getLogger(__name__)
     try:
         import tiktoken
+    except ImportError as exc:
+        logger.warning(
+            "tiktoken not available, falling back to simple estimate: %s",
+            exc,
+            exc_info=True,
+        )
+        return max(1, len(text) // 4)
 
+    tiktoken_error = getattr(tiktoken, "TiktokenError", Exception)
+    try:
         encoding = tiktoken.encoding_for_model(model)
         return len(encoding.encode(text))
-    except Exception:
+    except tiktoken_error as exc:  # type: ignore[arg-type]
+        logger.warning(
+            "tiktoken failed for model %s; falling back to simple estimate: %s",
+            model,
+            exc,
+            exc_info=True,
+        )
         return max(1, len(text) // 4)
 
 

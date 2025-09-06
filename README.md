@@ -289,7 +289,8 @@ PyPI.
 
 This project uses [semantic versioning](https://semver.org/) and
 [setuptools-scm](https://github.com/pypa/setuptools-scm) to derive the version
-from Git tags. To create a new release:
+from Git tags. The package exposes ``doc_ai.__version__`` via
+``setuptools_scm.get_version`` at runtime. To create a new release:
 
 1. Ensure `CHANGELOG.md` has an entry for the upcoming version.
 2. Run linters and tests:
@@ -317,6 +318,12 @@ from Git tags. To create a new release:
    ```bash
    git tag -a vMAJOR.MINOR.PATCH -m "Release vMAJOR.MINOR.PATCH"
    git push --tags
+   ```
+
+6. Confirm the CLI reports the tagged version:
+
+   ```bash
+   doc-ai --version
    ```
 
 ## Documentation
