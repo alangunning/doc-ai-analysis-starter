@@ -8,8 +8,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import click
 import typer
-import questionary
 
 DATA_DIR = Path("data")
 
@@ -86,14 +86,9 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
 
 
 def edit_prompt_inline(doc_type: str, topic: str | None) -> None:
-    """Edit the prompt file using an inline questionary textarea."""
+    """Edit the prompt file using the user's ``$EDITOR``."""
     path = resolve_prompt_path(doc_type, topic)
-    try:
-        new_text = questionary.text(
-            "Edit prompt", default=path.read_text(), multiline=True
-        ).ask()
-    except Exception:
-        new_text = None
+    new_text = click.edit(path.read_text())
     if new_text is None:
         return
     path.write_text(new_text.rstrip() + "\n")

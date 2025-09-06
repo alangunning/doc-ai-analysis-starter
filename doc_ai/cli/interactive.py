@@ -446,16 +446,12 @@ def _repl_edit_url_list(args: list[str]) -> None:
         click.echo("Document type required")
         return
     path, urls = manage_urls_mod._load_urls(doc_type)
-    try:
-        raw = questionary.text(
-            "Edit URLs", default="\n".join(urls), multiline=True
-        ).ask()
-    except Exception:
-        raw = None
-    if raw is None:
+    initial = "\n".join(urls) + ("\n" if urls else "")
+    edited = click.edit(initial)
+    if edited is None:
         return
     new_urls: list[str] = []
-    for entry in raw.split():
+    for entry in edited.split():
         entry = entry.strip()
         if not manage_urls_mod._valid_url(entry):
             click.echo(f"Skipping invalid URL: {entry}")
