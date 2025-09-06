@@ -33,6 +33,7 @@ SAFE_ENV_VARS = {
 """Names of environment variables that may be exposed in the REPL."""
 
 PROMPT_KWARGS: dict[str, object] | None = None
+_REPL_CTX: click.Context | None = None
 
 __all__ = [
     "interactive_shell",
@@ -45,6 +46,79 @@ __all__ = [
     "refresh_after",
     "_prompt_name",
 ]
+
+
+def _repl_help(args: list[str]) -> None:
+    """Display help for CLI commands or the REPL itself."""
+
+    if _REPL_CTX is None:
+        click.echo("Help is unavailable.")
+        return
+
+    ctx = _REPL_CTX
+    cmd = ctx.command
+    cur_ctx = ctx
+    path: list[str] = []
+    for arg in args:
+        if isinstance(cmd, click.MultiCommand):
+            sub = cmd.get_command(cur_ctx, arg)
+            if sub is None:
+                click.echo(f"Unknown command: {' '.join(path + [arg])}")
+                return
+            path.append(arg)
+            cur_ctx = click.Context(sub, info_name=arg, parent=cur_ctx)
+            cmd = sub
+        else:
+            click.echo(f"{' '.join(path) or cmd.name} has no subcommand {arg}")
+            return
+
+    click.echo(cmd.get_help(cur_ctx))
+
+    if not args:
+        repl_cmds = sorted(
+            name for name in plugins.iter_repl_commands() if name.startswith(":")
+        )
+        if repl_cmds:
+            click.echo("\nREPL commands: " + ", ".join(repl_cmds))
+            click.echo("Example: :history")
+        click.echo("\nType ':help COMMAND' for command-specific help.")
+    elif isinstance(cmd, click.MultiCommand):
+        subs = sorted(cmd.list_commands(cur_ctx))
+        if subs:
+            click.echo("\nSubcommands: " + ", ".join(subs))
+            click.echo(f"Example: :help {' '.join(path + [subs[0]])}")
+    else:
+        example = " ".join(path or [cmd.name]) + " --help"
+        click.echo(f"\nExample: {example}")
+
+
+def _repl_reload(args: list[str]) -> None:
+    """Reload dynamic resources like completions."""
+
+    refresh_completer()
+    click.echo("Resources reloaded.")
+
+
+def _repl_history(args: list[str]) -> None:
+    """Display the current session history."""
+
+    history = PROMPT_KWARGS.get("history") if PROMPT_KWARGS else None
+    if not isinstance(history, FileHistory):
+        click.echo("No history available.")
+        return
+    items = list(history.load_history_strings())
+    for i, entry in enumerate(reversed(items), 1):
+        click.echo(f"{i}: {entry}")
+
+
+def _register_repl_commands(ctx: click.Context) -> None:
+    """Register built-in REPL commands for the given context."""
+
+    global _REPL_CTX
+    _REPL_CTX = ctx
+    plugins.register_repl_command(":help", _repl_help)
+    plugins.register_repl_command(":reload", _repl_reload)
+    plugins.register_repl_command(":history", _repl_history)
 
 
 def discover_doc_types_topics(
@@ -244,6 +318,7 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
 
     cmd = get_command(app)
     ctx = click.Context(cmd)
+    _register_repl_commands(ctx)
     if init is not None:
         run_batch(ctx, init)
     dirs = PlatformDirs("doc_ai")
