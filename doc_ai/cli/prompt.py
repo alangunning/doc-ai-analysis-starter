@@ -40,10 +40,12 @@ def show_prompt(doc_type: str, topic: str | None) -> str:
 def edit_prompt(doc_type: str, topic: str | None) -> None:
     """Launch an editor for the prompt file.
 
-    Resolves ``$EDITOR`` using :func:`shutil.which` and falls back to a safe
-    default (``vi`` or ``nano``) when the variable is unset, invalid, or points
-    to a non-existent command. Values containing path separators or shell
-    metacharacters are ignored to avoid command injection vulnerabilities.
+    Resolves ``$EDITOR`` using :func:`shutil.which` and falls back to common
+    Unix editors when the variable is unset, invalid, or points to a
+    non-existent command. On Windows, ``notepad.exe`` is also considered. If no
+    editor can be found, a helpful :class:`RuntimeError` is raised advising
+    manual editing. Values containing path separators or shell metacharacters
+    are ignored to avoid command injection vulnerabilities.
     """
 
     path = resolve_prompt_path(doc_type, topic)
@@ -70,7 +72,13 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
             if resolved:
                 editor_cmd = [resolved]
                 break
-        else:
-            editor_cmd = ["vi"]
+        if editor_cmd is None and os.name == "nt":
+            resolved = shutil.which("notepad.exe")
+            if resolved:
+                editor_cmd = [resolved]
+        if editor_cmd is None:
+            raise RuntimeError(
+                "No editor found. Please edit the file manually."
+            )
 
     subprocess.run(editor_cmd + [str(path)], check=True)
