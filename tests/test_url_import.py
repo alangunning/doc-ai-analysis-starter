@@ -131,15 +131,53 @@ def test_manage_urls_command(tmp_path, monkeypatch):
     doc_dir.mkdir(parents=True)
     url_file = doc_dir / "urls.txt"
     url_file.write_text("http://a\nhttp://b\n")
-    runner = CliRunner()
-    # Attempt to add an invalid URL and a duplicate, then remove entry 2
-    result = runner.invoke(
-        app,
-        ["add", "manage-urls", "reports"],
-        input="notaurl\nhttp://c\nhttp://a\n2\n\n",
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    # Replace prompts with edited content: remove "a", keep "b", add "c"
+    monkeypatch.setattr(
+        "doc_ai.cli.add.questionary.text",
+        lambda *a, **k: DummyPrompt("http://b\nhttp://c\n"),
     )
+    called = []
+    monkeypatch.setattr("doc_ai.cli.add.refresh_completer", lambda: called.append(True))
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["add", "manage-urls", "reports"])
     assert result.exit_code == 0, result.output
-    assert url_file.read_text().splitlines() == ["http://a", "http://c"]
+    assert url_file.read_text().splitlines() == ["http://b", "http://c"]
+    assert called == [True]
+
+
+def test_manage_urls_bulk_delete(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("http://a\nhttp://b\n")
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    # User clears all entries
+    monkeypatch.setattr(
+        "doc_ai.cli.add.questionary.text",
+        lambda *a, **k: DummyPrompt(""),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["add", "manage-urls", "reports"])
+    assert result.exit_code == 0, result.output
+    assert url_file.read_text().splitlines() == []
 
 
 def test_add_url_rejects_invalid(monkeypatch):
