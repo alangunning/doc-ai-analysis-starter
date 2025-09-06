@@ -26,7 +26,7 @@ from ..metadata import (
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
-EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
+EMBED_DIMENSIONS = int(os.environ["EMBED_DIMENSIONS"])
 
 _log = logging.getLogger(__name__)
 _log.addFilter(RedactFilter())
@@ -71,22 +71,8 @@ def build_vector_store(
             "model": EMBED_MODEL,
             "input": text,
             "encoding_format": "float",
+            "dimensions": EMBED_DIMENSIONS,
         }
-        if EMBED_DIMENSIONS:
-            try:
-                dims = int(EMBED_DIMENSIONS)
-                if dims > 0:
-                    kwargs["dimensions"] = dims
-                else:
-                    _log.warning(
-                        "EMBED_DIMENSIONS must be a positive integer; got %s",
-                        EMBED_DIMENSIONS,
-                    )
-            except ValueError:
-                _log.warning(
-                    "EMBED_DIMENSIONS must be a positive integer; got %s",
-                    EMBED_DIMENSIONS,
-                )
 
         success = False
         max_attempts = 3

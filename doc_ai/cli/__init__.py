@@ -100,6 +100,28 @@ def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     return global_cfg, env_vals, merged
 
 
+def _parse_embed_dimensions(val: str | None) -> int:
+    """Return a validated positive integer for ``EMBED_DIMENSIONS``.
+
+    Args:
+        val: Raw environment variable value.
+
+    Raises:
+        ValueError: If the value is missing, non-numeric, or not positive.
+    """
+    if val is None:
+        raise ValueError("Missing required environment variable: EMBED_DIMENSIONS")
+    try:
+        dim = int(val)
+    except ValueError as exc:  # pragma: no cover - defensive
+        raise ValueError(
+            f"EMBED_DIMENSIONS must be a positive integer; got {val}"
+        ) from exc
+    if dim <= 0:
+        raise ValueError(f"EMBED_DIMENSIONS must be a positive integer; got {val}")
+    return dim
+
+
 logger = logging.getLogger(__name__)
 
 # File extensions considered raw inputs for the pipeline.
@@ -164,9 +186,15 @@ def _main_callback(
         raise typer.Exit()
 
     global_cfg, _env_vals, merged = read_configs()
+    try:
+        embed_dims = _parse_embed_dimensions(merged.get("EMBED_DIMENSIONS"))
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1)
     ctx.obj = {
         "config": merged,
         "global_config": global_cfg,
+        "embed_dimensions": embed_dims,
     }
 
     verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
