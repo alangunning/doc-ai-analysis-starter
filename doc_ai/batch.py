@@ -1,16 +1,23 @@
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import click
+
+# Replace deprecated MultiCommand with Group to avoid warnings from click-repl
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", ".*'MultiCommand'.*", DeprecationWarning)
+    click.MultiCommand = click.Group  # type: ignore[attr-defined]
+
 import typer
 from click.exceptions import Exit as ClickExit
+from click_repl.exceptions import CommandLineParserError  # type: ignore[import-untyped]
 from click_repl.utils import (  # type: ignore[import-untyped]
     dispatch_repl_commands,
     handle_internal_commands,
     split_arg_string,
 )
-from click_repl.exceptions import CommandLineParserError  # type: ignore[import-untyped]
 
 from doc_ai import plugins
 
@@ -63,9 +70,7 @@ def run_batch(ctx: click.Context, path: Path) -> None:
             )
             ctx.command.invoke(sub_ctx)
         except click.ClickException as exc:
-            err = click.ClickException(
-                f"{path}:{lineno}: {exc.format_message()}"
-            )
+            err = click.ClickException(f"{path}:{lineno}: {exc.format_message()}")
             err.exit_code = exc.exit_code
             raise err from exc
         except ClickExit as exc:

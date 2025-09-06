@@ -4,18 +4,20 @@ import json
 import math
 import os
 from pathlib import Path
-import logging
 
 import typer
 from openai import OpenAI
 
-from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
+from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.openai import create_response
-from . import ModelName
-from .utils import resolve_bool, resolve_str, prompt_if_missing
 
-app = typer.Typer(invoke_without_command=True, help="Query a vector store for similar documents.")
+from . import ModelName
+from .utils import prompt_if_missing, resolve_bool, resolve_str
+
+app = typer.Typer(
+    invoke_without_command=True, help="Query a vector store for similar documents."
+)
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -41,7 +43,6 @@ def query(
         False,
         "--ask",
         help="Send top matches to an LLM and return an answer",
-        is_flag=True,
     ),
     model: ModelName = typer.Option(
         ModelName.GPT_4O_MINI,
