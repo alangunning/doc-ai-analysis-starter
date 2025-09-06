@@ -114,6 +114,52 @@ def rename_topic(
         desc.rename(new_file.with_suffix(".description.txt"))
 
 
+@app.command("duplicate-topic", help="Duplicate a topic prompt for a document type.")
+@refresh_after  # type: ignore[misc]
+def duplicate_topic(
+    ctx: typer.Context,
+    old: str | None = typer.Argument(None, help="Existing topic"),
+    new: str | None = typer.Argument(None, help="New topic name"),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the duplication and skip the prompt",
+    ),
+) -> None:
+    """Copy topic *old* to *new* under *doc_type*."""
+
+    doc_type = select_doc_type(ctx, doc_type)
+    old = select_topic(ctx, doc_type, old)
+    new = prompt_if_missing(ctx, new, "New topic name")
+    if new is None:
+        raise typer.BadParameter("New topic name required")
+    new = sanitize_name(new)
+    target_dir = DATA_DIR / doc_type
+    if not target_dir.exists():
+        typer.echo(f"Document type directory {target_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    old_file = target_dir / f"{doc_type}.analysis.{old}.prompt.yaml"
+    new_file = target_dir / f"{doc_type}.analysis.{new}.prompt.yaml"
+    if not old_file.exists():
+        typer.echo(f"Prompt file {old_file} does not exist", err=True)
+        raise typer.Exit(code=1)
+    if new_file.exists():
+        typer.echo(f"Prompt file {new_file} already exists", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty() and not yes:
+        if not typer.confirm(f"Duplicate topic {old} to {new}?", default=True):
+            typer.echo("Aborted")
+            return
+
+    shutil.copyfile(old_file, new_file)
+    desc = old_file.with_suffix(".description.txt")
+    if desc.exists():
+        shutil.copyfile(desc, new_file.with_suffix(".description.txt"))
+
+
 @app.command("delete-topic", help="Delete a topic prompt from a document type.")
 @refresh_after  # type: ignore[misc]
 def delete_topic(

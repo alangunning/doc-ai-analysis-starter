@@ -323,6 +323,24 @@ def _repl_rename_doc_type(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_duplicate_doc_type(args: list[str]) -> None:
+    """Duplicate an existing document type."""
+    if _REPL_CTX is None:
+        click.echo("Document type duplication unavailable.")
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    if not args:
+        click.echo("New document type name required")
+        return
+    new = args[0]
+    old = args[1] if len(args) > 1 else None
+    try:
+        new_doc_type_mod.duplicate_doc_type(cast(typer.Context, _REPL_CTX), new, old=old)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
 def _repl_new_topic(args: list[str]) -> None:
     """Create a new topic prompt for a document type."""
     if _REPL_CTX is None:
@@ -367,6 +385,24 @@ def _repl_rename_topic(args: list[str]) -> None:
     new = args[2] if len(args) > 2 else None
     try:
         new_topic_mod.rename_topic(
+            cast(typer.Context, _REPL_CTX), old, new, doc_type=doc_type
+        )
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_duplicate_topic(args: list[str]) -> None:
+    """Duplicate a topic prompt for a document type."""
+    if _REPL_CTX is None:
+        click.echo("Topic duplication unavailable.")
+        return
+    from . import new_topic as new_topic_mod
+
+    doc_type = args[0] if args else None
+    old = args[1] if len(args) > 1 else None
+    new = args[2] if len(args) > 2 else None
+    try:
+        new_topic_mod.duplicate_topic(
             cast(typer.Context, _REPL_CTX), old, new, doc_type=doc_type
         )
     except click.ClickException as exc:
@@ -591,9 +627,11 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
     plugins.register_repl_command(":delete-doc-type", _repl_delete_doc_type)
     plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)
+    plugins.register_repl_command(":duplicate-doc-type", _repl_duplicate_doc_type)
     plugins.register_repl_command(":new-topic", _repl_new_topic)
     plugins.register_repl_command(":rename-topic", _repl_rename_topic)
     plugins.register_repl_command(":delete-topic", _repl_delete_topic)
+    plugins.register_repl_command(":duplicate-topic", _repl_duplicate_topic)
     plugins.register_repl_command(":doc-types", _repl_doc_types)
     plugins.register_repl_command(":topics", _repl_topics)
     plugins.register_repl_command(":set-default", _repl_set_default)

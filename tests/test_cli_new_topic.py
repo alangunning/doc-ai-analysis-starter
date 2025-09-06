@@ -104,6 +104,56 @@ def test_new_topic_management_yes_and_non_interactive():
         assert not math_file.exists()
 
 
+def test_duplicate_topic():
+    runner = CliRunner()
+    repo_root = Path(__file__).resolve().parents[1]
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
+    topic_tpl = repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml"
+
+    with runner.isolated_filesystem():
+        prompts_dir = Path(".github/prompts")
+        prompts_dir.mkdir(parents=True)
+        shutil.copy(analysis_tpl, prompts_dir / "doc-analysis.analysis.prompt.yaml")
+        shutil.copy(validate_tpl, prompts_dir / "validate-output.validate.prompt.yaml")
+        shutil.copy(topic_tpl, prompts_dir / "doc-analysis.topic.prompt.yaml")
+
+        runner.invoke(app, ["new", "doc-type", "sample"])
+        runner.invoke(app, ["new", "topic", "biology", "--doc-type", "sample"])
+
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
+            dup_res = runner.invoke(
+                app,
+                [
+                    "new",
+                    "duplicate-topic",
+                    "biology",
+                    "chemistry",
+                    "--doc-type",
+                    "sample",
+                    "--yes",
+                ],
+            )
+        assert dup_res.exit_code == 0
+        orig = Path("data/sample/sample.analysis.biology.prompt.yaml")
+        dup = Path("data/sample/sample.analysis.chemistry.prompt.yaml")
+        assert orig.is_file() and dup.is_file()
+
+        # non-interactive duplication
+        runner.invoke(app, ["new", "topic", "physics", "--doc-type", "sample"])
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=False):
+            dup_res2 = runner.invoke(
+                app,
+                ["new", "duplicate-topic", "physics", "math", "--doc-type", "sample"],
+            )
+        assert dup_res2.exit_code == 0
+        assert Path("data/sample/sample.analysis.math.prompt.yaml").is_file()
+
+
 def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     doc_dir = Path("data/sample")
