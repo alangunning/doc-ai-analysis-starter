@@ -23,6 +23,7 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    pip install -e .
    pip install pre-commit
    pre-commit install
+   pre-commit run --all-files
    ```
 
    Optionally build the documentation site:
@@ -308,6 +309,12 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | Auto Merge | `/merge` issue comment | Approve and merge a pull request after review |
 | Lint | Push/PR touching Python files | Run Ruff style checks |
 | Security | Push/PR | Scan code with Bandit |
+
+Run pre-commit to format and lint the code:
+
+```bash
+pre-commit run --all-files
+```
 
 Run Bandit locally to scan for common security issues:
 
