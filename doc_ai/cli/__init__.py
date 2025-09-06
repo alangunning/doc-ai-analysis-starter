@@ -156,7 +156,7 @@ def _validate_prompt(value: Path | None) -> Path | None:
     return value
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def _main_callback(
     ctx: typer.Context,
     version: bool = typer.Option(
