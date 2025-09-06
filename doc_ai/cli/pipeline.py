@@ -271,7 +271,6 @@ def _entrypoint(
         False,
         "--show-cost",
         help="Display token cost estimates",
-        is_flag=True,
     ),
     estimate: bool = typer.Option(
         True,
@@ -288,13 +287,11 @@ def _entrypoint(
         False,
         "--force",
         help="Re-run steps even if metadata indicates completion",
-        is_flag=True,
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
         help="Log steps without executing conversion, validation, or analysis",
-        is_flag=True,
     ),
     resume_from: PipelineStep = typer.Option(
         PipelineStep.CONVERT,

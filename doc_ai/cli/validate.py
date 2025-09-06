@@ -54,7 +54,6 @@ def validate(
         False,
         "--force",
         help="Re-run validation even if metadata is present",
-        is_flag=True,
     ),
 ) -> None:
     """Validate converted output against the original file.

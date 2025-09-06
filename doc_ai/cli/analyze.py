@@ -64,13 +64,11 @@ def analyze(
         False,
         "--require-structured",
         help="Fail if analysis output is not valid JSON",
-        is_flag=True,
     ),
     show_cost: bool = typer.Option(
         False,
         "--show-cost",
         help="Display token cost estimates",
-        is_flag=True,
     ),
     estimate: bool = typer.Option(
         True,
@@ -81,7 +79,6 @@ def analyze(
         False,
         "--force",
         help="Re-run analysis even if metadata is present",
-        is_flag=True,
     ),
 ) -> None:
     """Run an analysis prompt against a converted document.

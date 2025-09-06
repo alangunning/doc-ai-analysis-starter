@@ -80,6 +80,12 @@ def configure_logging(
         numeric_level = level
 
     root = logging.getLogger()
+    # Close existing handlers to avoid ResourceWarning when reconfiguring
+    for handler in list(root.handlers):
+        try:
+            handler.close()
+        except Exception:  # pragma: no cover - best effort cleanup
+            pass
     root.handlers.clear()
     root.setLevel(numeric_level)
 

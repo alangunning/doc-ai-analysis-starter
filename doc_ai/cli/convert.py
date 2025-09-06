@@ -100,7 +100,6 @@ def convert(
         False,
         "--force",
         help="Re-run conversion even if metadata is present",
-        is_flag=True,
     ),
 ) -> None:
     """Convert files using Docling.

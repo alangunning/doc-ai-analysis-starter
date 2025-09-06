@@ -13,6 +13,12 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, TypeVar, cast
 
 import click
+
+# Replace deprecated MultiCommand with Group before importing click-repl
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", ".*'MultiCommand'.*", DeprecationWarning)
+    click.MultiCommand = click.Group  # type: ignore[attr-defined]
+
 import click_repl.utils as repl_utils
 import questionary
 import typer

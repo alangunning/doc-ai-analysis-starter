@@ -43,7 +43,6 @@ def query(
         False,
         "--ask",
         help="Send top matches to an LLM and return an answer",
-        is_flag=True,
     ),
     model: ModelName = typer.Option(
         ModelName.GPT_4O_MINI,

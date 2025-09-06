@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import click
+
+# Replace deprecated MultiCommand with Group to avoid warnings from click-repl
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", ".*'MultiCommand'.*", DeprecationWarning)
+    click.MultiCommand = click.Group  # type: ignore[attr-defined]
+
 import typer
 from click.exceptions import Exit as ClickExit
 from click_repl.exceptions import CommandLineParserError  # type: ignore[import-untyped]

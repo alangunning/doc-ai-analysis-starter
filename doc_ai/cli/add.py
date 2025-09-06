@@ -36,7 +36,6 @@ def add_url(
         False,
         "--force",
         help="Re-run conversion even if metadata is present",
-        is_flag=True,
     ),
 ) -> None:
     """Download *link* and convert it under ``data/<doc-type>/``."""
@@ -80,7 +79,6 @@ def add_urls(
         False,
         "--force",
         help="Re-run conversion even if metadata is present",
-        is_flag=True,
     ),
 ) -> None:
     """Download URLs from *path* and convert them."""
