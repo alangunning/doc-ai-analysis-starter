@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [0.1.0] - 2025-09-06
+## [0.1.0b1] - 2025-09-06
 ### Added
 - Script to generate validation and analysis prompts from a PDF in one run.
 - Documentation for PDF input cost considerations and new script usage.
