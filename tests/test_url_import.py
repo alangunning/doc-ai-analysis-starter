@@ -84,3 +84,46 @@ def test_add_url_command(tmp_path, monkeypatch):
     assert (dest / "y.txt").read_bytes() == b"y"
     assert called == [dest]
 
+
+def test_add_urls_command(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    urls = {
+        "http://example.com/a.txt": b"a",
+        "http://example.com/b.txt": b"b",
+    }
+    monkeypatch.setattr("doc_ai.cli.convert.http_get", _mock_http_get(urls))
+    called = []
+
+    def fake_convert_path(path, fmts, force=False):
+        called.append(Path(path))
+        return {}
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", fake_convert_path)
+
+    url_file = tmp_path / "urls.txt"
+    url_file.write_text("\n".join(urls))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app, ["add", "urls", str(url_file), "--doc-type", "letters"]
+    )
+    assert result.exit_code == 0, result.output
+    dest = Path("data/letters")
+    assert (dest / "a.txt").read_bytes() == b"a"
+    assert (dest / "b.txt").read_bytes() == b"b"
+    assert called == [dest]
+
+
+def test_manage_urls_command(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("http://a\nhttp://b\n")
+    runner = CliRunner()
+    result = runner.invoke(
+        app, ["add", "manage-urls", "reports"], input="http://c\n2\n\n"
+    )
+    assert result.exit_code == 0, result.output
+    assert url_file.read_text().splitlines() == ["http://a", "http://c"]
+

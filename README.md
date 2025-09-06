@@ -76,6 +76,13 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai> add url https://example.com/a.pdf --doc-type reports
    ```
 
+   Load a list of links from a file or manage a stored URL list:
+
+   ```bash
+   doc-ai> add urls links.txt --doc-type reports
+   doc-ai> add manage-urls reports
+   ```
+
    The validator searches for a prompt file next to the inputs:
 
    - `<name>.validate.prompt.yaml` for a single document
