@@ -172,7 +172,9 @@ refreshes completion suggestions for document types and topics:
     The prompt reflects the current working directory and command history is
     stored under the user data directory provided by ``platformdirs`` (for
     example ``~/.local/share/doc_ai/history`` on Linux) for future sessions. The
-    shell helper lives
+    location can be overridden with ``DOC_AI_HISTORY_FILE`` or set to ``-`` to
+    disable history entirely. Use ``:clear-history`` to truncate the history
+    file during a session. The shell helper lives
     in ``doc_ai.cli.interactive`` and is re-exported from ``doc_ai.cli`` so it
     can be reused in other Typer-based projects.
 
@@ -186,9 +188,14 @@ refreshes completion suggestions for document types and topics:
     Each non-empty, non-comment line in ``commands.txt`` runs as if typed at the
     prompt before the REPL begins.
 
+    Additional REPL helpers like ``:delete-doc-type`` and ``:delete-topic``
+    manage prompt files, while ``:set-default DOC_TYPE [TOPIC]`` persists
+    defaults for later commands.
+
     Prefix commands with ``!`` to execute them in the system shell. Output from
     the command is echoed back to the REPL and the exit status is stored in
-    ``doc_ai.cli.interactive.LAST_EXIT_CODE``.
+    ``doc_ai.cli.interactive.LAST_EXIT_CODE``. Set ``DOC_AI_ALLOW_SHELL=false``
+    to disable shell escapes and emit a warning when ``!`` is used.
 
 ### Shell Completion
 

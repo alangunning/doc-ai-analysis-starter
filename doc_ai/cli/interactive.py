@@ -1,9 +1,9 @@
-# mypy: ignore-errors
 """Interactive REPL helper for the Doc AI CLI."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, Callable, Mapping, TypeVar, cast, Iterable
 import os
 import re
 import stat
@@ -18,8 +18,14 @@ import click_repl.utils as repl_utils
 from doc_ai import plugins
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
-from prompt_toolkit.completion import Completer, WordCompleter
+from prompt_toolkit.completion import (
+    Completer,
+    WordCompleter,
+    Completion,
+    CompleteEvent,
+)
 from prompt_toolkit.document import Document
+from click.core import Command
 import typer
 from typer.main import get_command
 from doc_ai.batch import run_batch
@@ -28,6 +34,12 @@ import doc_ai.batch as batch_mod
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
 """Config key with comma-separated allow/deny env var names."""
+
+ALLOW_SHELL_ENV = "DOC_AI_ALLOW_SHELL"
+"""Configuration key that enables shell escapes when truthy."""
+
+HISTORY_FILE_ENV = "DOC_AI_HISTORY_FILE"
+"""Configuration key overriding or disabling REPL history."""
 
 SAFE_ENV_VARS: set[str] = {"PATH", "HOME"}
 """Base names of environment variables that may be exposed in the REPL."""
@@ -53,6 +65,7 @@ def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
             allow.add(name.lstrip("+").strip())
     return allow, deny
 
+
 PROMPT_KWARGS: dict[str, object] | None = None
 _REPL_CTX: click.Context | None = None
 LAST_EXIT_CODE = 0
@@ -62,6 +75,7 @@ __all__ = [
     "run_batch",
     "DocAICompleter",
     "discover_doc_types_topics",
+    "discover_topics",
     "SAFE_ENV_VARS",
     "PROMPT_KWARGS",
     "refresh_completer",
@@ -71,11 +85,40 @@ __all__ = [
 ]
 
 
+def _allow_shell_from_config(cfg: Mapping[str, object]) -> bool:
+    """Return ``True`` if shell escapes are allowed by *cfg* or the environment."""
+
+    raw = str(cfg.get(ALLOW_SHELL_ENV) or os.getenv(ALLOW_SHELL_ENV, "true")).lower()
+    return raw in {"1", "true", "yes"}
+
+
+def _allow_shell() -> bool:
+    cfg: Mapping[str, object] = {}
+    if _REPL_CTX and isinstance(_REPL_CTX.obj, dict):
+        cfg = _REPL_CTX.obj.get("config", {})
+    if not cfg:
+        from . import read_configs  # local import to avoid circular
+
+        try:
+            _, _, merged = read_configs()
+            cfg = merged
+        except Exception:
+            cfg = {}
+    return _allow_shell_from_config(cfg)
+
+
 def _dispatch_repl_commands(command: str) -> bool:
     """Execute system commands prefixed with ``!`` using ``subprocess.run``."""
 
     global LAST_EXIT_CODE
     if command.startswith("!"):
+        if not _allow_shell():
+            warnings.warn(
+                f"Shell escapes disabled. Set {ALLOW_SHELL_ENV}=true to enable.",
+                stacklevel=1,
+            )
+            LAST_EXIT_CODE = 1
+            return True
         result = subprocess.run(command[1:], shell=True, capture_output=True, text=True)
         if result.stdout:
             click.echo(result.stdout, nl=False)
@@ -89,7 +132,7 @@ def _dispatch_repl_commands(command: str) -> bool:
 # Patch click-repl helpers to use the custom dispatcher
 repl_utils.dispatch_repl_commands = _dispatch_repl_commands
 click_repl_repl.dispatch_repl_commands = _dispatch_repl_commands
-batch_mod.dispatch_repl_commands = _dispatch_repl_commands
+setattr(batch_mod, "dispatch_repl_commands", _dispatch_repl_commands)
 
 
 def _repl_help(args: list[str]) -> None:
@@ -100,11 +143,11 @@ def _repl_help(args: list[str]) -> None:
         return
 
     ctx = _REPL_CTX
-    cmd = ctx.command
+    cmd: Any = ctx.command
     cur_ctx = ctx
     path: list[str] = []
     for arg in args:
-        if isinstance(cmd, click.MultiCommand):
+        if isinstance(cmd, click.MultiCommand):  # type: ignore[arg-type]
             sub = cmd.get_command(cur_ctx, arg)
             if sub is None:
                 click.echo(f"Unknown command: {' '.join(path + [arg])}")
@@ -126,13 +169,13 @@ def _repl_help(args: list[str]) -> None:
             click.echo("\nREPL commands: " + ", ".join(repl_cmds))
             click.echo("Example: :history")
         click.echo("\nType ':help COMMAND' for command-specific help.")
-    elif isinstance(cmd, click.MultiCommand):
+    elif isinstance(cmd, click.MultiCommand):  # type: ignore[arg-type]
         subs = sorted(cmd.list_commands(cur_ctx))
         if subs:
             click.echo("\nSubcommands: " + ", ".join(subs))
             click.echo(f"Example: :help {' '.join(path + [subs[0]])}")
     else:
-        example = " ".join(path or [cmd.name]) + " --help"
+        example = " ".join(path or [cmd.name or ""]) + " --help"
         click.echo(f"\nExample: {example}")
 
 
@@ -178,6 +221,20 @@ def _repl_config(args: list[str]) -> None:
             _REPL_CTX.default_map = sub_ctx.default_map
 
 
+def _repl_clear_history(args: list[str]) -> None:
+    """Clear the REPL command history."""
+
+    history = PROMPT_KWARGS.get("history") if PROMPT_KWARGS else None
+    if not isinstance(history, FileHistory):
+        click.echo("No history available.")
+        return
+    path = Path(str(history.filename))
+    path.write_text("")
+    assert PROMPT_KWARGS is not None
+    PROMPT_KWARGS["history"] = FileHistory(path)
+    click.echo("History cleared.")
+
+
 def _repl_edit_prompt(args: list[str]) -> None:
     """Edit prompt for the current or given doc type/topic."""
     if _REPL_CTX is None:
@@ -206,7 +263,21 @@ def _repl_new_doc_type(args: list[str]) -> None:
 
     name = args[0] if args else None
     try:
-        new_doc_type_mod.doc_type(_REPL_CTX, name)
+        new_doc_type_mod.doc_type(cast(typer.Context, _REPL_CTX), name)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_delete_doc_type(args: list[str]) -> None:
+    """Delete an existing document type directory."""
+    if _REPL_CTX is None:
+        click.echo("Document type deletion unavailable.")
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    name = args[0] if args else None
+    try:
+        new_doc_type_mod.delete_doc_type(cast(typer.Context, _REPL_CTX), name)
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -224,7 +295,7 @@ def _repl_rename_doc_type(args: list[str]) -> None:
     new = args[0]
     old = args[1] if len(args) > 1 else None
     try:
-        new_doc_type_mod.rename_doc_type(_REPL_CTX, new, old=old)
+        new_doc_type_mod.rename_doc_type(cast(typer.Context, _REPL_CTX), new, old=old)
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -239,7 +310,24 @@ def _repl_new_topic(args: list[str]) -> None:
     doc_type = args[0] if args else None
     topic = args[1] if len(args) > 1 else None
     try:
-        new_topic_mod.topic(_REPL_CTX, topic, doc_type=doc_type)
+        new_topic_mod.topic(cast(typer.Context, _REPL_CTX), topic, doc_type=doc_type)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_delete_topic(args: list[str]) -> None:
+    """Delete a topic prompt from a document type."""
+    if _REPL_CTX is None:
+        click.echo("Topic deletion unavailable.")
+        return
+    from . import new_topic as new_topic_mod
+
+    doc_type = args[0] if args else None
+    topic = args[1] if len(args) > 1 else None
+    try:
+        new_topic_mod.delete_topic(
+            cast(typer.Context, _REPL_CTX), topic, doc_type=doc_type
+        )
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -255,7 +343,9 @@ def _repl_rename_topic(args: list[str]) -> None:
     old = args[1] if len(args) > 1 else None
     new = args[2] if len(args) > 2 else None
     try:
-        new_topic_mod.rename_topic(_REPL_CTX, old, new, doc_type=doc_type)
+        new_topic_mod.rename_topic(
+            cast(typer.Context, _REPL_CTX), old, new, doc_type=doc_type
+        )
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -269,9 +359,34 @@ def _repl_urls(args: list[str]) -> None:
 
     doc_type = args[0] if args else None
     try:
-        manage_urls_mod.manage_urls(_REPL_CTX, doc_type)
+        manage_urls_mod.manage_urls(cast(typer.Context, _REPL_CTX), doc_type)
     except click.ClickException as exc:
         click.echo(exc.format_message())
+
+
+def _repl_set_default(args: list[str]) -> None:
+    """Set default document type and optional topic."""
+    if _REPL_CTX is None:
+        click.echo("Setting defaults unavailable.")
+        return
+    from .config import default_doc_type, default_topic
+
+    cfg = _REPL_CTX.obj.get("config", {}) if _REPL_CTX.obj else {}
+    if not args:
+        dt = cfg.get("default_doc_type") or "(none)"
+        tp = cfg.get("default_topic") or "(none)"
+        click.echo(f"Default document type: {dt}\nDefault topic: {tp}")
+        return
+
+    doc_type = None if args[0] == "-" else args[0]
+    topic = (
+        None
+        if len(args) > 1 and args[1] == "-"
+        else (args[1] if len(args) > 1 else None)
+    )
+    default_doc_type(cast(typer.Context, _REPL_CTX), doc_type)
+    if len(args) > 1:
+        default_topic(cast(typer.Context, _REPL_CTX), topic)
 
 
 def _register_repl_commands(ctx: click.Context) -> None:
@@ -282,46 +397,56 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":help", _repl_help)
     plugins.register_repl_command(":reload", _repl_reload)
     plugins.register_repl_command(":history", _repl_history)
+    plugins.register_repl_command(":clear-history", _repl_clear_history)
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
     plugins.register_repl_command(":urls", _repl_urls)
     plugins.register_repl_command(":manage-urls", _repl_urls)
     plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
+    plugins.register_repl_command(":delete-doc-type", _repl_delete_doc_type)
     plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)
     plugins.register_repl_command(":new-topic", _repl_new_topic)
     plugins.register_repl_command(":rename-topic", _repl_rename_topic)
+    plugins.register_repl_command(":delete-topic", _repl_delete_topic)
+    plugins.register_repl_command(":set-default", _repl_set_default)
+
+
+def discover_topics(doc_type: str, data_dir: Path = Path("data")) -> list[str]:
+    """Return sorted topics available under *doc_type* in ``data_dir``."""
+
+    topics: set[str] = set()
+    doc_dir = data_dir / doc_type
+    if not doc_dir.exists():
+        return []
+    for p in doc_dir.glob("analysis_*.prompt.yaml"):
+        m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
+        if m:
+            topics.add(m.group(1))
+    for p in doc_dir.glob(f"{doc_type}.analysis.*.prompt.yaml"):
+        m = re.match(rf"{re.escape(doc_type)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
+        if m:
+            topics.add(m.group(1))
+    return sorted(topics)
 
 
 def discover_doc_types_topics(
     data_dir: Path = Path("data"),
 ) -> tuple[list[str], list[str]]:
-    """Return sorted document types and analysis topics under ``data_dir``.
-
-    This mirrors the discovery used by :class:`DocAICompleter` so other
-    commands can enumerate the same resources without duplicating logic.
-    """
+    """Return sorted document types and analysis topics under ``data_dir``."""
 
     if not data_dir.exists():
         return [], []
     doc_types = [p.name for p in data_dir.iterdir() if p.is_dir()]
     topics: set[str] = set()
     for dtype in doc_types:
-        doc_dir = data_dir / dtype
-        for p in doc_dir.glob("analysis_*.prompt.yaml"):
-            m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
-            if m:
-                topics.add(m.group(1))
-        for p in doc_dir.glob(f"{dtype}.analysis.*.prompt.yaml"):
-            m = re.match(rf"{re.escape(dtype)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
-            if m:
-                topics.add(m.group(1))
+        topics.update(discover_topics(dtype, data_dir))
     return sorted(doc_types), sorted(topics)
 
 
 class DocAICompleter(Completer):
     """Completer that hides sensitive env vars and suggests doc types/topics."""
 
-    def __init__(self, cli: click.BaseCommand, ctx: click.Context) -> None:
+    def __init__(self, cli: Command, ctx: click.Context) -> None:
         self._click = ClickCompleter(cli, ctx)
         self._env = WordCompleter([], ignore_case=True)
         self._doc_types = WordCompleter([], ignore_case=True)
@@ -366,7 +491,9 @@ class DocAICompleter(Completer):
         self._doc_types = WordCompleter(doc_types, ignore_case=True)
         self._topics = WordCompleter(topics, ignore_case=True)
 
-    def get_completions(self, document, complete_event=None):  # type: ignore[override]
+    def get_completions(
+        self, document: Document, complete_event: CompleteEvent
+    ) -> Iterable[Completion]:
         text = document.text_before_cursor
         if text.startswith("$"):
             yield from self._env.get_completions(document, complete_event)
@@ -422,20 +549,21 @@ def refresh_completer() -> None:
         comp.refresh()
 
 
-def refresh_after(func):
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def refresh_after(func: F) -> F:
     """Decorator to refresh the REPL completer after *func* succeeds."""
 
     from functools import wraps
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         result = func(*args, **kwargs)
         refresh_completer()
         return result
 
-    return wrapper
-
-
+    return cast(F, wrapper)
 
 
 def _prompt_name() -> str:
@@ -459,37 +587,66 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     cmd = get_command(app)
     ctx = click.Context(cmd)
     _register_repl_commands(ctx)
+
+    from . import read_configs  # local import
+
+    global_cfg, _env_vals, merged = read_configs()
+    ctx.obj = {"global_config": global_cfg, "config": merged, "interactive": True}
+
+    if not _allow_shell_from_config(merged):
+        warnings.warn(
+            f"Shell escapes disabled. Set {ALLOW_SHELL_ENV}=true to enable.",
+            stacklevel=1,
+        )
+
     if init is not None:
         run_batch(ctx, init)
-    dirs = PlatformDirs("doc_ai")
-    data_dir = dirs.user_data_path
-    data_dir.mkdir(parents=True, exist_ok=True)
-    if os.name != "nt":
-        try:
-            data_dir.chmod(0o700)
-        except OSError:
-            pass
-    history_path = data_dir / "history"
-    exists = history_path.exists()
-    history_path.touch(mode=0o600, exist_ok=True)
-    if os.name != "nt":
-        if exists:
+
+    hist_raw = str(
+        merged.get(HISTORY_FILE_ENV) or os.getenv(HISTORY_FILE_ENV, "")
+    ).strip()
+    history: FileHistory | None = None
+    history_path: Path | None
+    if hist_raw == "-":
+        history_path = None
+    else:
+        if hist_raw:
+            history_path = Path(hist_raw).expanduser()
+        else:
+            dirs = PlatformDirs("doc_ai")
+            data_dir = dirs.user_data_path
+            data_dir.mkdir(parents=True, exist_ok=True)
+            if os.name != "nt":
+                try:
+                    data_dir.chmod(0o700)
+                except OSError:
+                    pass
+            history_path = data_dir / "history"
+        exists = history_path.exists()
+        history_path.touch(mode=0o600, exist_ok=True)
+        if os.name != "nt":
+            if exists:
+                try:
+                    history_path.chmod(0o600)
+                except OSError:
+                    pass
+        else:
             try:
-                history_path.chmod(0o600)
+                mode = history_path.stat().st_mode
+                if os.access(history_path, os.R_OK) and mode & (
+                    stat.S_IRGRP | stat.S_IROTH
+                ):
+                    warnings.warn("History file is world-readable.")
             except OSError:
                 pass
-    else:
-        try:
-            mode = history_path.stat().st_mode
-            if os.access(history_path, os.R_OK) and mode & (stat.S_IRGRP | stat.S_IROTH):
-                warnings.warn("History file is world-readable.")
-        except OSError:
-            pass
-    history = FileHistory(history_path)
+        history = FileHistory(history_path)
+
     global PROMPT_KWARGS
     PROMPT_KWARGS = {
-        "history": history,
         "message": lambda: f"{_prompt_name()}>",
         "completer": DocAICompleter(cmd, ctx),
     }
+    if history is not None:
+        PROMPT_KWARGS["history"] = history
+
     repl(ctx, prompt_kwargs=PROMPT_KWARGS)

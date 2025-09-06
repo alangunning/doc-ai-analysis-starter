@@ -17,8 +17,11 @@ doc-ai> help
 The prompt updates to reflect the current working directory and command
 history is stored in the user data directory provided by
 ``platformdirs`` (for example ``~/.local/share/doc_ai/history`` on Linux)
-for future sessions. Under the hood the shell leverages ``click-repl`` to
-provide tab completion and can be reused in other Typer-based projects.
+for future sessions. Set ``DOC_AI_HISTORY_FILE`` to override the history
+location or ``-`` to disable it. The ``:clear-history`` REPL command
+truncates the file during a session. Under the hood the shell leverages
+``click-repl`` to provide tab completion and can be reused in other
+Typer-based projects.
 
 Use `show doc-types` and `show topics` to list document types under the
 ``data/`` directory and analysis topics discovered from prompt files.
@@ -28,7 +31,11 @@ Use `show doc-types` and `show topics` to list document types under the
 The interactive prompt includes a minimal set of shell-like commands.
 Use ``cd <path>`` to change the current working directory for subsequent
 commands. The command reloads any ``.env`` file and global configuration
-in the target directory so project-specific settings take effect:
+in the target directory so project-specific settings take effect. Other
+helpers include ``:delete-doc-type`` and ``:delete-topic`` for removing
+prompt files and ``:set-default DOC_TYPE [TOPIC]`` to persist defaults.
+Shell escapes (``!command``) may be disabled by setting
+``DOC_AI_ALLOW_SHELL=false``; when disabled, using ``!`` emits a warning.
 
 ```
 doc-ai> cd docs
