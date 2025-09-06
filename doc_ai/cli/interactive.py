@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import shlex
 import stat
 import subprocess
 import warnings
@@ -126,7 +127,22 @@ def _dispatch_repl_commands(command: str) -> bool:
             )
             LAST_EXIT_CODE = 1
             return True
-        result = subprocess.run(command[1:], shell=True, capture_output=True, text=True)
+        parts = shlex.split(command[1:])
+        if not parts:
+            LAST_EXIT_CODE = 0
+            return True
+        try:
+            result = subprocess.run(
+                parts, shell=False, capture_output=True, text=True
+            )
+        except FileNotFoundError:
+            click.echo(f"{parts[0]}: command not found", err=True)
+            LAST_EXIT_CODE = 127
+            return True
+        except PermissionError:
+            click.echo(f"{parts[0]}: permission denied", err=True)
+            LAST_EXIT_CODE = 126
+            return True
         if result.stdout:
             click.echo(result.stdout, nl=False)
         if result.stderr:
