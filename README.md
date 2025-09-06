@@ -87,6 +87,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai> urls reports
    ```
 
+   Within the URL manager choose ``add`` to paste one or more links separated
+   by whitespace or ``import`` to load them from a text file.
+
    The validator searches for a prompt file next to the inputs:
 
    - `<name>.validate.prompt.yaml` for a single document

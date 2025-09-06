@@ -28,6 +28,7 @@ When required arguments such as the source path are omitted, commands like `conv
 - `new delete-doc-type <name>` – remove a document type directory
 - `new rename-topic <doc-type> <old> <new>` – rename a topic prompt
 - `new delete-topic <doc-type> <name>` – delete a topic prompt
+- `urls <doc-type>` – manage a persistent list of source URLs for a document type
 - `pipeline` – convert, validate, analyze and embed supported raw documents in a directory; paths containing `.converted` are ignored
 
   Use `--workers N` to process documents concurrently. Control which steps run with
