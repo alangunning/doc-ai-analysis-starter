@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
+import shlex
 import shutil
 import subprocess
 
@@ -37,7 +38,10 @@ def show_prompt(doc_type: str, topic: str | None) -> str:
 
 
 def edit_prompt(doc_type: str, topic: str | None) -> None:
-    """Launch an editor for the prompt file."""
+    """Launch an editor for the prompt file.
+
+    Uses shlex.split so editors with arguments are handled properly.
+    """
     path = resolve_prompt_path(doc_type, topic)
     editor = os.environ.get("EDITOR")
     if not editor:
@@ -47,4 +51,4 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
                 break
         else:
             editor = "vi"
-    subprocess.run([editor, str(path)], check=True)
+    subprocess.run(shlex.split(editor) + [str(path)], check=True)
