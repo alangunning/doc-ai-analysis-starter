@@ -72,7 +72,6 @@ dev = [
 
 version_scheme = "post-release"
 local_scheme = "no-local-version"
-fallback_version = "0.1.0b2"
 write_to = "doc_ai/_version.py"
 
 [tool.ruff]

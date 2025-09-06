@@ -1,10 +1,8 @@
 """Reusable helpers for the Doc AI Analysis Starter template."""
 
-try:  # pragma: no cover - runtime metadata
-    from setuptools_scm import get_version
-
-    __version__ = get_version(root="..", relative_to=__file__)
-except (LookupError, ModuleNotFoundError):  # pragma: no cover - fallback for local runs
+try:
+    from ._version import version as __version__
+except ImportError:  # pragma: no cover
     __version__ = "0.0.0"
 
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
