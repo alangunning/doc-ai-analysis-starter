@@ -145,12 +145,14 @@ under ``data/`` and analysis topics discovered from prompt files. Use
 help and exit instead of starting the REPL.
 
 Environment variable names offered for completion skip entries containing
-sensitive words like ``TOKEN`` or ``PASSWORD``. Override this behaviour with
-``DOC_AI_SAFE_ENV_VARS`` in the project ``.env`` or global config. Provide a
-comma-separated list where entries prefixed with ``-`` are explicitly hidden and
-others are always shown. For example::
+sensitive words like ``TOKEN`` or ``PASSWORD``. Manage the allow/deny lists with
+``doc-ai config safe-env`` subcommands or set ``DOC_AI_SAFE_ENV_VARS`` in the
+project ``.env`` or global config. The value is a comma-separated list where
+entries prefixed with ``-`` are explicitly hidden and others are always shown.
+For example::
 
-    DOC_AI_SAFE_ENV_VARS=MY_API_KEY,-DEBUG_TOKEN
+    doc-ai config safe-env add MY_API_KEY
+    doc-ai config safe-env add -DEBUG_TOKEN
 
    #### cd command
 
@@ -300,7 +302,18 @@ Plugins may extend the interactive shell by calling
 `doc_ai.plugins.register_completion_provider` to supply additional
 completions. See
 [docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a
-complete example.
+complete example. For security, plugins are ignored unless explicitly
+allowlisted. Add a plugin's entry-point name to the allowlist with:
+
+```
+doc-ai plugins trust example
+```
+
+### Log Redaction
+
+Sensitive strings such as API keys are automatically masked in logs. Supply
+additional comma-separated regular expressions via the
+``LOG_REDACTION_PATTERNS`` configuration key to redact custom secrets.
 
 ## Automated Workflows
 

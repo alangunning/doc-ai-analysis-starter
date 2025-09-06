@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from pathlib import Path
 from typing import Iterable
@@ -25,7 +26,21 @@ class RedactFilter(logging.Filter):
 
     def __init__(self, patterns: Iterable[re.Pattern[str]] | None = None) -> None:
         super().__init__()
-        self.patterns = list(patterns or _SECRET_PATTERNS)
+        if patterns is None:
+            raw = os.getenv("LOG_REDACTION_PATTERNS", "")
+            pats: list[re.Pattern[str]] = []
+            if raw:
+                for expr in raw.split(","):
+                    expr = expr.strip()
+                    if not expr:
+                        continue
+                    try:
+                        pats.append(re.compile(expr))
+                    except re.error:
+                        continue
+            self.patterns = pats or list(_SECRET_PATTERNS)
+        else:
+            self.patterns = list(patterns)
 
     def _redact(self, value: str) -> str:
         for pat in self.patterns:
