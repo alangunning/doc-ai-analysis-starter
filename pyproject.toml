@@ -28,11 +28,15 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Environment :: Console",
     "Topic :: Utilities",
+    "Typing :: Typed",
 ]
 keywords = ["document", "analysis", "cli", "ai"]
 
@@ -41,9 +45,10 @@ Homepage = "https://github.com/alangunning/doc-ai-analysis-starter"
 Repository = "https://github.com/alangunning/doc-ai-analysis-starter"
 Issues = "https://github.com/alangunning/doc-ai-analysis-starter/issues"
 Documentation = "https://alangunning.github.io/doc-ai-analysis-starter/docs/"
+Changelog = "https://github.com/alangunning/doc-ai-analysis-starter/blob/main/CHANGELOG.md"
 
-[project.scripts]
-"doc-ai" = "doc_ai.cli:main"
+[project.entry-points.console_scripts]
+doc-ai = "doc_ai.cli:main"
 
 [project.entry-points."doc_ai.plugins"]
 
@@ -60,7 +65,13 @@ dev = [
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
 
+[tool.setuptools.metadata]
+long_description_content_type = "text/markdown"
+
 [tool.setuptools_scm]
+
+version_scheme = "post-release"
+local_scheme = "no-local-version"
 
 [tool.ruff]
 [tool.ruff.lint]
