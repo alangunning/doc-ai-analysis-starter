@@ -31,9 +31,10 @@ Each step writes to a `<name>.metadata.json` file so completed work can be skipp
 ## Getting Started
 
 1. Follow the Quick Start steps in the repository `README.md` to install dependencies.
-2. Inspect the sample documents under `data/` or add your own files.
-3. Use the CLI scripts to convert, validate, and analyze documents.
-4. Review the workflow docs to see how GitHub Actions connect the pieces.
+2. Install the pre-commit hooks and run `pre-commit run --all-files` before committing changes.
+3. Inspect the sample documents under `data/` or add your own files.
+4. Use the CLI scripts to convert, validate, and analyze documents.
+5. Review the workflow docs to see how GitHub Actions connect the pieces.
 
 Use the navigation to dive into specific topics:
 
