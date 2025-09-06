@@ -8,3 +8,4 @@ docs/.docusaurus/
 docs/build/*
 !docs/build/.gitkeep
 .env
+doc_ai/_version.py

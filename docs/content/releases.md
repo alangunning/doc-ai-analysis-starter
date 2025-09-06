@@ -9,6 +9,11 @@ version:
 1. Update `CHANGELOG.md` with the summary of changes.
 2. Commit the changes and tag the release with a `vMAJOR.MINOR.PATCH` tag.
 3. Push the tag to GitHub.
+4. Verify the CLI reports the tagged version:
+
+   ```bash
+   doc-ai --version
+   ```
 
 Versions are derived from these tags by
 [`setuptools-scm`](https://github.com/pypa/setuptools-scm).
