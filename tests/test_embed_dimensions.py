@@ -1,7 +1,7 @@
+import importlib
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-import importlib
 import pytest
 from typer.testing import CliRunner
 
@@ -43,4 +43,3 @@ def test_build_vector_store_uses_dimensions_when_positive(tmp_path, monkeypatch)
         vector.build_vector_store(tmp_path)
     kwargs = mock_client.embeddings.create.call_args.kwargs
     assert kwargs["dimensions"] == 64
-

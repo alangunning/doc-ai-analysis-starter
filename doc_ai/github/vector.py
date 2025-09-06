@@ -10,9 +10,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from rich.console import Console
 import httpx
 from openai import APIConnectionError, APIError, OpenAI, RateLimitError
+from rich.console import Console
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter
