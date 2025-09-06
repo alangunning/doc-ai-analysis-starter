@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import urlparse
 
+import questionary
 import typer
 
 from .interactive import refresh_completer
@@ -128,24 +129,23 @@ def add_urls(
 @app.command("manage-urls")
 def manage_urls(doc_type: str = typer.Argument(..., help="Document type")) -> None:
     """Interactively manage stored URLs for *doc_type*."""
-
     path, urls = show_urls(doc_type)
-    while True:
-        choice = typer.prompt(
-            "Enter URL to add, number to remove, or blank to finish",
-            default="",
-        ).strip()
-        if not choice:
-            break
-        if choice.isdigit() and 1 <= int(choice) <= len(urls):
-            urls.pop(int(choice) - 1)
-        else:
-            if not _valid_url(choice):
-                typer.echo("Invalid URL; please try again.")
-                continue
-            if choice in urls:
-                typer.echo("URL already present.")
-                continue
-            urls.append(choice)
-    save_urls(path, urls)
+    edited = questionary.text(
+        "Edit URLs (one per line)",
+        default="\n".join(urls),
+        multiline=True,
+    ).ask()
+    if edited is None:
+        return
+
+    new_urls: list[str] = []
+    for line in edited.splitlines():
+        url = line.strip()
+        if not url:
+            continue
+        if not _valid_url(url):
+            typer.echo(f"Skipping invalid URL: {url}")
+            continue
+        new_urls.append(url)
+    save_urls(path, new_urls)
     refresh_completer()
