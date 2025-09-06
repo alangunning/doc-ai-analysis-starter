@@ -268,6 +268,7 @@ from . import validate as validate_cmd  # noqa: E402
 from . import query as query_cmd  # noqa: E402
 from . import init_workflows as init_workflows_cmd  # noqa: E402
 from . import new_doc_type as new_doc_type_cmd  # noqa: E402
+from . import new_topic as new_topic_cmd  # noqa: E402
 from . import prompt as prompt_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")
@@ -278,7 +279,12 @@ app.add_typer(embed_cmd.app, name="embed")
 app.add_typer(pipeline_cmd.app, name="pipeline")
 app.add_typer(query_cmd.app, name="query")
 app.add_typer(init_workflows_cmd.app, name="init-workflows")
-app.add_typer(new_doc_type_cmd.app, name="new")
+
+new_app = typer.Typer(help="Scaffold new document types and topic prompts")
+new_app.command("doc-type")(new_doc_type_cmd.doc_type)
+new_app.command("topic")(new_topic_cmd.topic)
+app.add_typer(new_app, name="new")
+
 app.add_typer(add_cmd.app, name="add")
 app.command("set")(config_cmd.set_defaults)
 
