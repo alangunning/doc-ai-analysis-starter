@@ -63,6 +63,15 @@ def test_bang_executes_shell_command(capsys, monkeypatch):
     assert interactive.LAST_EXIT_CODE == 0
 
 
+def test_bang_echo_still_works(capsys, monkeypatch):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    _setup()
+    _parse_command("!echo hi")
+    out = capsys.readouterr().out
+    assert out.strip() == "hi"
+    assert interactive.LAST_EXIT_CODE == 0
+
+
 def test_bang_preserves_exit_status(capsys, monkeypatch):
     monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
     _setup()
