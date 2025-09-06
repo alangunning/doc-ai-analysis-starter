@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
 import logging
+import os
 import sys
+from pathlib import Path
 
-import typer
-from rich.table import Table
-from rich.panel import Panel
-from dotenv import set_key, dotenv_values
 import questionary
+import typer
+from dotenv import dotenv_values, set_key
+from rich.panel import Panel
+from rich.table import Table
 
+from . import ENV_FILE, console, read_configs, save_global_config
+from .interactive import SAFE_ENV_VARS_ENV, _parse_allow_deny, refresh_completer
 from .utils import get_logging_options, load_env_defaults, prompt_if_missing
-from . import ENV_FILE, save_global_config, read_configs, console
-from .interactive import refresh_completer, SAFE_ENV_VARS_ENV, _parse_allow_deny
 
 TRUE_SET = {"1", "true", "yes"}
 FALSE_SET = {"0", "false", "no"}
@@ -83,7 +83,12 @@ app.add_typer(safe_env_app, name="safe-env")
 
 def _read_safe_env(ctx: typer.Context) -> tuple[set[str], set[str]]:
     cfg = ctx.obj.get("global_config", {}) if ctx.obj else {}
-    raw = cfg.get(SAFE_ENV_VARS_ENV, "")
+    if SAFE_ENV_VARS_ENV in cfg:
+        raw: str | None = str(cfg[SAFE_ENV_VARS_ENV])
+    elif SAFE_ENV_VARS_ENV in os.environ:
+        raw = os.environ[SAFE_ENV_VARS_ENV]
+    else:
+        raw = None
     return _parse_allow_deny(raw)
 
 

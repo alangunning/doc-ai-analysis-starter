@@ -26,6 +26,23 @@ Typer-based projects.
 Use `show doc-types` and `show topics` to list document types under the
 ``data/`` directory and analysis topics discovered from prompt files.
 
+## Safe environment variables
+
+Only a minimal set of environment variables is available for completion inside
+the REPL. When the :envvar:`DOC_AI_SAFE_ENV_VARS` setting is unset, only
+``PATH`` and ``HOME`` are suggested. To expose additional variables, either set
+``DOC_AI_SAFE_ENV_VARS`` to a comma-separated allow/deny list or run
+``doc-ai config safe-env`` subcommands. Items prefixed with ``-`` are denied and
+the ``+`` prefix is optional.
+
+Examples::
+
+    DOC_AI_SAFE_ENV_VARS=MY_API_KEY,-DEBUG_TOKEN
+    doc-ai config safe-env add MY_API_KEY
+
+Variables not present in the allow list are omitted from completion results so
+accidental disclosure of secrets is avoided.
+
 ## Built-in commands
 
 The interactive prompt includes a minimal set of shell-like commands.
