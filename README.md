@@ -263,12 +263,37 @@ PyPI.
 
 ## Releases
 
-This project uses [semantic versioning](https://semver.org/). Update
-`CHANGELOG.md` and tag commits with `vMAJOR.MINOR.PATCH` (for example,
-`v1.2.3`). Versions are derived automatically from these Git tags by
-[setuptools-scm](https://github.com/pypa/setuptools-scm), ensuring reproducible
-builds. Tagging a release triggers the CI workflow, which runs `ruff`, `pytest`,
-builds the package, and publishes it to PyPI.
+This project uses [semantic versioning](https://semver.org/) and
+[setuptools-scm](https://github.com/pypa/setuptools-scm) to derive the version
+from Git tags. To create a new release:
+
+1. Ensure `CHANGELOG.md` has an entry for the upcoming version.
+2. Run linters and tests:
+
+   ```bash
+   pre-commit run --all-files
+   pytest
+   ```
+
+3. Build the package and validate metadata:
+
+   ```bash
+   python -m build
+   twine check dist/*
+   ```
+
+4. Publish to PyPI:
+
+   ```bash
+   twine upload dist/*
+   ```
+
+5. Tag the commit and push the tag to trigger the release workflow:
+
+   ```bash
+   git tag -a vMAJOR.MINOR.PATCH -m "Release vMAJOR.MINOR.PATCH"
+   git push --tags
+   ```
 
 ## Documentation
 

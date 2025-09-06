@@ -13,3 +13,11 @@ repos:
       - id: bandit
         args: ["-r", "doc_ai"]
         exclude: ^tests/
+  - repo: https://github.com/mgedmin/check-manifest
+    rev: "0.50"
+    hooks:
+      - id: check-manifest
+  - repo: https://github.com/pypa/validate-pyproject
+    rev: "v0.16"
+    hooks:
+      - id: validate-pyproject
