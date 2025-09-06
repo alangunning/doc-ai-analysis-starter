@@ -76,6 +76,6 @@ distribution. Add a plugin to the allowlist with
 `doc-ai plugins untrust NAME`. Untrusting a plugin removes it from the
 allowlist and unloads it from the current CLI session.
 
-See the [template plugin](../../examples/plugin_example.py) for a complete
+See the [template plugin](../examples/plugin_example.py) for a complete
 file and entry‑point declaration.
 

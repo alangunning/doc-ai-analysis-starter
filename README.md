@@ -332,7 +332,7 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 - [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
 - [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
 - [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
-- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands, REPL commands, and completion providers; see [docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a template
+- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands, REPL commands, and completion providers; see [docs/content/examples/plugin_example.py](docs/content/examples/plugin_example.py) for a template
 
 ## Plugin Development
 
@@ -348,7 +348,7 @@ Plugins may extend the interactive shell by calling
 `doc_ai.plugins.register_repl_command` to add REPL-only commands and
 `doc_ai.plugins.register_completion_provider` to supply additional
 completions. See
-[docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a
+[docs/content/examples/plugin_example.py](docs/content/examples/plugin_example.py) for a
 complete example. For security, plugins are ignored unless explicitly
 allowlisted. Trust a plugin by recording its version and hash:
 
