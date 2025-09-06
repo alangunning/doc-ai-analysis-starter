@@ -5,3 +5,6 @@ recursive-include data *
 include doc_ai/py.typed
 exclude .env
 recursive-exclude * *.env
+exclude docs/package.json
+exclude docs/package-lock.json
+prune docs/node_modules

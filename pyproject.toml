@@ -65,9 +65,6 @@ dev = [
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
 
-[tool.setuptools.metadata]
-long_description_content_type = "text/markdown"
-
 [tool.setuptools_scm]
 
 version_scheme = "post-release"
