@@ -6,8 +6,8 @@ from urllib.parse import urlparse
 import questionary
 import typer
 
-from .interactive import refresh_completer, discover_doc_types_topics
-from .utils import prompt_if_missing
+from .interactive import refresh_completer
+from .utils import select_doc_type
 
 
 app = typer.Typer(
@@ -57,32 +57,13 @@ def _valid_url(url: str) -> bool:
     return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
 
-def _get_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
-    """Resolve *doc_type* from CLI options or prompts."""
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
-    return doc_type
-
-
 @app.command("list")
 def list_urls(
     ctx: typer.Context,
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
 ) -> None:
     """List stored URLs for *doc_type*."""
-    doc_type = _get_doc_type(ctx, doc_type)
+    doc_type = select_doc_type(ctx, doc_type)
     show_urls(doc_type)
 
 
@@ -95,7 +76,7 @@ def add_urls(
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
 ) -> None:
     """Add one or more URLs for *doc_type*."""
-    doc_type = _get_doc_type(ctx, doc_type)
+    doc_type = select_doc_type(ctx, doc_type)
     path, urls = _load_urls(doc_type)
     if not url:
         try:
@@ -130,7 +111,7 @@ def import_urls(
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
 ) -> None:
     """Import URLs from *file* for *doc_type*."""
-    doc_type = _get_doc_type(ctx, doc_type)
+    doc_type = select_doc_type(ctx, doc_type)
     if file is None:
         try:
             path_str = questionary.text("Path to file with URLs").ask()
@@ -167,7 +148,7 @@ def remove_url(
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
 ) -> None:
     """Remove a stored URL for *doc_type*."""
-    doc_type = _get_doc_type(ctx, doc_type)
+    doc_type = select_doc_type(ctx, doc_type)
     path, urls = _load_urls(doc_type)
     if not urls:
         typer.echo("No URLs to remove.")
@@ -197,7 +178,7 @@ def manage_urls(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand:
         return
 
-    doc_type = _get_doc_type(ctx, None)
+    doc_type = select_doc_type(ctx, None)
 
     path, urls = show_urls(doc_type)
 

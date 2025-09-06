@@ -6,11 +6,10 @@ import sys
 import shutil
 from pathlib import Path
 
-import questionary
 import typer
 
-from .interactive import refresh_after, discover_doc_types_topics
-from .utils import prompt_if_missing, sanitize_name
+from .interactive import refresh_after
+from .utils import prompt_if_missing, sanitize_name, select_doc_type
 
 app = typer.Typer(help="Scaffold a new document type with template prompts")
 
@@ -86,21 +85,7 @@ def rename_doc_type(
     """Rename existing document type *old* to *new*."""
 
     new = sanitize_name(new)
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    old = old or cfg.get("default_doc_type")
-    if old is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                old = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                old = None
-        old = prompt_if_missing(ctx, old, "Document type")
-    if old is None:
-        raise typer.BadParameter("Document type required")
-    old = sanitize_name(old)
+    old = select_doc_type(ctx, old)
     old_dir = DATA_DIR / old
     new_dir = DATA_DIR / new
     if not old_dir.exists():
@@ -138,21 +123,7 @@ def delete_doc_type(
 ) -> None:
     """Remove the document type directory named *name*."""
 
-    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    name = name or cfg.get("default_doc_type")
-    if name is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                name = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                name = None
-        name = prompt_if_missing(ctx, name, "Document type")
-    if name is None:
-        raise typer.BadParameter("Document type required")
-    name = sanitize_name(name)
+    name = select_doc_type(ctx, name)
     target_dir = DATA_DIR / name
     if not target_dir.exists():
         typer.echo(f"Directory {target_dir} does not exist", err=True)
