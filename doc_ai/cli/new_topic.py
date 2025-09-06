@@ -1,12 +1,14 @@
-from __future__ import annotations
-
 """Scaffold new topic prompt templates for existing document types."""
+
+from __future__ import annotations
 
 import sys
 import shutil
 from pathlib import Path
 
 import typer
+
+from .interactive import refresh_completer
 
 app = typer.Typer(help="Scaffold a new analysis topic prompt for a document type")
 
@@ -42,3 +44,4 @@ def topic(doc_type: str, topic: str) -> None:
         typer.prompt("Optional initial description", default="", show_default=False)
     else:
         typer.echo(f"Created {target_file}")
+    refresh_completer()

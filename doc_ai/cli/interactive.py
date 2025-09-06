@@ -39,6 +39,7 @@ __all__ = [
     "discover_doc_types_topics",
     "SAFE_ENV_VARS",
     "PROMPT_KWARGS",
+    "refresh_completer",
     "_prompt_name",
 ]
 
@@ -74,6 +75,14 @@ class DocAICompleter(Completer):
 
     def __init__(self, cli: click.BaseCommand, ctx: click.Context) -> None:
         self._click = ClickCompleter(cli, ctx)
+        self._env = WordCompleter([], ignore_case=True)
+        self._doc_types = WordCompleter([], ignore_case=True)
+        self._topics = WordCompleter([], ignore_case=True)
+        self.refresh()
+
+    def refresh(self) -> None:
+        """Refresh cached doc types, topics, and environment variables."""
+
         pattern = re.compile(r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE)
         allowed = SAFE_ENV_VARS.union(
             {
@@ -88,12 +97,6 @@ class DocAICompleter(Completer):
             if name in allowed or not pattern.search(name)
         ]
         self._env = WordCompleter(env_words, ignore_case=True)
-        self._doc_types = WordCompleter([], ignore_case=True)
-        self._topics = WordCompleter([], ignore_case=True)
-        self.refresh()
-
-    def refresh(self) -> None:
-        """Refresh cached doc types and topics from the ``data`` directory."""
 
         doc_types, topics = discover_doc_types_topics(Path("data"))
         self._doc_types = WordCompleter(doc_types, ignore_case=True)
@@ -143,6 +146,14 @@ class DocAICompleter(Completer):
                     return
 
         yield from self._click.get_completions(document, complete_event)
+
+
+def refresh_completer() -> None:
+    """Refresh the interactive completer if the REPL is active."""
+
+    comp = PROMPT_KWARGS.get("completer") if PROMPT_KWARGS else None
+    if isinstance(comp, DocAICompleter):
+        comp.refresh()
 
 
 def _parse_command(command: str) -> list[str] | None:

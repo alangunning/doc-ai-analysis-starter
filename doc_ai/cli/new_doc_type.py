@@ -1,12 +1,14 @@
-from __future__ import annotations
-
 """Scaffold new document type directories and prompt templates."""
+
+from __future__ import annotations
 
 import sys
 import shutil
 from pathlib import Path
 
 import typer
+
+from .interactive import refresh_completer
 
 app = typer.Typer(help="Scaffold a new document type with template prompts")
 
@@ -45,3 +47,4 @@ def doc_type(name: str) -> None:
         typer.prompt("Optional description or notes", default="", show_default=False)
     else:
         typer.echo(f"Created {target_dir}")
+    refresh_completer()
