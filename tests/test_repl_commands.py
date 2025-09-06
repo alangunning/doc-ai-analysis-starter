@@ -15,6 +15,14 @@ def _setup():
     _register_repl_commands(ctx)
 
 
+def test_help_lists_repl_commands(capsys):
+    _setup()
+    interactive._repl_help([])
+    out = capsys.readouterr().out
+    assert ":new-doc-type" in out
+    assert ":manage-urls" in out
+
+
 def test_help_lists_subcommands(capsys):
     _setup()
     _parse_command(":help add")

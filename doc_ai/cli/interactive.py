@@ -170,6 +170,69 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_new_doc_type(args: list[str]) -> None:
+    """Create a new document type directory with template prompts."""
+    if _REPL_CTX is None:
+        click.echo("Document type creation unavailable.")
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    name = args[0] if args else None
+    try:
+        new_doc_type_mod.doc_type(_REPL_CTX, name)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_rename_doc_type(args: list[str]) -> None:
+    """Rename an existing document type."""
+    if _REPL_CTX is None:
+        click.echo("Document type renaming unavailable.")
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    if not args:
+        click.echo("New document type name required")
+        return
+    new = args[0]
+    old = args[1] if len(args) > 1 else None
+    try:
+        new_doc_type_mod.rename_doc_type(_REPL_CTX, new, old=old)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_new_topic(args: list[str]) -> None:
+    """Create a new topic prompt for a document type."""
+    if _REPL_CTX is None:
+        click.echo("Topic creation unavailable.")
+        return
+    from . import new_topic as new_topic_mod
+
+    doc_type = args[0] if args else None
+    topic = args[1] if len(args) > 1 else None
+    try:
+        new_topic_mod.topic(_REPL_CTX, topic, doc_type=doc_type)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
+def _repl_rename_topic(args: list[str]) -> None:
+    """Rename an existing topic prompt for a document type."""
+    if _REPL_CTX is None:
+        click.echo("Topic renaming unavailable.")
+        return
+    from . import new_topic as new_topic_mod
+
+    doc_type = args[0] if args else None
+    old = args[1] if len(args) > 1 else None
+    new = args[2] if len(args) > 2 else None
+    try:
+        new_topic_mod.rename_topic(_REPL_CTX, old, new, doc_type=doc_type)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
 def _repl_urls(args: list[str]) -> None:
     """Invoke the URL management command from the REPL."""
     if _REPL_CTX is None:
@@ -195,6 +258,11 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
     plugins.register_repl_command(":urls", _repl_urls)
+    plugins.register_repl_command(":manage-urls", _repl_urls)
+    plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
+    plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)
+    plugins.register_repl_command(":new-topic", _repl_new_topic)
+    plugins.register_repl_command(":rename-topic", _repl_rename_topic)
 
 
 def discover_doc_types_topics(
