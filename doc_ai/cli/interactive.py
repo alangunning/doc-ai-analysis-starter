@@ -116,6 +116,15 @@ class DocAICompleter(Completer):
                         Document(parts[-1]), complete_event
                     )
                     return
+            if cmd == "add" and len(parts) >= 2 and parts[1] == "manage-urls":
+                if len(parts) == 2 and text.endswith(" "):
+                    yield from self._doc_types.get_completions(Document(""), complete_event)
+                    return
+                if len(parts) == 3 and not parts[2].startswith("-"):
+                    yield from self._doc_types.get_completions(
+                        Document(parts[2]), complete_event
+                    )
+                    return
 
         yield from self._click.get_completions(document, complete_event)
 
