@@ -21,7 +21,7 @@ def test_show_completion():
 def test_completer_hides_sensitive_env(tmp_path, monkeypatch):
     import doc_ai.cli as cli_mod
 
-    monkeypatch.setenv("VISIBLE", "1")
+    monkeypatch.setenv("PATH", "/bin")
     monkeypatch.setenv("MY_SECRET", "x")
     monkeypatch.setenv("MY_API_KEY", "x")
     monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_PATH", tmp_path / "config.json")
@@ -34,7 +34,7 @@ def test_completer_hides_sensitive_env(tmp_path, monkeypatch):
     comp = DocAICompleter(cmd, ctx)
     completions = list(comp.get_completions(Document("$"), None))
     texts = {c.text for c in completions}
-    assert "$VISIBLE" in texts
+    assert "$PATH" in texts
     assert "$MY_SECRET" not in texts
     assert "$MY_API_KEY" not in texts
 
@@ -66,7 +66,9 @@ def test_completer_blocks_blacklisted_env(tmp_path, monkeypatch):
     monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_PATH", tmp_path / "config.json")
     monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_DIR", tmp_path)
     cmd = get_command(cli_mod.app)
-    ctx = click.Context(cmd, obj={"config": {"DOC_AI_SAFE_ENV_VARS": "-VISIBLE"}})
+    ctx = click.Context(
+        cmd, obj={"config": {"DOC_AI_SAFE_ENV_VARS": "VISIBLE,-VISIBLE"}}
+    )
     comp = DocAICompleter(cmd, ctx)
     completions = list(comp.get_completions(Document("$"), None))
     texts = {c.text for c in completions}
