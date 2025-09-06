@@ -95,7 +95,7 @@ def _repl_help(args: list[str]) -> None:
         )
         if repl_cmds:
             click.echo("\nREPL commands: " + ", ".join(repl_cmds))
-            click.echo("Example: :history")
+            click.echo("Example: :history or :new-doc-type")
         click.echo("\nType ':help COMMAND' for command-specific help.")
     elif isinstance(cmd, click.MultiCommand):
         subs = sorted(cmd.list_commands(cur_ctx))
@@ -168,6 +168,70 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _invoke_cli_command(app: typer.Typer, name: str, args: list[str], unavailable: str) -> None:
+    """Invoke a Typer *app* command named *name* with *args*."""
+
+    if _REPL_CTX is None:
+        click.echo(unavailable)
+        return
+    cmd = get_command(app)
+    sub_ctx: click.Context | None = None
+    try:
+        sub_ctx = cmd.make_context(
+            name, [name] + args, obj=_REPL_CTX.obj, default_map=_REPL_CTX.default_map
+        )
+        cmd.invoke(sub_ctx)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+    except ClickExit as exc:
+        raise typer.Exit(exc.exit_code)
+    finally:
+        if sub_ctx is not None:
+            _REPL_CTX.default_map = sub_ctx.default_map
+
+
+def _repl_new_doc_type(args: list[str]) -> None:
+    """Scaffold a new document type directory."""
+
+    from doc_ai.cli import new_doc_type as mod
+
+    _invoke_cli_command(mod.app, "doc-type", args, "New doc type unavailable.")
+
+
+def _repl_rename_doc_type(args: list[str]) -> None:
+    """Rename an existing document type."""
+
+    from doc_ai.cli import new_doc_type as mod
+
+    _invoke_cli_command(
+        mod.app, "rename-doc-type", args, "Rename doc type unavailable."
+    )
+
+
+def _repl_new_topic(args: list[str]) -> None:
+    """Create a new topic prompt."""
+
+    from doc_ai.cli import new_topic as mod
+
+    _invoke_cli_command(mod.app, "topic", args, "New topic unavailable.")
+
+
+def _repl_rename_topic(args: list[str]) -> None:
+    """Rename an existing topic prompt."""
+
+    from doc_ai.cli import new_topic as mod
+
+    _invoke_cli_command(mod.app, "rename-topic", args, "Rename topic unavailable.")
+
+
+def _repl_manage_urls(args: list[str]) -> None:
+    """Interactively manage stored URLs for a document type."""
+
+    from doc_ai.cli import add as add_mod
+
+    _invoke_cli_command(add_mod.app, "manage-urls", args, "URL management unavailable.")
+
+
 def _register_repl_commands(ctx: click.Context) -> None:
     """Register built-in REPL commands for the given context."""
 
@@ -178,6 +242,11 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":history", _repl_history)
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
+    plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
+    plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)
+    plugins.register_repl_command(":new-topic", _repl_new_topic)
+    plugins.register_repl_command(":rename-topic", _repl_rename_topic)
+    plugins.register_repl_command(":manage-urls", _repl_manage_urls)
 
 
 def discover_doc_types_topics(
