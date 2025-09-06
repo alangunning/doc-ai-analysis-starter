@@ -21,6 +21,8 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
 
    ```bash
    pip install -e .
+   pip install pre-commit
+   pre-commit install
    ```
 
    Optionally build the documentation site:
