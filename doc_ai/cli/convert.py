@@ -3,12 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 import logging
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
 
 import typer
 
 from doc_ai.converter import OutputFormat
 
-from doc_ai.utils import http_get
+from doc_ai.utils import http_get, sanitize_filename
+from rich.progress import Progress
 
 from .utils import parse_config_formats as _parse_config_formats, resolve_bool
 
@@ -29,12 +32,18 @@ def download_and_convert(
 
     dest = Path("data") / doc_type
     dest.mkdir(parents=True, exist_ok=True)
-    for link in urls:
+    seen: set[str] = set()
+    lock = Lock()
+
+    def _download(link: str) -> None:
         resp = http_get(link, stream=True)
         try:
             resp.raise_for_status()
             name = Path(urlparse(link).path).name or "downloaded"
-            path = dest / name
+            with lock:
+                sanitized = sanitize_filename(name, existing=seen)
+                seen.add(sanitized)
+            path = dest / sanitized
             with open(path, "wb") as fh:
                 for chunk in resp.iter_content(chunk_size=8192):
                     if not chunk:
@@ -42,6 +51,15 @@ def download_and_convert(
                     fh.write(chunk)
         finally:
             resp.close()
+
+    with Progress(transient=True) as progress:
+        task = progress.add_task(f"Downloading {doc_type}", total=len(urls))
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(_download, link) for link in urls]
+            for fut in as_completed(futures):
+                fut.result()
+                progress.advance(task)
+
     return _convert_path(dest, formats, force=force)
 
 
