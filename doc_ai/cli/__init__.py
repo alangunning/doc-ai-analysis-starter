@@ -297,6 +297,7 @@ from . import config as config_cmd  # noqa: E402
 from . import convert as convert_cmd  # noqa: E402
 from . import embed as embed_cmd  # noqa: E402
 from . import add as add_cmd  # noqa: E402
+from . import manage_urls as manage_urls_cmd  # noqa: E402
 
 pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
 from . import validate as validate_cmd  # noqa: E402
@@ -325,6 +326,7 @@ new_app.command("delete-topic")(new_topic_cmd.delete_topic)
 app.add_typer(new_app, name="new")
 
 app.add_typer(add_cmd.app, name="add")
+app.add_typer(manage_urls_cmd.app, name="urls")
 app.command("set")(config_cmd.set_defaults)
 
 # Prompt inspection and editing

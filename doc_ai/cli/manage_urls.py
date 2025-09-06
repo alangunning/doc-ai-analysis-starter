@@ -10,6 +10,9 @@ from .interactive import refresh_completer, discover_doc_types_topics
 from .utils import prompt_if_missing
 
 
+app = typer.Typer(help="Manage stored URLs.", invoke_without_command=True)
+
+
 def _url_file(doc_type: str) -> Path:
     """Return path to the persistent URL list for ``doc_type``."""
     return Path("data") / doc_type / "urls.txt"
@@ -45,6 +48,7 @@ def _valid_url(url: str) -> bool:
     return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
 
+@app.callback()
 def manage_urls(
     ctx: typer.Context, doc_type: str | None = typer.Argument(None, help="Document type")
 ) -> None:

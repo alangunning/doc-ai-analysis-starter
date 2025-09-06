@@ -120,7 +120,7 @@ def test_completer_suggests_doc_types_and_topics(tmp_path, monkeypatch):
     assert {"sales", "finance"} <= topics
 
 
-def test_completer_suggests_manage_urls_doc_types(tmp_path, monkeypatch):
+def test_completer_suggests_urls_doc_types(tmp_path, monkeypatch):
     data_dir = tmp_path / "data"
     (data_dir / "alpha").mkdir(parents=True)
     (data_dir / "beta").mkdir()
@@ -131,6 +131,6 @@ def test_completer_suggests_manage_urls_doc_types(tmp_path, monkeypatch):
     ctx = click.Context(cmd)
     comp = DocAICompleter(cmd, ctx)
 
-    completions = list(comp.get_completions(Document("add manage-urls "), None))
+    completions = list(comp.get_completions(Document("urls "), None))
     texts = {c.text for c in completions}
     assert {"alpha", "beta"} <= texts

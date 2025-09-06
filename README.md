@@ -79,12 +79,12 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    doc-ai> add url https://example.com/a.pdf --doc-type reports
    ```
 
-   Load a list of links from a file or manage a stored URL list. ``manage-urls``
+   Load a list of links from a file or manage a stored URL list. ``urls``
    validates entries and prevents duplicates:
 
    ```bash
    doc-ai> add urls links.txt --doc-type reports
-   doc-ai> add manage-urls reports
+   doc-ai> urls reports
    ```
 
    The validator searches for a prompt file next to the inputs:
