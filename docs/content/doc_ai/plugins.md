@@ -10,7 +10,8 @@ commands. Plugins must return a `typer.Typer` instance and register it under
 the `doc_ai.plugins` entry‑point group so the main CLI can discover and
 attach it at runtime. Plugins may also hook into the interactive REPL by
 registering custom commands or completion providers via
-`doc_ai.plugins`.
+`doc_ai.plugins`. These features require the optional `repl` dependencies
+(`pip install "doc-ai[repl]"`).
 
 ## Plugin template
 

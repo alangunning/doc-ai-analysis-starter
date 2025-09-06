@@ -1,6 +1,10 @@
 import io
+
 import click
+import pytest
 import typer
+
+pytest.importorskip("questionary")
 
 from doc_ai.cli import config as config_mod
 
@@ -15,8 +19,14 @@ class DummyQuestion:
 
 def test_config_wizard_sets_values(monkeypatch):
     monkeypatch.setattr(config_mod, "load_env_defaults", lambda: {"FOO": "bar"})
-    monkeypatch.setattr(config_mod.questionary, "text", lambda *a, **k: DummyQuestion("baz"))
-    monkeypatch.setattr(config_mod.sys, "stdin", type("Tty", (io.StringIO,), {"isatty": lambda self: True})())
+    monkeypatch.setattr(
+        config_mod.questionary, "text", lambda *a, **k: DummyQuestion("baz")
+    )
+    monkeypatch.setattr(
+        config_mod.sys,
+        "stdin",
+        type("Tty", (io.StringIO,), {"isatty": lambda self: True})(),
+    )
 
     captured = []
 

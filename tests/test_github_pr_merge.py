@@ -2,6 +2,8 @@ import subprocess
 
 import pytest
 
+pytest.importorskip("questionary")
+
 from doc_ai.github.pr import merge_pr
 
 

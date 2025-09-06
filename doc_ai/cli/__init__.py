@@ -2,44 +2,56 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import importlib
 import json
 import logging
 import os
 import sys
-import importlib
-import hashlib
-import hmac
-from importlib.metadata import entry_points
 from enum import Enum
+from importlib.metadata import entry_points
 from pathlib import Path
+from typing import Any
 
 import click
 import typer
-from typer import Typer
-from typing import Any
-from dotenv import find_dotenv, load_dotenv, dotenv_values
+import yaml
+from dotenv import dotenv_values, find_dotenv, load_dotenv
 from platformdirs import PlatformDirs
 from rich.console import Console
-import yaml
+from typer import Typer
 from typer.main import get_command
 
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
 from doc_ai.logging import configure_logging
-from .interactive import (
-    interactive_shell,
-    run_batch,
-    discover_doc_types_topics,
-)  # noqa: F401
-import doc_ai.cli.interactive as interactive_module
+
+try:
+    import doc_ai.cli.interactive as interactive_module
+
+    from .interactive import (
+        discover_doc_types_topics,
+        interactive_shell,
+        run_batch,
+    )  # noqa: F401
+except ModuleNotFoundError:  # pragma: no cover - optional repl deps
+    interactive_shell = run_batch = discover_doc_types_topics = None  # type: ignore[assignment]
+    interactive_module = None  # type: ignore[assignment]
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
     analyze_doc,
-    infer_format as _infer_format,
-    parse_env_formats as _parse_env_formats,
-    suffix as _suffix,
-    validate_doc,
     prompt_if_missing,
+    validate_doc,
+)
+from .utils import (  # noqa: F401
+    infer_format as _infer_format,
+)
+from .utils import (  # noqa: F401
+    parse_env_formats as _parse_env_formats,
+)
+from .utils import (  # noqa: F401
+    suffix as _suffix,
 )
 
 # Ensure project root is first on sys.path when running as a script.
@@ -280,9 +292,6 @@ def _version_command() -> None:
     raise typer.Exit()
 
 
-from typing import Any
-
-
 def validate_file(*args: Any, **kwargs: Any) -> Any:
     from doc_ai.github.validator import validate_file as _validate_file
 
@@ -302,20 +311,20 @@ def run_prompt(*args: Any, **kwargs: Any) -> Any:
 
 
 # Register subcommands implemented in dedicated modules.
+from . import add as add_cmd  # noqa: E402
 from . import analyze as analyze_cmd  # noqa: E402
 from . import config as config_cmd  # noqa: E402
 from . import convert as convert_cmd  # noqa: E402
 from . import embed as embed_cmd  # noqa: E402
-from . import add as add_cmd  # noqa: E402
 from . import manage_urls as manage_urls_cmd  # noqa: E402
 
 pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
-from . import validate as validate_cmd  # noqa: E402
-from . import query as query_cmd  # noqa: E402
 from . import init_workflows as init_workflows_cmd  # noqa: E402
 from . import new_doc_type as new_doc_type_cmd  # noqa: E402
 from . import new_topic as new_topic_cmd  # noqa: E402
 from . import prompt as prompt_cmd  # noqa: E402
+from . import query as query_cmd  # noqa: E402
+from . import validate as validate_cmd  # noqa: E402
 
 app.add_typer(config_cmd.app, name="config")  # type: ignore[has-type]
 app.add_typer(convert_cmd.app, name="convert")
@@ -452,7 +461,9 @@ def _register_plugins() -> None:
             logger.error("Skipping plugin %s: trusted hash not specified", ep.name)
             continue
         if dist is None:
-            logger.error("Skipping plugin %s: distribution not available for hashing", ep.name)
+            logger.error(
+                "Skipping plugin %s: distribution not available for hashing", ep.name
+            )
             continue
         try:
             actual_hash = _hash_distribution(dist)
@@ -537,9 +548,7 @@ def untrust_plugin(name: str) -> None:
         typer.echo(f"Plugin '{name}' not trusted")
 
     if name in _LOADED_PLUGINS:
-        app.registered_groups = [
-            g for g in app.registered_groups if g.name != name
-        ]
+        app.registered_groups = [g for g in app.registered_groups if g.name != name]
         _LOADED_PLUGINS.pop(name, None)
         setattr(app, "_command", None)
     _register_plugins()
@@ -606,6 +615,11 @@ def main() -> None:
             logger.error("[red]Batch file not found: %s[/red]", path)
             raise SystemExit(1)
     if run_path is not None:
+        if run_batch is None:
+            logger.error(
+                "Batch execution requires optional repl dependencies. Install with 'pip install doc-ai[repl]'",
+            )
+            raise SystemExit(1)
         cmd = get_command(app)
         ctx = click.Context(cmd)
         try:
@@ -642,6 +656,11 @@ def main() -> None:
             app(prog_name="cli.py", args=["--help"])
         except SystemExit:
             pass
+    if interactive_shell is None:
+        logger.error(
+            "Interactive shell requires optional repl dependencies. Install with 'pip install doc-ai[repl]'",
+        )
+        return
     logger.info("Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave.")
     interactive_shell(app, init=init_path)
     logger.info("Goodbye!")
