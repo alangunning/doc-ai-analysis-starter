@@ -8,6 +8,8 @@ import os
 import time
 from pathlib import Path
 
+from openai import OpenAIError
+
 if TYPE_CHECKING:  # pragma: no cover - import for type checking only
     from openai import OpenAI
 
@@ -58,6 +60,8 @@ def create_response(
     file_purpose: str | None = None,
     progress: Optional[Callable[[int], None]] = None,
     logger: Optional[logging.Logger] = None,
+    retries: int = 3,
+    request_timeout: float | None = None,
     **kwargs: Any,
 ) -> Any:
     """Call the Responses API with a mix of inputs.
@@ -90,6 +94,10 @@ def create_response(
         displaying progress bars.
     logger:
         Optional logger for emitting request and response payloads.
+    retries:
+        Number of times to retry failed API calls. Defaults to ``3``.
+    request_timeout:
+        Timeout in seconds for the API request.
     """
 
     file_purpose = file_purpose or os.getenv("OPENAI_FILE_PURPOSE", "user_data")
@@ -130,17 +138,27 @@ def create_response(
         )
 
     result = None
-    for attempt in range(3):
+    call_kwargs = dict(payload)
+    if request_timeout is not None:
+        call_kwargs["timeout"] = request_timeout
+
+    for attempt in range(retries):
         try:
-            result = client.responses.create(**payload)
+            result = client.responses.create(**call_kwargs)
             break
-        except Exception as exc:  # pragma: no cover - network failures
+        except OpenAIError as exc:  # pragma: no cover - network failures
             if logger:
                 logger.warning(
                     "Responses API request failed", extra={"attempt": attempt + 1, "error": str(exc)}
                 )
-            if attempt == 2:
-                raise
+            if attempt == retries - 1:
+                if logger:
+                    logger.error(
+                        "Responses API request failed after %s attempts", retries, extra={"error": str(exc)}
+                    )
+                raise RuntimeError(
+                    f"Responses API request failed after {retries} attempts"
+                ) from exc
             time.sleep(2 ** attempt)
 
     if logger and result is not None:
