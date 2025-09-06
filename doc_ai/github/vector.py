@@ -15,6 +15,7 @@ from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 from rich.console import Console
 from rich.progress import Progress
 
+from doc_ai.cli import _parse_embed_dimensions
 from doc_ai.logging import RedactFilter
 
 from ..metadata import (
@@ -27,7 +28,10 @@ from ..metadata import (
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
-EMBED_DIMENSIONS = int(os.environ["EMBED_DIMENSIONS"])
+try:
+    EMBED_DIMENSIONS = _parse_embed_dimensions(os.getenv("EMBED_DIMENSIONS"))
+except ValueError as exc:  # pragma: no cover - defensive
+    raise RuntimeError(str(exc)) from exc
 
 _log = logging.getLogger(__name__)
 _log.addFilter(RedactFilter())

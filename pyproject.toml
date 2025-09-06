@@ -69,7 +69,7 @@ dev = [
 "doc_ai" = ["py.typed"]
 
 [tool.setuptools_scm]
-
+fallback_version = "0.1.0-alpha.0"
 version_scheme = "post-release"
 local_scheme = "no-local-version"
 write_to = "doc_ai/_version.py"

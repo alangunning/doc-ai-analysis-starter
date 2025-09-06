@@ -23,7 +23,7 @@ def test_project_metadata_and_changelog():
     assert scm.get("version_scheme") == "post-release"
     assert scm.get("local_scheme") == "no-local-version"
     assert scm.get("write_to") == "doc_ai/_version.py"
-    assert "fallback_version" not in scm
+    assert scm.get("fallback_version") == "0.1.0-alpha.0"
 
     changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
     assert changelog.startswith("# Changelog")
