@@ -69,18 +69,15 @@ def load_global_config() -> dict[str, str]:
     if GLOBAL_CONFIG_PATH.exists():
         try:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
-                data = yaml.safe_load(GLOBAL_CONFIG_PATH.read_text())
-            else:
-                data = json.loads(GLOBAL_CONFIG_PATH.read_text())
-            if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+                return yaml.safe_load(GLOBAL_CONFIG_PATH.read_text()) or {}
+            return json.loads(GLOBAL_CONFIG_PATH.read_text())
         except Exception as exc:
             logger.warning(
                 "Failed to load global config from %s: %s",
                 GLOBAL_CONFIG_PATH,
                 exc,
             )
-        return {}
+            return {}
     return {}
 
 
@@ -436,7 +433,10 @@ def _register_plugins() -> None:
             logger.info("Skipping untrusted plugin %s", ep.name)
             continue
         expected_version = allowed[ep.name]
-        if expected_version and expected_version != version:
+        if not expected_version:
+            logger.error("Skipping plugin %s: trusted version not specified", ep.name)
+            continue
+        if expected_version != version:
             logger.error(
                 "Skipping plugin %s: version %s does not match trusted %s",
                 ep.name,
@@ -446,15 +446,20 @@ def _register_plugins() -> None:
             continue
 
         expected_hash = expected_hashes.get(ep.name)
-        if expected_hash and dist is not None:
-            try:
-                actual_hash = _hash_distribution(dist)
-            except Exception as exc:  # pragma: no cover - defensive
-                logger.error("Failed to hash plugin %s: %s", ep.name, exc)
-                continue
-            if not hmac.compare_digest(actual_hash, expected_hash):
-                logger.error("Hash mismatch for plugin %s", ep.name)
-                continue
+        if not expected_hash:
+            logger.error("Skipping plugin %s: trusted hash not specified", ep.name)
+            continue
+        if dist is None:
+            logger.error("Skipping plugin %s: distribution not available for hashing", ep.name)
+            continue
+        try:
+            actual_hash = _hash_distribution(dist)
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Failed to hash plugin %s: %s", ep.name, exc)
+            continue
+        if not hmac.compare_digest(actual_hash, expected_hash):
+            logger.error("Hash mismatch for plugin %s", ep.name)
+            continue
 
         try:
             plugin_app = ep.load()
@@ -482,18 +487,36 @@ def list_plugins() -> None:
 
 
 @plugins_app.command("trust")
-def trust_plugin(name: str) -> None:
-    """Add *name* to the plugin allowlist and attempt to load it."""
+def trust_plugin(
+    name: str | None = typer.Argument(None),
+    hash_: str | None = typer.Option(
+        None,
+        "--hash",
+        help="Register a trusted hash as NAME=SHA256",
+    ),
+) -> None:
+    """Add *name* to the plugin allowlist and/or record a hash."""
     cfg = load_global_config()
-    raw = cfg.get("DOC_AI_TRUSTED_PLUGINS", "")
-    allowed = {p.strip() for p in raw.split(",") if p.strip()}
-    if name in allowed:
-        typer.echo(f"Plugin '{name}' already trusted")
-    else:
-        allowed.add(name)
-        cfg["DOC_AI_TRUSTED_PLUGINS"] = ",".join(sorted(allowed))
+
+    if name is not None:
+        raw = cfg.get("DOC_AI_TRUSTED_PLUGINS", "")
+        allowed = {p.strip() for p in raw.split(",") if p.strip()}
+        if name in allowed:
+            typer.echo(f"Plugin '{name}' already trusted")
+        else:
+            allowed.add(name)
+            cfg["DOC_AI_TRUSTED_PLUGINS"] = ",".join(sorted(allowed))
+            save_global_config(cfg)
+            typer.echo(f"Trusted plugin '{name}'")
+
+    if hash_ is not None:
+        raw = cfg.get("DOC_AI_TRUSTED_PLUGIN_HASHES", "")
+        hashes = {p.strip() for p in raw.split(",") if p.strip()}
+        hashes.add(hash_)
+        cfg["DOC_AI_TRUSTED_PLUGIN_HASHES"] = ",".join(sorted(hashes))
         save_global_config(cfg)
-        typer.echo(f"Trusted plugin '{name}'")
+        typer.echo(f"Recorded hash '{hash_}'")
+
     _register_plugins()
 
 
