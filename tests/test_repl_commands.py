@@ -23,6 +23,8 @@ def test_help_lists_repl_commands(capsys):
     out = capsys.readouterr().out
     assert ":new-doc-type" in out
     assert ":manage-urls" in out
+    assert ":doc-types" in out
+    assert ":topics" in out
 
 
 def test_help_lists_subcommands(capsys):
@@ -77,6 +79,22 @@ def test_bang_warns_when_shell_disabled(monkeypatch):
     with pytest.warns(UserWarning, match="Shell escapes disabled"):
         _parse_command("!python -c \"print('hi')\"")
     assert interactive.LAST_EXIT_CODE == 1
+
+
+def test_doc_types_and_topics_commands(tmp_path, monkeypatch, capsys):
+    data_dir = tmp_path / "data"
+    (data_dir / "invoice").mkdir(parents=True)
+    (data_dir / "invoice" / "analysis_sales.prompt.yaml").write_text("")
+    (data_dir / "report").mkdir()
+    (data_dir / "report" / "report.analysis.finance.prompt.yaml").write_text("")
+    monkeypatch.chdir(tmp_path)
+    _setup()
+    _parse_command(":doc-types")
+    out = capsys.readouterr().out.splitlines()
+    assert {"invoice", "report"} <= set(out)
+    _parse_command(":topics")
+    out = capsys.readouterr().out.splitlines()
+    assert {"sales", "finance"} <= set(out)
 
 
 def test_chmod_failure_is_handled(monkeypatch, tmp_path):

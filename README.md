@@ -187,9 +187,10 @@ refreshes completion suggestions for document types and topics:
     Each non-empty, non-comment line in ``commands.txt`` runs as if typed at the
     prompt before the REPL begins.
 
-    Additional REPL helpers like ``:delete-doc-type`` and ``:delete-topic``
-    manage prompt files, while ``:set-default DOC_TYPE [TOPIC]`` persists
-    defaults for later commands.
+    Additional REPL helpers like ``:doc-types`` and ``:topics`` list
+    discovered document types and analysis topics. Commands such as
+    ``:delete-doc-type`` and ``:delete-topic`` manage prompt files, while
+    ``:set-default DOC_TYPE [TOPIC]`` persists defaults for later commands.
 
     Prefix commands with ``!`` to execute them in the system shell. Output from
     the command is echoed back to the REPL and the exit status is stored in

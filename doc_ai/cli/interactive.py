@@ -541,6 +541,22 @@ def _repl_set_default(args: list[str]) -> None:
         default_topic(cast(typer.Context, _REPL_CTX), topic)
 
 
+def _repl_doc_types(args: list[str]) -> None:
+    """List available document types."""
+
+    doc_types, _ = discover_doc_types_topics()
+    for name in doc_types:
+        click.echo(name)
+
+
+def _repl_topics(args: list[str]) -> None:
+    """List available analysis topics."""
+
+    _, topics = discover_doc_types_topics()
+    for name in topics:
+        click.echo(name)
+
+
 def _register_repl_commands(ctx: click.Context) -> None:
     """Register built-in REPL commands for the given context."""
 
@@ -562,6 +578,8 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":new-topic", _repl_new_topic)
     plugins.register_repl_command(":rename-topic", _repl_rename_topic)
     plugins.register_repl_command(":delete-topic", _repl_delete_topic)
+    plugins.register_repl_command(":doc-types", _repl_doc_types)
+    plugins.register_repl_command(":topics", _repl_topics)
     plugins.register_repl_command(":set-default", _repl_set_default)
 
 
