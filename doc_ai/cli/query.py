@@ -9,7 +9,6 @@ import typer
 from openai import OpenAI
 
 from doc_ai.github.prompts import DEFAULT_MODEL_BASE_URL
-from doc_ai.github.vector import EMBED_MODEL
 from doc_ai.openai import create_response
 
 from . import ModelName
@@ -18,6 +17,8 @@ from .utils import prompt_if_missing, resolve_bool, resolve_str
 app = typer.Typer(
     invoke_without_command=True, help="Query a vector store for similar documents."
 )
+
+EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
