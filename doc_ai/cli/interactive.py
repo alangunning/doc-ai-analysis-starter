@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shlex
@@ -91,6 +92,9 @@ __all__ = [
 ]
 
 
+logger = logging.getLogger(__name__)
+
+
 def _allow_shell_from_config(cfg: Mapping[str, object]) -> bool:
     """Return ``True`` if shell escapes are explicitly allowed."""
 
@@ -132,9 +136,7 @@ def _dispatch_repl_commands(command: str) -> bool:
             LAST_EXIT_CODE = 0
             return True
         try:
-            result = subprocess.run(
-                parts, shell=False, capture_output=True, text=True
-            )
+            result = subprocess.run(parts, shell=False, capture_output=True, text=True)
         except FileNotFoundError:
             click.echo(f"{parts[0]}: command not found", err=True)
             LAST_EXIT_CODE = 127
@@ -786,7 +788,12 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
         )
 
     if init is not None:
-        run_batch(ctx, init)
+        try:
+            run_batch(ctx, init)
+        except typer.Exit:
+            raise
+        except Exception:
+            logger.exception("Failed to run batch file %s", init)
 
     hist_raw = str(
         merged.get(HISTORY_FILE_ENV) or os.getenv(HISTORY_FILE_ENV, "")
