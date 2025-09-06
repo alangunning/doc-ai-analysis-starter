@@ -1,5 +1,10 @@
 from unittest.mock import MagicMock
 
+import pytest
+from openai import OpenAIError
+
+import doc_ai.openai.responses as responses_module
+
 from doc_ai.openai import (
     create_response,
     create_response_with_file_url,
@@ -169,5 +174,33 @@ def test_create_response_passes_text_format():
             }
         ],
         text={"format": {"type": "json_schema"}},
+    )
+
+
+def test_create_response_retries_exhausted(monkeypatch):
+    client = MagicMock()
+    client.responses.create.side_effect = OpenAIError("boom")
+    monkeypatch.setattr(responses_module.time, "sleep", lambda _s: None)
+
+    with pytest.raises(RuntimeError, match="Responses API request failed after 2 attempts"):
+        create_response(client, model="gpt-4.1", retries=2)
+
+    assert client.responses.create.call_count == 2
+
+
+def test_create_response_passes_timeout():
+    client = MagicMock()
+    create_response(client, model="gpt-4.1", texts=["hi"], request_timeout=10)
+    client.responses.create.assert_called_once_with(
+        model="gpt-4.1",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": "hi"},
+                ],
+            }
+        ],
+        timeout=10,
     )
 
