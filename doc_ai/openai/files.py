@@ -31,10 +31,15 @@ def _open_file(file: Union[str, Path, BinaryIO]) -> tuple[BinaryIO, bool]:
     """
     if hasattr(file, "read"):
         return file, False  # already a file-like object
+
+    path = Path(file)
     try:
-        return open(Path(file), "rb"), True
+        fh = path.open("rb")
     except FileNotFoundError as exc:  # pragma: no cover - trivial
-        raise ValueError(f"File not found: {file}") from exc
+        raise ValueError(f"File not found: {path}") from exc
+    except OSError as exc:  # pragma: no cover - best effort
+        raise ValueError(f"Could not open file: {path}: {exc.strerror}") from exc
+    return fh, True
 
 
 def upload_file(
