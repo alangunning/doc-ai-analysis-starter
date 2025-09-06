@@ -40,6 +40,7 @@ __all__ = [
     "SAFE_ENV_VARS",
     "PROMPT_KWARGS",
     "refresh_completer",
+    "refresh_after",
     "_prompt_name",
 ]
 
@@ -154,6 +155,20 @@ def refresh_completer() -> None:
     comp = PROMPT_KWARGS.get("completer") if PROMPT_KWARGS else None
     if isinstance(comp, DocAICompleter):
         comp.refresh()
+
+
+def refresh_after(func):
+    """Decorator to refresh the REPL completer after *func* succeeds."""
+
+    from functools import wraps
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        refresh_completer()
+        return result
+
+    return wrapper
 
 
 def _parse_command(command: str) -> list[str] | None:

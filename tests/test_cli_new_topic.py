@@ -1,12 +1,13 @@
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
 from doc_ai.cli import app
 
 
-def test_new_topic_creates_prompt_file():
+def test_new_topic_management():
     runner = CliRunner()
     repo_root = Path(__file__).resolve().parents[1]
     analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
@@ -23,8 +24,52 @@ def test_new_topic_creates_prompt_file():
         result = runner.invoke(app, ["new", "doc-type", "sample"])
         assert result.exit_code == 0
 
-        topic_result = runner.invoke(app, ["new", "topic", "sample", "biology"])
+        topic_result = runner.invoke(
+            app,
+            [
+                "new",
+                "topic",
+                "sample",
+                "biology",
+                "--description",
+                "desc",
+            ],
+        )
         assert topic_result.exit_code == 0
-
         target_file = Path("data/sample/sample.analysis.biology.prompt.yaml")
         assert target_file.is_file()
+        desc_file = Path(
+            "data/sample/sample.analysis.biology.prompt.description.txt"
+        )
+        assert desc_file.read_text().strip() == "desc"
+
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
+            rename_res = runner.invoke(
+                app,
+                [
+                    "new",
+                    "rename-topic",
+                    "sample",
+                    "biology",
+                    "chemistry",
+                ],
+                input="y\n",
+            )
+        assert rename_res.exit_code == 0
+        assert not target_file.exists()
+        renamed = Path("data/sample/sample.analysis.chemistry.prompt.yaml")
+        assert renamed.is_file()
+        assert Path(
+            "data/sample/sample.analysis.chemistry.prompt.description.txt"
+        ).is_file()
+
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
+            del_res = runner.invoke(
+                app, ["new", "delete-topic", "sample", "chemistry"], input="y\n"
+            )
+        assert del_res.exit_code == 0
+        assert not renamed.exists()
+        assert not Path(
+            "data/sample/sample.analysis.chemistry.prompt.description.txt"
+        ).exists()
+

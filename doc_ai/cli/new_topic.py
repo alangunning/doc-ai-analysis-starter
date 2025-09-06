@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from .interactive import refresh_completer
+from .interactive import refresh_after
 
 app = typer.Typer(help="Scaffold a new analysis topic prompt for a document type")
 
@@ -20,7 +20,16 @@ DATA_DIR = Path("data")
     "topic",
     help="Create a new topic prompt under an existing document type directory.",
 )
-def topic(doc_type: str, topic: str) -> None:
+@refresh_after
+def topic(
+    doc_type: str,
+    topic: str,
+    description: str = typer.Option(
+        "",
+        "--description",
+        help="Optional initial description saved next to the prompt",
+    ),
+) -> None:
     """Create a new topic prompt template for the given document type."""
     if not TEMPLATE_TOPIC.exists():
         typer.echo("Template prompt file not found.", err=True)
@@ -38,10 +47,72 @@ def topic(doc_type: str, topic: str) -> None:
 
     shutil.copyfile(TEMPLATE_TOPIC, target_file)
 
-    if sys.stdin.isatty():
+    if description:
+        target_file.with_suffix(".description.txt").write_text(description + "\n")
+    elif sys.stdin.isatty():
         typer.echo("Created new topic prompt template.")
         typer.echo(f"  {target_file}")
-        typer.prompt("Optional initial description", default="", show_default=False)
+        desc = typer.prompt(
+            "Optional initial description", default="", show_default=False
+        ).strip()
+        if desc:
+            target_file.with_suffix(".description.txt").write_text(desc + "\n")
     else:
         typer.echo(f"Created {target_file}")
-    refresh_completer()
+
+
+@app.command("rename-topic", help="Rename a topic prompt for a document type.")
+@refresh_after
+def rename_topic(doc_type: str, old: str, new: str) -> None:
+    """Rename topic *old* to *new* under *doc_type*."""
+
+    target_dir = DATA_DIR / doc_type
+    if not target_dir.exists():
+        typer.echo(f"Document type directory {target_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    old_file = target_dir / f"{doc_type}.analysis.{old}.prompt.yaml"
+    new_file = target_dir / f"{doc_type}.analysis.{new}.prompt.yaml"
+    if not old_file.exists():
+        typer.echo(f"Prompt file {old_file} does not exist", err=True)
+        raise typer.Exit(code=1)
+    if new_file.exists():
+        typer.echo(f"Prompt file {new_file} already exists", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty():
+        if not typer.confirm(f"Rename topic {old} to {new}?", default=True):
+            typer.echo("Aborted")
+            return
+
+    old_file.rename(new_file)
+    desc = old_file.with_suffix(".description.txt")
+    if desc.exists():
+        desc.rename(new_file.with_suffix(".description.txt"))
+
+
+@app.command("delete-topic", help="Delete a topic prompt from a document type.")
+@refresh_after
+def delete_topic(doc_type: str, topic: str) -> None:
+    """Delete the topic prompt *topic* under *doc_type*."""
+
+    target_dir = DATA_DIR / doc_type
+    if not target_dir.exists():
+        typer.echo(f"Document type directory {target_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    target_file = target_dir / f"{doc_type}.analysis.{topic}.prompt.yaml"
+    if not target_file.exists():
+        typer.echo(f"Prompt file {target_file} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty():
+        if not typer.confirm(f"Delete topic {topic}?", default=False):
+            typer.echo("Aborted")
+            return
+
+    target_file.unlink()
+    desc = target_file.with_suffix(".description.txt")
+    if desc.exists():
+        desc.unlink()
+
