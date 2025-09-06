@@ -99,3 +99,40 @@ def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
     result = runner.invoke(app, ["new", "delete-topic", "--doc-type", "sample"])
     assert result.exit_code == 0, result.output
     assert not target_file.exists()
+
+
+def test_new_topic_prompts_for_topic():
+    runner = CliRunner()
+    repo_root = Path(__file__).resolve().parents[1]
+    analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    validate_tpl = repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    topic_tpl = repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml"
+
+    with runner.isolated_filesystem():
+        prompts_dir = Path(".github/prompts")
+        prompts_dir.mkdir(parents=True)
+        shutil.copy(analysis_tpl, prompts_dir / "doc-analysis.analysis.prompt.yaml")
+        shutil.copy(validate_tpl, prompts_dir / "validate-output.validate.prompt.yaml")
+        shutil.copy(topic_tpl, prompts_dir / "doc-analysis.topic.prompt.yaml")
+
+        runner.invoke(app, ["new", "doc-type", "sample"])
+
+        with patch("doc_ai.cli.new_topic.prompt_if_missing", return_value="biology"):
+            topic_result = runner.invoke(
+                app,
+                [
+                    "new",
+                    "topic",
+                    "--doc-type",
+                    "sample",
+                    "--description",
+                    "desc",
+                ],
+            )
+        assert topic_result.exit_code == 0
+        target_file = Path("data/sample/sample.analysis.biology.prompt.yaml")
+        assert target_file.is_file()
+        desc_file = Path(
+            "data/sample/sample.analysis.biology.prompt.description.txt"
+        )
+        assert desc_file.read_text().strip() == "desc"

@@ -44,7 +44,7 @@ def _discover_topics(doc_type: str) -> list[str]:
 @refresh_after
 def topic(
     ctx: typer.Context,
-    topic: str,
+    topic: str | None = typer.Argument(None, help="Topic"),
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
     description: str = typer.Option(
         "",
@@ -69,6 +69,9 @@ def topic(
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
+    topic = prompt_if_missing(ctx, topic, "Topic")
+    if topic is None:
+        raise typer.BadParameter("Topic required")
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)

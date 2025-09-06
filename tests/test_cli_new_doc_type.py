@@ -1,7 +1,5 @@
 import shutil
 from pathlib import Path
-import shutil
-from pathlib import Path
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -30,6 +28,30 @@ def test_new_doc_type_creates_scaffolding():
             app,
             ["new", "doc-type", "sample", "--description", "description"],
         )
+        assert result.exit_code == 0
+
+        new_dir = Path("data/sample")
+        assert new_dir.is_dir()
+        assert (new_dir / "sample.analysis.prompt.yaml").is_file()
+        assert (new_dir / "validate.prompt.yaml").is_file()
+        assert (new_dir / "description.txt").read_text().strip() == "description"
+
+
+def test_new_doc_type_prompts_for_name():
+    runner = CliRunner()
+    analysis_tpl, validate_tpl = _setup_templates()
+
+    with runner.isolated_filesystem():
+        prompts_dir = Path(".github/prompts")
+        prompts_dir.mkdir(parents=True)
+        shutil.copy(analysis_tpl, prompts_dir / "doc-analysis.analysis.prompt.yaml")
+        shutil.copy(validate_tpl, prompts_dir / "validate-output.validate.prompt.yaml")
+
+        with patch("doc_ai.cli.new_doc_type.prompt_if_missing", return_value="sample"):
+            result = runner.invoke(
+                app,
+                ["new", "doc-type", "--description", "description"],
+            )
         assert result.exit_code == 0
 
         new_dir = Path("data/sample")

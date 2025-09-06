@@ -26,7 +26,8 @@ DATA_DIR = Path("data")
 )
 @refresh_after
 def doc_type(
-    name: str,
+    ctx: typer.Context,
+    name: str | None = typer.Argument(None, help="Document type"),
     description: str = typer.Option(
         "",
         "--description",
@@ -37,6 +38,10 @@ def doc_type(
     if not TEMPLATE_ANALYSIS.exists() or not TEMPLATE_VALIDATE.exists():
         typer.echo("Template prompt files not found.", err=True)
         raise typer.Exit(code=1)
+
+    name = prompt_if_missing(ctx, name, "Document type")
+    if name is None:
+        raise typer.BadParameter("Document type required")
 
     target_dir = DATA_DIR / name
     if target_dir.exists():
