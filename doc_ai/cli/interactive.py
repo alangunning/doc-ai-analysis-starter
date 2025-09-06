@@ -2,35 +2,35 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Callable, Mapping, TypeVar, cast, Iterable
 import os
 import re
 import stat
-import warnings
 import subprocess
-from platformdirs import PlatformDirs
+import warnings
+from pathlib import Path
+from typing import Any, Callable, Iterable, Mapping, TypeVar, cast
 
 import click
-from click_repl import repl, ClickCompleter
-from click_repl import _repl as click_repl_repl
 import click_repl.utils as repl_utils
-from doc_ai import plugins
+import typer
+from click.core import Command
 from click.exceptions import Exit as ClickExit
-from prompt_toolkit.history import FileHistory
+from click_repl import ClickCompleter, repl
+from click_repl import _repl as click_repl_repl
+from platformdirs import PlatformDirs
 from prompt_toolkit.completion import (
-    Completer,
-    WordCompleter,
-    Completion,
     CompleteEvent,
+    Completer,
+    Completion,
+    WordCompleter,
 )
 from prompt_toolkit.document import Document
-from click.core import Command
-import typer
+from prompt_toolkit.history import FileHistory
 from typer.main import get_command
-from doc_ai.batch import run_batch
-import doc_ai.batch as batch_mod
 
+import doc_ai.batch as batch_mod
+from doc_ai import plugins
+from doc_ai.batch import run_batch
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
 """Config key with comma-separated allow/deny env var names."""
@@ -45,13 +45,17 @@ SAFE_ENV_VARS: set[str] = {"PATH", "HOME"}
 """Base names of environment variables that may be exposed in the REPL."""
 
 
-def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
+def _parse_allow_deny(value: str | None = None) -> tuple[set[str], set[str]]:
     """Return allow and deny sets parsed from a comma-separated *value*.
 
-    Items prefixed with ``-`` are placed in the deny set; all others are
-    considered allowed. Empty items are ignored. ``+`` prefixes are optional and
-    treated the same as no prefix.
+    When *value* is ``None`` the minimal whitelist defined by ``SAFE_ENV_VARS``
+    is returned.  Items prefixed with ``-`` are placed in the deny set; all
+    others are considered allowed. Empty items are ignored. ``+`` prefixes are
+    optional and treated the same as no prefix.
     """
+
+    if value is None:
+        return set(SAFE_ENV_VARS), set()
 
     allow: set[str] = set()
     deny: set[str] = set()
@@ -466,16 +470,14 @@ class DocAICompleter(Completer):
             cfg = {}
         if self._ctx.obj and isinstance(self._ctx.obj.get("config"), dict):
             cfg.update(self._ctx.obj["config"])
-        raw = cfg.get(SAFE_ENV_VARS_ENV, "") or os.getenv(SAFE_ENV_VARS_ENV, "")
+        if SAFE_ENV_VARS_ENV in cfg:
+            raw: str | None = str(cfg[SAFE_ENV_VARS_ENV])
+        elif SAFE_ENV_VARS_ENV in os.environ:
+            raw = os.environ[SAFE_ENV_VARS_ENV]
+        else:
+            raw = None
         allow, deny = _parse_allow_deny(raw)
-        allowed = SAFE_ENV_VARS.union(allow)
-
-        exposed = [name for name in os.environ if name in allowed and name not in deny]
-        if not raw and len(exposed) > 5:
-            warnings.warn(
-                f"{SAFE_ENV_VARS_ENV} is unset; completions will expose many environment variables.",
-                stacklevel=1,
-            )
+        exposed = [name for name in os.environ if name in allow and name not in deny]
         env_words = [f"${name}" for name in exposed]
         self._env = WordCompleter(env_words, ignore_case=True)
 

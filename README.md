@@ -151,9 +151,8 @@ By default only ``PATH`` and ``HOME`` are offered for completion. Use
 ``doc-ai config safe-env`` subcommands or set ``DOC_AI_SAFE_ENV_VARS`` in the
 project ``.env`` or global config to explicitly allow or deny additional
 variables. The value is a comma-separated list where entries prefixed with ``-``
-are hidden and others are exposed. If ``DOC_AI_SAFE_ENV_VARS`` is unset and the
-configuration would reveal many variables, the CLI emits a warning. For
-example::
+are hidden and others are exposed. Variables not listed are omitted from
+completion results. For example::
 
     doc-ai config safe-env add MY_API_KEY
     doc-ai config safe-env add -DEBUG_TOKEN
