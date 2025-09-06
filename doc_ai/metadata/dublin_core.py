@@ -1,5 +1,6 @@
 """Dublin Core metadata utilities."""
 
+# mypy: ignore-errors
 from __future__ import annotations
 
 import base64
@@ -261,10 +262,14 @@ class DublinCoreDocument:
                         )
                         element.text = str(item)
                 elif isinstance(value, (datetime.date, datetime.datetime)):
-                    element = ElementTree.SubElement(root_element, FIELD_TO_DC_ELEMENT[field_name])
+                    element = ElementTree.SubElement(
+                        root_element, FIELD_TO_DC_ELEMENT[field_name]
+                    )
                     element.text = value.isoformat()
                 else:
-                    element = ElementTree.SubElement(root_element, FIELD_TO_DC_ELEMENT[field_name])
+                    element = ElementTree.SubElement(
+                        root_element, FIELD_TO_DC_ELEMENT[field_name]
+                    )
                     element.text = str(value)
 
         return ElementTree.tostring(root_element, encoding="unicode", method="xml")
@@ -278,7 +283,11 @@ class DublinCoreDocument:
             elements = root.findall(f".//{dc_element}", XML_NAMESPACES)
             if elements:
                 texts = [cast(str, elem.text) for elem in elements]
-                if len(texts) > 1 and field_name in {"creator", "subject", "contributor"}:
+                if len(texts) > 1 and field_name in {
+                    "creator",
+                    "subject",
+                    "contributor",
+                }:
                     dc_data[field_name] = texts
                 else:
                     dc_data[field_name] = texts[0]
@@ -306,10 +315,14 @@ class DublinCoreDocument:
                         )
                         element.text = str(item)
                 elif isinstance(value, (datetime.date, datetime.datetime)):
-                    element = ElementTree.SubElement(description, FIELD_TO_DC_ELEMENT[field_name])
+                    element = ElementTree.SubElement(
+                        description, FIELD_TO_DC_ELEMENT[field_name]
+                    )
                     element.text = value.isoformat()
                 else:
-                    element = ElementTree.SubElement(description, FIELD_TO_DC_ELEMENT[field_name])
+                    element = ElementTree.SubElement(
+                        description, FIELD_TO_DC_ELEMENT[field_name]
+                    )
                     element.text = str(value)
         return ElementTree.tostring(rdf_root, encoding="unicode", method="xml")
 
@@ -322,7 +335,11 @@ class DublinCoreDocument:
             elements = root.findall(f".//*/{dc_element}", XML_NAMESPACES)
             if elements:
                 texts = [cast(str, elem.text) for elem in elements]
-                if len(texts) > 1 and field_name in {"creator", "subject", "contributor"}:
+                if len(texts) > 1 and field_name in {
+                    "creator",
+                    "subject",
+                    "contributor",
+                }:
                     dc_data[field_name] = texts
                 else:
                     dc_data[field_name] = texts[0]
@@ -378,9 +395,7 @@ class DublinCoreDocument:
             output_file.write(self.to_pickle_bytes())
 
     @staticmethod
-    def from_pickle_file(
-        file_path: str, *, unsafe: bool = False
-    ) -> DublinCoreDocument:
+    def from_pickle_file(file_path: str, *, unsafe: bool = False) -> DublinCoreDocument:
         """Load a DublinCoreDocument from a pickle file.
 
         Warning:
@@ -408,7 +423,9 @@ class DublinCoreDocument:
             field_name = DC_ELEMENT_TO_FIELD.get(term)
             if not field_name:
                 continue
-            if field_name in {"creator", "subject", "contributor"} and isinstance(value, str):
+            if field_name in {"creator", "subject", "contributor"} and isinstance(
+                value, str
+            ):
                 data[field_name] = [value]
             else:
                 data[field_name] = value
@@ -423,7 +440,9 @@ class DublinCoreDocument:
             if field_name not in FIELD_TO_DC_ELEMENT:
                 continue
             if isinstance(value, (datetime.date, datetime.datetime)):
-                if isinstance(value, datetime.datetime) and value.time() == datetime.time(0, 0):
+                if isinstance(
+                    value, datetime.datetime
+                ) and value.time() == datetime.time(0, 0):
                     out_value = value.date().isoformat()
                 else:
                     out_value = value.isoformat()

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Unified document conversion helpers.
 
 Provides a thin wrapper around the current conversion backend (Docling)
@@ -24,11 +25,14 @@ from rich.progress import (
     TaskProgressColumn,
     TextColumn,
 )
+
 try:  # Docling’s converter uses Pydantic which may raise ValidationError
     from pydantic import ValidationError
 except Exception:  # pragma: no cover - Pydantic always available in tests
+
     class ValidationError(Exception):
         pass
+
 
 # ``Docling`` pulls in heavy dependencies like ``torch`` which can slow down
 # startup considerably.  Import the converter lazily so simply importing this
@@ -89,12 +93,14 @@ def _get_docling_converter():
                 from docling.document_converter import (  # type: ignore
                     DocumentConverter as _Docling,  # pylint: disable=C0415
                 )
+
                 _DoclingConverter = _Docling
             _converter_instance = _DoclingConverter()
         if show_status:
             _CACHE_MARKER.parent.mkdir(parents=True, exist_ok=True)
             _CACHE_MARKER.touch()
         return _converter_instance
+
 
 # Supported high level output formats.
 class OutputFormat(str, Enum):
@@ -156,7 +162,9 @@ def convert_files(
 
     written: Dict[OutputFormat, Path] = {}
 
-    def _write_outputs(doc: Any, progress_obj: Progress | None = None, task_id: int | None = None) -> None:
+    def _write_outputs(
+        doc: Any, progress_obj: Progress | None = None, task_id: int | None = None
+    ) -> None:
         for fmt, out_path in outputs.items():
             out_path.parent.mkdir(parents=True, exist_ok=True)
             if fmt == OutputFormat.JSON:

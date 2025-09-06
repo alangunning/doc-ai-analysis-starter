@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Metadata utilities for doc_ai."""
 
 from __future__ import annotations

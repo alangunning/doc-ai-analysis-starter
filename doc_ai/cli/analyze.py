@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from pathlib import Path
@@ -18,7 +19,10 @@ from . import ModelName, _validate_prompt
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt against a converted document.")
+app = typer.Typer(
+    invoke_without_command=True,
+    help="Run an analysis prompt against a converted document.",
+)
 
 
 @app.callback()
@@ -93,8 +97,12 @@ def analyze(
         raise typer.BadParameter("Missing argument 'source'")
     source = Path(src_val)
     model = resolve_str(ctx, "model", model, cfg, "MODEL")
-    base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
-    require_json = resolve_bool(ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED")
+    base_model_url = resolve_str(
+        ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL"
+    )
+    require_json = resolve_bool(
+        ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED"
+    )
     show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
     estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")

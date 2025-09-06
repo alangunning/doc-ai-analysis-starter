@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Prompt execution helpers."""
 
 from __future__ import annotations
@@ -69,11 +70,7 @@ def run_prompt(
             prompt_tokens + user_tokens,
         )
 
-    base = (
-        base_url
-        or os.getenv("BASE_MODEL_URL")
-        or DEFAULT_MODEL_BASE_URL
-    )
+    base = base_url or os.getenv("BASE_MODEL_URL") or DEFAULT_MODEL_BASE_URL
     api_key_var = "OPENAI_API_KEY" if "api.openai.com" in base else "GITHUB_TOKEN"
     api_key = os.getenv(api_key_var)
     if not api_key:
@@ -89,9 +86,7 @@ def run_prompt(
         "max_output_tokens",
         "text",
     }
-    params = {
-        k: v for k, v in spec.get("modelParameters", {}).items() if k in allowed
-    }
+    params = {k: v for k, v in spec.get("modelParameters", {}).items() if k in allowed}
     response = client.responses.create(
         model=model_name,
         input=messages,

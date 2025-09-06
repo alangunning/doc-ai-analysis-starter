@@ -54,6 +54,7 @@ dev = [
     "ruff==0.12.12",
     "pytest==8.4.2",
     "bandit==1.8.6",
+    "mypy==1.11.2",
 ]
 
 [tool.setuptools.package-data]
