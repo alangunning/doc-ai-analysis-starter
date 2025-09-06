@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urlparse
 
 import typer
 
@@ -36,12 +37,21 @@ def show_urls(doc_type: str) -> tuple[Path, list[str]]:
 
 
 def save_urls(path: Path, urls: list[str]) -> None:
-    """Write *urls* to *path* atomically."""
+    """Write *urls* to *path* atomically after removing duplicates."""
 
+    # Preserve order while removing duplicates
+    unique = list(dict.fromkeys(urls))
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text("\n".join(urls) + ("\n" if urls else ""))
+    tmp.write_text("\n".join(unique) + ("\n" if unique else ""))
     tmp.replace(path)
+
+
+def _valid_url(url: str) -> bool:
+    """Return ``True`` if *url* looks like an HTTP/HTTPS URL."""
+
+    parsed = urlparse(url)
+    return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
 
 @app.command("url")
@@ -67,6 +77,8 @@ def add_url(
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
+    if not _valid_url(link):
+        raise typer.BadParameter("Invalid URL")
     download_and_convert([link], doc_type, fmts, force)
 
 
@@ -93,9 +105,22 @@ def add_urls(
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
-    links = [line.strip() for line in path.read_text().splitlines() if line.strip()]
+    links: list[str] = []
+    seen: set[str] = set()
+    for line in path.read_text().splitlines():
+        url = line.strip()
+        if not url:
+            continue
+        if not _valid_url(url):
+            typer.echo(f"Skipping invalid URL: {url}")
+            continue
+        if url in seen:
+            typer.echo(f"Skipping duplicate URL: {url}")
+            continue
+        seen.add(url)
+        links.append(url)
     if not links:
-        typer.echo("No URLs found in file.")
+        typer.echo("No valid URLs found in file.")
         return
     download_and_convert(links, doc_type, fmts, force)
 
@@ -115,7 +140,12 @@ def manage_urls(doc_type: str = typer.Argument(..., help="Document type")) -> No
         if choice.isdigit() and 1 <= int(choice) <= len(urls):
             urls.pop(int(choice) - 1)
         else:
+            if not _valid_url(choice):
+                typer.echo("Invalid URL; please try again.")
+                continue
+            if choice in urls:
+                typer.echo("URL already present.")
+                continue
             urls.append(choice)
     save_urls(path, urls)
     refresh_completer()
-

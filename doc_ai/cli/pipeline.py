@@ -19,8 +19,7 @@ from .utils import (
     suffix as _suffix,
 )
 from . import RAW_SUFFIXES, ModelName, _validate_prompt
-
-import re
+from .interactive import discover_doc_types_topics
 
 logger = logging.getLogger(__name__)
 
@@ -37,29 +36,25 @@ class PipelineStep(str, Enum):
 def _discover_topics(doc_dir: Path) -> list[str | None]:
     """Return analysis topics available for a document directory.
 
-    Topics are inferred from prompt filenames matching
-    ``analysis_<topic>.prompt.yaml`` or ``<type>.analysis.<topic>.prompt.yaml``.
-    If no topic-specific prompts are found but generic analysis prompts exist,
-    a ``None`` topic is returned.
+    This delegates topic discovery to
+    :func:`doc_ai.cli.interactive.discover_doc_types_topics` and then checks for
+    the presence of topic-specific prompt files within ``doc_dir``.
     """
-    topics: list[str | None] = []
-    for p in doc_dir.glob("analysis_*.prompt.yaml"):
-        m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
-        if m:
-            topics.append(m.group(1))
-    prefix = f"{doc_dir.name}.analysis."
-    for p in doc_dir.glob(f"{doc_dir.name}.analysis.*.prompt.yaml"):
-        if p.name.startswith(prefix) and p.name.endswith(".prompt.yaml"):
-            topic = p.name[len(prefix) : -len(".prompt.yaml")]
-            topics.append(topic)
-    if (
-        (doc_dir / "analysis.prompt.yaml").exists()
-        or (doc_dir / f"{doc_dir.name}.analysis.prompt.yaml").exists()
-    ):
+
+    _, all_topics = discover_doc_types_topics(doc_dir.parent)
+    topics: list[str | None] = [
+        tp
+        for tp in all_topics
+        if (doc_dir / f"analysis_{tp}.prompt.yaml").exists()
+        or (doc_dir / f"{doc_dir.name}.analysis.{tp}.prompt.yaml").exists()
+    ]
+    if (doc_dir / "analysis.prompt.yaml").exists() or (
+        doc_dir / f"{doc_dir.name}.analysis.prompt.yaml"
+    ).exists():
         topics.append(None)
     if not topics:
         topics.append(None)
-    seen = []
+    seen: list[str | None] = []
     for t in topics:
         if t not in seen:
             seen.append(t)
@@ -91,9 +86,7 @@ def pipeline(
     )
 
     fmts = format or [OutputFormat.MARKDOWN]
-    validation_prompt = Path(
-        ".github/prompts/validate-output.validate.prompt.yaml"
-    )
+    validation_prompt = Path(".github/prompts/validate-output.validate.prompt.yaml")
     failures: list[tuple[str, Path, Exception]] = []
     lock = Lock()
     skip_set = set(skip or [])
@@ -129,9 +122,7 @@ def pipeline(
                 logger.info(
                     "Would convert %s to %s", raw_file, ", ".join(f.value for f in fmts)
                 )
-            md_file = raw_file.with_name(
-                raw_file.name + _suffix(OutputFormat.MARKDOWN)
-            )
+            md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
             if should_run(PipelineStep.VALIDATE):
                 logger.info("Would validate %s", md_file)
             if should_run(PipelineStep.ANALYZE):
@@ -147,9 +138,7 @@ def pipeline(
                 _convert_path(raw_file, fmts, force=force)
             except Exception as exc:  # pragma: no cover - error handling
                 local_failures.append(("conversion", raw_file, exc))
-                logger.error(
-                    "[red]Conversion failed for %s: %s[/red]", raw_file, exc
-                )
+                logger.error("[red]Conversion failed for %s: %s[/red]", raw_file, exc)
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists() and should_run(PipelineStep.VALIDATE):
             try:
@@ -164,9 +153,7 @@ def pipeline(
                 )
             except Exception as exc:  # pragma: no cover - error handling
                 local_failures.append(("validation", raw_file, exc))
-                logger.error(
-                    "[red]Validation failed for %s: %s[/red]", raw_file, exc
-                )
+                logger.error("[red]Validation failed for %s: %s[/red]", raw_file, exc)
         if (
             md_file.exists()
             and should_run(PipelineStep.ANALYZE)
@@ -187,9 +174,7 @@ def pipeline(
                     )
                 except Exception as exc:  # pragma: no cover - error handling
                     local_failures.append(("analysis", md_file, exc))
-                    logger.error(
-                        "[red]Analysis failed for %s: %s[/red]", md_file, exc
-                    )
+                    logger.error("[red]Analysis failed for %s: %s[/red]", md_file, exc)
         if local_failures:
             if fail_fast:
                 step, path, exc = local_failures[0]
@@ -235,7 +220,10 @@ def pipeline(
             _build_vector_store(source, workers=workers)
 
 
-app = typer.Typer(invoke_without_command=True, help="Run the full pipeline: convert, validate, analyze, and embed.")
+app = typer.Typer(
+    invoke_without_command=True,
+    help="Run the full pipeline: convert, validate, analyze, and embed.",
+)
 
 
 @app.callback()
@@ -324,14 +312,18 @@ def _entrypoint(
     cfg = ctx.obj.get("config", {})
     format = format or _parse_config_formats(cfg)
     model = resolve_str(ctx, "model", model, cfg, "MODEL")
-    base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
+    base_model_url = resolve_str(
+        ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL"
+    )
     fail_fast = resolve_bool(ctx, "fail_fast", fail_fast, cfg, "FAIL_FAST")
     show_cost = resolve_bool(ctx, "show_cost", show_cost, cfg, "SHOW_COST")
     estimate = resolve_bool(ctx, "estimate", estimate, cfg, "ESTIMATE")
     workers = resolve_int(ctx, "workers", workers, cfg, "WORKERS")
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     dry_run = resolve_bool(ctx, "dry_run", dry_run, cfg, "DRY_RUN")
-    resume_from_val = resolve_str(ctx, "resume_from", resume_from.value, cfg, "RESUME_FROM")
+    resume_from_val = resolve_str(
+        ctx, "resume_from", resume_from.value, cfg, "RESUME_FROM"
+    )
     try:
         resume_from = PipelineStep(resume_from_val)
     except ValueError as exc:
