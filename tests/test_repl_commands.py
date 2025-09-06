@@ -52,6 +52,21 @@ def test_history_outputs_entries(tmp_path, capsys):
     assert "2: second" in out
 
 
+def test_bang_executes_shell_command(capsys):
+    _setup()
+    _parse_command("!python -c \"print('hi')\"")
+    out = capsys.readouterr().out
+    assert "hi" in out
+    assert interactive.LAST_EXIT_CODE == 0
+
+
+def test_bang_preserves_exit_status(capsys):
+    _setup()
+    _parse_command("!python -c \"import sys; sys.exit(3)\"")
+    capsys.readouterr()
+    assert interactive.LAST_EXIT_CODE == 3
+
+
 def test_chmod_failure_is_handled(monkeypatch, tmp_path):
     plugins._reset()
     monkeypatch.setattr(

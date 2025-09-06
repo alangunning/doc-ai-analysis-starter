@@ -8,10 +8,13 @@ import os
 import re
 import stat
 import warnings
+import subprocess
 from platformdirs import PlatformDirs
 
 import click
 from click_repl import repl, ClickCompleter
+from click_repl import _repl as click_repl_repl
+import click_repl.utils as repl_utils
 from doc_ai import plugins
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
@@ -20,6 +23,7 @@ from prompt_toolkit.document import Document
 import typer
 from typer.main import get_command
 from doc_ai.batch import run_batch
+import doc_ai.batch as batch_mod
 
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
@@ -51,6 +55,7 @@ def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
 
 PROMPT_KWARGS: dict[str, object] | None = None
 _REPL_CTX: click.Context | None = None
+LAST_EXIT_CODE = 0
 
 __all__ = [
     "interactive_shell",
@@ -62,7 +67,29 @@ __all__ = [
     "refresh_completer",
     "refresh_after",
     "_prompt_name",
+    "LAST_EXIT_CODE",
 ]
+
+
+def _dispatch_repl_commands(command: str) -> bool:
+    """Execute system commands prefixed with ``!`` using ``subprocess.run``."""
+
+    global LAST_EXIT_CODE
+    if command.startswith("!"):
+        result = subprocess.run(command[1:], shell=True, capture_output=True, text=True)
+        if result.stdout:
+            click.echo(result.stdout, nl=False)
+        if result.stderr:
+            click.echo(result.stderr, err=True, nl=False)
+        LAST_EXIT_CODE = result.returncode
+        return True
+    return False
+
+
+# Patch click-repl helpers to use the custom dispatcher
+repl_utils.dispatch_repl_commands = _dispatch_repl_commands
+click_repl_repl.dispatch_repl_commands = _dispatch_repl_commands
+batch_mod.dispatch_repl_commands = _dispatch_repl_commands
 
 
 def _repl_help(args: list[str]) -> None:
