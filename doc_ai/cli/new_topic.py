@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Scaffold new topic prompt templates for existing document types."""
 
 from __future__ import annotations
@@ -41,7 +40,7 @@ def _discover_topics(doc_type: str) -> list[str]:
     "topic",
     help="Create a new topic prompt under an existing document type directory.",
 )
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def topic(
     ctx: typer.Context,
     topic: str | None = typer.Argument(None, help="Topic"),
@@ -99,7 +98,7 @@ def topic(
 
 
 @app.command("rename-topic", help="Rename a topic prompt for a document type.")
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def rename_topic(
     ctx: typer.Context,
     old: str | None = typer.Argument(None, help="Existing topic"),
@@ -160,7 +159,7 @@ def rename_topic(
 
 
 @app.command("delete-topic", help="Delete a topic prompt from a document type.")
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def delete_topic(
     ctx: typer.Context,
     topic: str | None = typer.Argument(None, help="Topic"),

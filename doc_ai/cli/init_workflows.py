@@ -1,8 +1,8 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import cast
 import typer
 
 from .utils import resolve_bool, resolve_str
@@ -43,7 +43,7 @@ def init_workflows(
         typer.echo("No workflow templates found", err=True)
         raise typer.Exit(1)
     cfg = ctx.obj.get("config", {})
-    dest = Path(resolve_str(ctx, "dest", str(dest), cfg, "DEST"))
+    dest = Path(cast(str, resolve_str(ctx, "dest", str(dest), cfg, "DEST")))
     overwrite = resolve_bool(ctx, "overwrite", overwrite, cfg, "OVERWRITE")
     dry_run = resolve_bool(ctx, "dry_run", dry_run, cfg, "DRY_RUN")
     yes = resolve_bool(ctx, "yes", yes, cfg, "YES")

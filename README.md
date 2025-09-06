@@ -214,6 +214,12 @@ from doc_ai.cli import app, interactive_shell
 interactive_shell(app, init=Path("commands.txt"))
 ```
 
+## Type Checking
+
+Doc AI treats static type checking as a first-class test. All modules should
+run through `mypy` without `# mypy: ignore-errors` pragmas. Run `mypy` locally
+before committing to ensure a clean type-checking pass.
+
 ## Directory Overview
 
 ```
@@ -337,6 +343,12 @@ allowlisted. Add a plugin's entry-point name to the allowlist with:
 
 ```
 doc-ai plugins trust example
+```
+
+Remove a plugin from the allowlist with:
+
+```
+doc-ai plugins untrust example
 ```
 
 ### Plugin Trust Model

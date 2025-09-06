@@ -5,12 +5,12 @@ from pathlib import Path
 import click
 import typer
 from click.exceptions import Exit as ClickExit
-from click_repl.utils import (
+from click_repl.utils import (  # type: ignore[import-untyped]
     dispatch_repl_commands,
     handle_internal_commands,
     split_arg_string,
 )
-from click_repl.exceptions import CommandLineParserError
+from click_repl.exceptions import CommandLineParserError  # type: ignore[import-untyped]
 
 from doc_ai import plugins
 
