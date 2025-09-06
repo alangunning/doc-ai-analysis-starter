@@ -40,15 +40,37 @@ def show_prompt(doc_type: str, topic: str | None) -> str:
 def edit_prompt(doc_type: str, topic: str | None) -> None:
     """Launch an editor for the prompt file.
 
-    Uses shlex.split so editors with arguments are handled properly.
+    Resolves ``$EDITOR`` using :func:`shutil.which` and falls back to a safe
+    default (``vi`` or ``nano``) when the variable is unset, invalid, or points
+    to a non-existent command. Values containing path separators or shell
+    metacharacters are ignored to avoid command injection vulnerabilities.
     """
+
     path = resolve_prompt_path(doc_type, topic)
-    editor = os.environ.get("EDITOR")
-    if not editor:
+
+    invalid_chars = set(";&|$><`")
+    # Disallow path separators to ensure only simple command names are used.
+    path_seps = {os.sep}
+    if os.altsep:
+        path_seps.add(os.altsep)
+
+    editor_cmd: list[str] | None = None
+    editor_env = os.environ.get("EDITOR")
+
+    if editor_env and not any(ch in editor_env for ch in invalid_chars.union(path_seps)):
+        parts = shlex.split(editor_env)
+        if parts:
+            resolved = shutil.which(parts[0])
+            if resolved:
+                editor_cmd = [resolved, *parts[1:]]
+
+    if editor_cmd is None:
         for candidate in ("vi", "nano"):
-            if shutil.which(candidate):
-                editor = candidate
+            resolved = shutil.which(candidate)
+            if resolved:
+                editor_cmd = [resolved]
                 break
         else:
-            editor = "vi"
-    subprocess.run(shlex.split(editor) + [str(path)], check=True)
+            editor_cmd = ["vi"]
+
+    subprocess.run(editor_cmd + [str(path)], check=True)
