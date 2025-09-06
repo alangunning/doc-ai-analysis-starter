@@ -13,7 +13,11 @@ from doc_ai.converter import OutputFormat
 from doc_ai.utils import http_get, sanitize_filename
 from rich.progress import Progress
 
-from .utils import parse_config_formats as _parse_config_formats, resolve_bool
+from .utils import (
+    parse_config_formats as _parse_config_formats,
+    prompt_if_missing,
+    resolve_bool,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +121,15 @@ def convert(
         )
     if url:
         url_list.extend(url)
+    source = prompt_if_missing(ctx, source, "Path or URL to raw document or folder")
+    if url_list and doc_type is None:
+        doc_type = prompt_if_missing(
+            ctx, doc_type, "Document type for downloaded URLs"
+        )
+        if doc_type is None:
+            raise typer.BadParameter("--doc-type is required when providing URLs")
+    if source is None and not url_list:
+        raise typer.BadParameter("Missing argument 'source'")
     results: dict[Path, tuple[dict[OutputFormat, Path], object]] = {}
     if url_list:
         if doc_type is None:

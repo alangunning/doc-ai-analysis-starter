@@ -13,6 +13,7 @@ from rich.progress import Progress
 from doc_ai.converter import OutputFormat
 from .utils import (
     parse_config_formats as _parse_config_formats,
+    prompt_if_missing,
     resolve_bool,
     resolve_int,
     resolve_str,
@@ -229,7 +230,7 @@ app = typer.Typer(
 @app.callback()
 def _entrypoint(
     ctx: typer.Context,
-    source: Path = typer.Argument(..., help="Directory with raw documents"),
+    source: Path | None = typer.Argument(None, help="Directory with raw documents"),
     prompt: Path | None = typer.Option(
         None,
         help="Analysis prompt file",
@@ -310,6 +311,12 @@ def _entrypoint(
     if ctx.obj is None:
         ctx.obj = {}
     cfg = ctx.obj.get("config", {})
+    src_val = prompt_if_missing(
+        ctx, str(source) if source is not None else None, "Directory with raw documents"
+    )
+    if src_val is None:
+        raise typer.BadParameter("Missing argument 'source'")
+    source = Path(src_val)
     format = format or _parse_config_formats(cfg)
     model = resolve_str(ctx, "model", model, cfg, "MODEL")
     base_model_url = resolve_str(

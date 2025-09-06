@@ -3,11 +3,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import logging
+import sys
 
 import typer
 from rich.table import Table
 from rich.panel import Panel
 from dotenv import set_key, dotenv_values
+import questionary
 
 from .utils import get_logging_options, load_env_defaults
 from . import ENV_FILE, save_global_config, read_configs, console
@@ -218,3 +220,34 @@ def set_defaults(
     for key, value in sorted(root.default_map.items()):
         table.add_row(key, str(value))
     console.print(Panel(table, title="Runtime defaults"))
+
+
+@app.command()
+def wizard(
+    ctx: typer.Context,
+    global_scope: bool = typer.Option(
+        False, "--global", help="Modify global config instead of project .env"
+    ),
+) -> None:
+    """Run an interactive configuration wizard."""
+
+    if ctx.obj is None:
+        ctx.obj = {}
+    try:
+        interactive = bool(ctx.obj.get("interactive", True)) and sys.stdin.isatty()
+    except Exception:
+        interactive = False
+    if not interactive:
+        typer.echo("Interactive prompts disabled; no changes made")
+        return
+    defaults = load_env_defaults()
+    pairs: list[str] = []
+    for key, default in defaults.items():
+        try:
+            answer = questionary.text(key, default=str(default or "")).ask()
+        except Exception:  # pragma: no cover - best effort
+            answer = default or ""
+        if answer:
+            pairs.append(f"{key}={answer}")
+    if pairs:
+        _set_pairs(ctx, pairs, global_scope)

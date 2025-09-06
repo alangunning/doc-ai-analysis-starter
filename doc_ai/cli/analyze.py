@@ -7,7 +7,13 @@ import logging
 import typer
 
 from doc_ai.converter import OutputFormat
-from .utils import analyze_doc, suffix as _suffix, resolve_bool, resolve_str
+from .utils import (
+    analyze_doc,
+    prompt_if_missing,
+    suffix as _suffix,
+    resolve_bool,
+    resolve_str,
+)
 from . import ModelName, _validate_prompt
 
 logger = logging.getLogger(__name__)
@@ -18,7 +24,7 @@ app = typer.Typer(invoke_without_command=True, help="Run an analysis prompt agai
 @app.callback()
 def analyze(
     ctx: typer.Context,
-    source: Path = typer.Argument(..., help="Raw or converted document"),
+    source: Path | None = typer.Argument(None, help="Raw or converted document"),
     fmt: Optional[OutputFormat] = typer.Option(
         None, "--format", "-f", help="Format of converted file"
     ),
@@ -80,6 +86,12 @@ def analyze(
     if ctx.obj is None:
         ctx.obj = {}
     cfg = ctx.obj.get("config", {})
+    src_val = prompt_if_missing(
+        ctx, str(source) if source is not None else None, "Raw or converted document"
+    )
+    if src_val is None:
+        raise typer.BadParameter("Missing argument 'source'")
+    source = Path(src_val)
     model = resolve_str(ctx, "model", model, cfg, "MODEL")
     base_model_url = resolve_str(ctx, "base_model_url", base_model_url, cfg, "BASE_MODEL_URL")
     require_json = resolve_bool(ctx, "require_json", require_json, cfg, "REQUIRE_STRUCTURED")
