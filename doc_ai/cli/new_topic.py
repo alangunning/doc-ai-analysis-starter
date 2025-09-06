@@ -10,7 +10,7 @@ import questionary
 import typer
 
 from .interactive import refresh_after, discover_doc_types_topics, discover_topics
-from .utils import prompt_if_missing
+from .utils import prompt_if_missing, sanitize_name
 
 app = typer.Typer(help="Scaffold a new analysis topic prompt for a document type")
 
@@ -52,9 +52,11 @@ def topic(
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
+    doc_type = sanitize_name(doc_type)
     topic = prompt_if_missing(ctx, topic, "Topic")
     if topic is None:
         raise typer.BadParameter("Topic required")
+    topic = sanitize_name(topic)
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
@@ -105,6 +107,7 @@ def rename_topic(
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
+    doc_type = sanitize_name(doc_type)
     topics = discover_topics(doc_type)
     old = old or cfg.get("default_topic")
     if old is None:
@@ -116,9 +119,11 @@ def rename_topic(
         old = prompt_if_missing(ctx, old, "Topic")
     if old is None:
         raise typer.BadParameter("Topic required")
+    old = sanitize_name(old)
     new = prompt_if_missing(ctx, new, "New topic name")
     if new is None:
         raise typer.BadParameter("New topic name required")
+    new = sanitize_name(new)
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
@@ -167,6 +172,7 @@ def delete_topic(
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
+    doc_type = sanitize_name(doc_type)
     topics = discover_topics(doc_type)
     topic = topic or cfg.get("default_topic")
     if topic is None:
@@ -178,6 +184,7 @@ def delete_topic(
         topic = prompt_if_missing(ctx, topic, "Topic")
     if topic is None:
         raise typer.BadParameter("Topic required")
+    topic = sanitize_name(topic)
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)

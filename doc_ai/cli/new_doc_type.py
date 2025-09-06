@@ -10,7 +10,7 @@ import questionary
 import typer
 
 from .interactive import refresh_after, discover_doc_types_topics
-from .utils import prompt_if_missing
+from .utils import prompt_if_missing, sanitize_name
 
 app = typer.Typer(help="Scaffold a new document type with template prompts")
 
@@ -41,6 +41,7 @@ def doc_type(
     name = prompt_if_missing(ctx, name, "Document type")
     if name is None:
         raise typer.BadParameter("Document type required")
+    name = sanitize_name(name)
 
     target_dir = DATA_DIR / name
     if target_dir.exists():
@@ -79,6 +80,7 @@ def rename_doc_type(
 ) -> None:
     """Rename existing document type *old* to *new*."""
 
+    new = sanitize_name(new)
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     old = old or cfg.get("default_doc_type")
     if old is None:
@@ -91,6 +93,7 @@ def rename_doc_type(
         old = prompt_if_missing(ctx, old, "Document type")
     if old is None:
         raise typer.BadParameter("Document type required")
+    old = sanitize_name(old)
     old_dir = DATA_DIR / old
     new_dir = DATA_DIR / new
     if not old_dir.exists():
@@ -135,6 +138,7 @@ def delete_doc_type(
         name = prompt_if_missing(ctx, name, "Document type")
     if name is None:
         raise typer.BadParameter("Document type required")
+    name = sanitize_name(name)
     target_dir = DATA_DIR / name
     if not target_dir.exists():
         typer.echo(f"Directory {target_dir} does not exist", err=True)
