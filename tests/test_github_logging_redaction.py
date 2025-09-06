@@ -10,4 +10,3 @@ def test_github_logs_redact_tokens(caplog):
         prompts.logger.info("token: %s", secret)
     assert expected in caplog.text
     assert secret not in caplog.text
-

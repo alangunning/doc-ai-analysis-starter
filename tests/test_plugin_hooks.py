@@ -5,8 +5,8 @@ from prompt_toolkit.document import Document
 from typer.main import get_command
 
 from doc_ai import plugins
-from doc_ai.cli.interactive import DocAICompleter
 from doc_ai.batch import _parse_command
+from doc_ai.cli.interactive import DocAICompleter
 
 
 def test_example_plugin_repl_and_completion(capsys):

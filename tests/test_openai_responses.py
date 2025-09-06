@@ -4,7 +4,6 @@ import pytest
 from openai import OpenAIError
 
 import doc_ai.openai.responses as responses_module
-
 from doc_ai.openai import (
     create_response,
     create_response_with_file_url,
@@ -130,6 +129,7 @@ def test_create_response_with_system_message():
         ],
     )
 
+
 def test_create_response_respects_file_purpose_env(monkeypatch, tmp_path):
     file_path = tmp_path / "file.txt"
     file_path.write_text("hi")
@@ -182,7 +182,9 @@ def test_create_response_retries_exhausted(monkeypatch):
     client.responses.create.side_effect = OpenAIError("boom")
     monkeypatch.setattr(responses_module.time, "sleep", lambda _s: None)
 
-    with pytest.raises(RuntimeError, match="Responses API request failed after 2 attempts"):
+    with pytest.raises(
+        RuntimeError, match="Responses API request failed after 2 attempts"
+    ):
         create_response(client, model="gpt-4.1", retries=2)
 
     assert client.responses.create.call_count == 2
@@ -203,4 +205,3 @@ def test_create_response_passes_timeout():
         ],
         timeout=10,
     )
-

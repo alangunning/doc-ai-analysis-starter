@@ -1,12 +1,12 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 import click
-from typer.testing import CliRunner
 from typer.main import get_command
+from typer.testing import CliRunner
 
-from doc_ai.cli import app
 import doc_ai.cli as cli_module
+from doc_ai.cli import app
 from doc_ai.cli import config as config_module
 
 

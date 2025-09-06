@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import pytest
 import click
+import pytest
 
 from doc_ai.cli.utils import validate_doc
 from doc_ai.converter import OutputFormat

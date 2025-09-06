@@ -1,7 +1,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from doc_ai.converter import OutputFormat, convert_path, document_converter as dc
+from doc_ai.converter import OutputFormat, convert_path
+from doc_ai.converter import document_converter as dc
 
 
 def test_convert_path_returns_results(tmp_path):
@@ -28,6 +29,7 @@ def test_convert_path_returns_results(tmp_path):
 
 def test_convert_path_downloads_url_and_records_metadata(tmp_path, monkeypatch):
     url = "https://example.com/file.pdf"
+
     class DummyResp:
         def __init__(self):
             self.closed = False

@@ -1,21 +1,21 @@
 import argparse
 import json
-import os
 import logging
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from openai import OpenAI
 from rich.console import Console
 from rich.logging import RichHandler
 
-from openai import OpenAI
-
-from doc_ai.openai import upload_file, create_response
-
+from doc_ai.openai import create_response, upload_file
 
 if __name__ == "__main__":
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Generate validation and analysis prompts for a PDF")
+    parser = argparse.ArgumentParser(
+        description="Generate validation and analysis prompts for a PDF"
+    )
     parser.add_argument("pdf", type=Path, help="Path to PDF document")
     parser.add_argument(
         "--model",
@@ -70,9 +70,7 @@ if __name__ == "__main__":
 
     file_id = upload_file(client, args.pdf, logger=logger)
 
-    system = (
-        "You design GitHub model prompt YAML files. Given a PDF, you create both validation and analysis prompts."
-    )
+    system = "You design GitHub model prompt YAML files. Given a PDF, you create both validation and analysis prompts."
     user = (
         "Analyze the attached PDF and infer its document type. "
         "Produce two YAML prompts suitable for GitHub Models:\n"

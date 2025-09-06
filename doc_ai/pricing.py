@@ -1,4 +1,5 @@
 """Token pricing utilities."""
+
 from __future__ import annotations
 
 import os
@@ -21,10 +22,10 @@ def get_model_prices() -> Dict[str, Dict[str, float]]:
             continue
         rest = key[len(prefix) :]
         if rest.endswith("_INPUT"):
-            model_key = rest[:-len("_INPUT")]
+            model_key = rest[: -len("_INPUT")]
             field = "input"
         elif rest.endswith("_OUTPUT"):
-            model_key = rest[:-len("_OUTPUT")]
+            model_key = rest[: -len("_OUTPUT")]
             field = "output"
         else:
             continue

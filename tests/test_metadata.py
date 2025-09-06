@@ -1,4 +1,4 @@
-from doc_ai.metadata import load_metadata, save_metadata, mark_step
+from doc_ai.metadata import load_metadata, mark_step, save_metadata
 
 
 def test_save_metadata_records_size_and_filename(tmp_path):

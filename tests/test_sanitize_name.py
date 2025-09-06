@@ -11,8 +11,12 @@ from doc_ai.cli.utils import sanitize_name
 
 def _setup_templates() -> tuple[Path, Path]:
     repo_root = Path(__file__).resolve().parents[1]
-    analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
-    validate_tpl = repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
     return analysis_tpl, validate_tpl
 
 

@@ -2,8 +2,8 @@ import logging
 
 from typer.testing import CliRunner
 
-from doc_ai.cli import app
 import doc_ai.cli as cli_module
+from doc_ai.cli import app
 
 
 def _no_op_convert_path(*args, **kwargs):

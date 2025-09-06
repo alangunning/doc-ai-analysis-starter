@@ -1,8 +1,9 @@
 import json
-from unittest.mock import patch
-import yaml
 import logging
+from unittest.mock import patch
+
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from doc_ai.cli import analyze_doc
@@ -21,7 +22,7 @@ def test_analyze_doc_strips_fences_and_updates_metadata(tmp_path):
     md.write_text("sample")
     with patch(
         "doc_ai.cli.run_prompt",
-        return_value=("```json\n{\"foo\": 1}\n```", 0.0),
+        return_value=('```json\n{"foo": 1}\n```', 0.0),
     ):
         analyze_doc(md)
     out_file = doc_dir / "apple-sec-form-4.pdf.analysis.json"

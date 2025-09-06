@@ -1,15 +1,15 @@
-import tempfile
-from pathlib import Path
 import sys
+import tempfile
 import types
-import yaml
+from pathlib import Path
 from unittest.mock import patch
 
+import yaml
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from doc_ai.openai.responses import create_response
 from doc_ai.github.prompts import run_prompt
+from doc_ai.openai.responses import create_response
 
 
 class StubResponses:
@@ -33,7 +33,12 @@ def validate_run_prompt() -> None:
     with tempfile.TemporaryDirectory() as td:
         path = Path(td) / "prompt.yml"
         path.write_text(
-            yaml.dump({"model": "gpt-4o-mini", "messages": [{"role": "user", "content": "Hi"}]})
+            yaml.dump(
+                {
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": "Hi"}],
+                }
+            )
         )
         with patch("doc_ai.github.prompts.OpenAI", return_value=client):
             run_prompt(path, "input")

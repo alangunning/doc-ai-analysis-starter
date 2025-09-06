@@ -6,7 +6,6 @@ from typer.testing import CliRunner
 from doc_ai.cli import app
 from doc_ai.cli import prompt as prompt_module
 
-
 runner = CliRunner()
 
 

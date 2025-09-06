@@ -66,9 +66,7 @@ def test_query_without_ask(monkeypatch, tmp_path):
     monkeypatch.setattr(query_module, "create_response", mock_create)
 
     runner = CliRunner()
-    result = runner.invoke(
-        query_module.app, ["--k", "2", str(tmp_path), "what?"]
-    )
+    result = runner.invoke(query_module.app, ["--k", "2", str(tmp_path), "what?"])
     assert result.exit_code == 0
     assert "doc1.md" in result.stdout
     assert "doc2.md" in result.stdout

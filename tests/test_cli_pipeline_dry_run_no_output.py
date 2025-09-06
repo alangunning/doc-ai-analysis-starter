@@ -15,4 +15,3 @@ def test_pipeline_dry_run_does_not_create_outputs():
         assert result.exit_code == 0
         assert not list(docs.rglob("*.converted*"))
         assert not list(docs.rglob("*.analysis*"))
-

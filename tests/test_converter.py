@@ -93,7 +93,8 @@ def test_convert_files_passes_progress_flag(tmp_path):
         # Use an in-memory console to avoid writing to stdout
         from rich.console import Console
 
-        dc._console = Console(file=devnull, force_terminal=True)
+        dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
+
         mock_progress = MockProgress.return_value.__enter__.return_value
         mock_progress.add_task.return_value = 1
 
@@ -129,7 +130,8 @@ def test_convert_files_handles_validation_error(tmp_path):
         dc._converter_instance = None
         from rich.console import Console
 
-        dc._console = Console(file=devnull, force_terminal=True)
+        dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
+
         mock_progress = MockProgress.return_value.__enter__.return_value
         mock_progress.add_task.return_value = 1
 

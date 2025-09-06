@@ -4,8 +4,7 @@ from typer.testing import CliRunner
 
 from doc_ai.cli import app
 from doc_ai.converter import OutputFormat
-from doc_ai.converter.path import convert_path, ConversionError
-
+from doc_ai.converter.path import ConversionError, convert_path
 
 
 def test_convert_cli_handles_missing_path(tmp_path, monkeypatch):
@@ -20,7 +19,6 @@ def test_convert_cli_handles_missing_path(tmp_path, monkeypatch):
     result = runner.invoke(app, ["convert", str(missing)])
     assert result.exit_code != 0
     assert any("Path does not exist" in m for m in messages)
-
 
 
 def test_convert_path_warns_and_continues(tmp_path, monkeypatch, caplog):
@@ -65,4 +63,3 @@ def test_convert_cli_handles_unexpected_error(tmp_path, monkeypatch):
     assert result.exit_code == 1
     assert any("kaboom" in m for m in messages)
     assert "Traceback" not in result.output
-

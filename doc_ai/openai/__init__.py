@@ -6,12 +6,12 @@ requests to the Responses API.
 """
 
 from .files import (
+    input_file_from_bytes,
+    input_file_from_id,
+    input_file_from_path,
+    input_file_from_url,
     upload_file,
     upload_large_file,
-    input_file_from_id,
-    input_file_from_url,
-    input_file_from_path,
-    input_file_from_bytes,
 )
 from .responses import create_response, create_response_with_file_url
 

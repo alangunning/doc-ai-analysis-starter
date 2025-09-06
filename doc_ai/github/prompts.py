@@ -3,16 +3,15 @@
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 from pathlib import Path
 from typing import Optional, Tuple
-
-from doc_ai.logging import RedactFilter
 
 import yaml
 from openai import OpenAI
 
+from doc_ai.logging import RedactFilter
 from doc_ai.pricing import estimate_cost, estimate_tokens
 
 logger = logging.getLogger(__name__)

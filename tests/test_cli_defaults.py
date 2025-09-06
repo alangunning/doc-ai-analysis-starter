@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
+
 def test_default_doc_type_and_topic(monkeypatch):
     runner = CliRunner()
     with runner.isolated_filesystem():

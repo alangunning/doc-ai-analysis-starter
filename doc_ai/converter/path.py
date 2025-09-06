@@ -1,16 +1,15 @@
 # mypy: ignore-errors
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterable, Tuple
 from urllib.parse import urlparse
-from tempfile import TemporaryDirectory
-import logging
-from rich.progress import Progress
 
 from docling.exceptions import ConversionError
+from rich.progress import Progress
 
-from .document_converter import OutputFormat, convert_files, suffix_for_format
 from doc_ai.metadata import (
     compute_hash,
     is_step_done,
@@ -19,7 +18,8 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
-from ..utils import http_get, sanitize_path, sanitize_filename
+from ..utils import http_get, sanitize_filename, sanitize_path
+from .document_converter import OutputFormat, convert_files, suffix_for_format
 
 logger = logging.getLogger(__name__)
 
