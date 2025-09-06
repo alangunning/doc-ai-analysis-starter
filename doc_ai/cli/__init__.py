@@ -157,6 +157,9 @@ def _main_callback(
         "--interactive/--no-interactive",
         help="Start interactive shell when no command is provided",
     ),
+    no_color: bool = typer.Option(
+        False, "--no-color", help="Disable colorized console output"
+    ),
 ) -> None:
     """Global options."""
     if version:
@@ -168,6 +171,11 @@ def _main_callback(
         "config": merged,
         "global_config": global_cfg,
     }
+
+    if no_color:
+        os.environ["NO_COLOR"] = "1"
+        console.no_color = True
+    ctx.obj["no_color"] = no_color
 
     verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
     banner_default = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
@@ -290,6 +298,7 @@ def validate_file(*args: Any, **kwargs: Any) -> Any:
 def build_vector_store(*args: Any, **kwargs: Any) -> None:
     from doc_ai.github.vector import build_vector_store as _build_vector_store
 
+    kwargs.setdefault("console", console)
     _build_vector_store(*args, **kwargs)
 
 

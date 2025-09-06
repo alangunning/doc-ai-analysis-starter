@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from openai import OpenAI
+from rich.console import Console
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter
@@ -32,7 +33,11 @@ _log.addFilter(RedactFilter())
 
 
 def build_vector_store(
-    src_dir: Path, *, fail_fast: bool = False, workers: int = 1
+    src_dir: Path,
+    *,
+    fail_fast: bool = False,
+    workers: int = 1,
+    console: Console | None = None,
 ) -> None:
     """Generate embeddings for Markdown files in ``src_dir``.
 
@@ -123,7 +128,8 @@ def build_vector_store(
         mark_step(meta, "vector", outputs=[out_file.name])
         save_metadata(md_file, meta)
 
-    with Progress(transient=True) as progress:
+    console = console or Console()
+    with Progress(transient=True, console=console) as progress:
         task = progress.add_task("Embedding markdown files", total=len(md_files))
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(process, md): md for md in md_files}
@@ -132,6 +138,10 @@ def build_vector_store(
                 progress.update(task, description=f"Embedding {md_file}")
                 try:
                     fut.result()
+                    progress.console.print(f"Embedded {md_file}")
+                except Exception as exc:  # pragma: no cover - unexpected failure
+                    progress.console.print(f"Failed to embed {md_file}: {exc}")
+                    raise
                 finally:
                     progress.advance(task)
 
