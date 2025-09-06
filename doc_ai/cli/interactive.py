@@ -25,12 +25,31 @@ from typer.main import get_command
 
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
-"""Environment variable containing comma-separated safe env var names."""
+"""Config key with comma-separated allow/deny env var names."""
 
-SAFE_ENV_VARS = {
-    v.strip() for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",") if v.strip()
-}
-"""Names of environment variables that may be exposed in the REPL."""
+SAFE_ENV_VARS: set[str] = set()
+"""Base names of environment variables that may be exposed in the REPL."""
+
+
+def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
+    """Return allow and deny sets parsed from a comma-separated *value*.
+
+    Items prefixed with ``-`` are placed in the deny set; all others are
+    considered allowed. Empty items are ignored. ``+`` prefixes are optional and
+    treated the same as no prefix.
+    """
+
+    allow: set[str] = set()
+    deny: set[str] = set()
+    for raw in value.split(","):
+        name = raw.strip()
+        if not name:
+            continue
+        if name.startswith("-"):
+            deny.add(name[1:].strip())
+        else:
+            allow.add(name.lstrip("+").strip())
+    return allow, deny
 
 PROMPT_KWARGS: dict[str, object] | None = None
 _REPL_CTX: click.Context | None = None
@@ -160,24 +179,21 @@ class DocAICompleter(Completer):
 
     def refresh(self) -> None:
         """Refresh cached doc types, topics, and environment variables."""
-
         pattern = re.compile(r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE)
-        allowed = SAFE_ENV_VARS.union(
-            {
-                v.strip()
-                for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",")
-                if v.strip()
-            }
-        )
+        cfg = self._ctx.obj.get("config", {}) if self._ctx.obj else {}
+        raw = cfg.get(SAFE_ENV_VARS_ENV)
+        if raw is None:
+            raw = os.getenv(SAFE_ENV_VARS_ENV, "")
+        allow, deny = _parse_allow_deny(raw)
+        allowed = SAFE_ENV_VARS.union(allow)
         env_words = [
             f"${name}"
             for name in os.environ
-            if name in allowed or not pattern.search(name)
+            if name not in deny and (name in allowed or not pattern.search(name))
         ]
         self._env = WordCompleter(env_words, ignore_case=True)
 
         doc_types, topics = discover_doc_types_topics(Path("data"))
-        cfg = self._ctx.obj.get("config", {}) if self._ctx.obj else {}
         default_doc_type = cfg.get("default_doc_type")
         default_topic = cfg.get("default_topic")
         if default_doc_type in doc_types:

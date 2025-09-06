@@ -144,6 +144,14 @@ under ``data/`` and analysis topics discovered from prompt files. Use
 ``--no-interactive`` (or set ``doc-ai config set interactive=false``) to show
 help and exit instead of starting the REPL.
 
+Environment variable names offered for completion skip entries containing
+sensitive words like ``TOKEN`` or ``PASSWORD``. Override this behaviour with
+``DOC_AI_SAFE_ENV_VARS`` in the project ``.env`` or global config. Provide a
+comma-separated list where entries prefixed with ``-`` are explicitly hidden and
+others are always shown. For example::
+
+    DOC_AI_SAFE_ENV_VARS=MY_API_KEY,-DEBUG_TOKEN
+
    #### cd command
 
 The shell includes a ``cd`` helper to change directories without leaving the session.
