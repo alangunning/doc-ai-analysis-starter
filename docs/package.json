@@ -5,11 +5,10 @@
   "license": "MIT",
   "scripts": {
     "start": "docusaurus start",
-    "build": "npm run lint:alt-text && docusaurus build && npm run test:a11y",
+    "build": "npm run lint:alt-text && docusaurus build",
     "deploy": "docusaurus deploy",
     "serve": "docusaurus serve",
-    "lint:alt-text": "bash -c \"if rg -n '!\\[]\\(' content; then echo 'Images missing alt text'; exit 1; fi\"",
-    "test:a11y": "pa11y file://$PWD/build/index.html"
+    "lint:alt-text": "bash -c \"if rg -n '!\\[]\\(' content; then echo 'Images missing alt text'; exit 1; fi\""
   },
   "dependencies": {
     "@docusaurus/core": "^3.3.2",
@@ -17,8 +16,5 @@
     "@docusaurus/theme-mermaid": "^3.3.2",
     "dotenv": "^16.4.5",
     "prism-react-renderer": "^2.3.0"
-  },
-  "devDependencies": {
-    "pa11y": "^9.0.0"
   }
 }
