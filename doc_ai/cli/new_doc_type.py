@@ -76,6 +76,11 @@ def rename_doc_type(
     ctx: typer.Context,
     new: str,
     old: str | None = typer.Option(None, "--doc-type", help="Existing name"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the rename and skip the prompt",
+    ),
 ) -> None:
     """Rename existing document type *old* to *new*."""
 
@@ -85,7 +90,9 @@ def rename_doc_type(
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                old = questionary.select("Select document type", choices=doc_types).ask()
+                old = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
             except Exception:
                 old = None
         old = prompt_if_missing(ctx, old, "Document type")
@@ -100,7 +107,7 @@ def rename_doc_type(
         typer.echo(f"Directory {new_dir} already exists", err=True)
         raise typer.Exit(code=1)
 
-    if sys.stdin.isatty():
+    if sys.stdin.isatty() and not yes:
         if not typer.confirm(f"Rename {old} to {new}?", default=True):
             typer.echo("Aborted")
             return
@@ -120,6 +127,11 @@ def rename_doc_type(
 def delete_doc_type(
     ctx: typer.Context,
     name: str | None = typer.Option(None, "--doc-type", help="Document type"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the deletion and skip the prompt",
+    ),
 ) -> None:
     """Remove the document type directory named *name*."""
 
@@ -129,7 +141,9 @@ def delete_doc_type(
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                name = questionary.select("Select document type", choices=doc_types).ask()
+                name = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
             except Exception:
                 name = None
         name = prompt_if_missing(ctx, name, "Document type")
@@ -140,7 +154,7 @@ def delete_doc_type(
         typer.echo(f"Directory {target_dir} does not exist", err=True)
         raise typer.Exit(code=1)
 
-    if sys.stdin.isatty():
+    if sys.stdin.isatty() and not yes:
         if not typer.confirm(f"Delete {target_dir}?", default=False):
             typer.echo("Aborted")
             return

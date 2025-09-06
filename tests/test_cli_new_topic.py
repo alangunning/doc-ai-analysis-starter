@@ -7,11 +7,15 @@ from typer.testing import CliRunner
 from doc_ai.cli import app
 
 
-def test_new_topic_management():
+def test_new_topic_management_yes_and_non_interactive():
     runner = CliRunner()
     repo_root = Path(__file__).resolve().parents[1]
-    analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
-    validate_tpl = repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
     topic_tpl = repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml"
 
     with runner.isolated_filesystem():
@@ -39,9 +43,7 @@ def test_new_topic_management():
         assert topic_result.exit_code == 0
         target_file = Path("data/sample/sample.analysis.biology.prompt.yaml")
         assert target_file.is_file()
-        desc_file = Path(
-            "data/sample/sample.analysis.biology.prompt.description.txt"
-        )
+        desc_file = Path("data/sample/sample.analysis.biology.prompt.description.txt")
         assert desc_file.read_text().strip() == "desc"
 
         with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
@@ -54,8 +56,8 @@ def test_new_topic_management():
                     "chemistry",
                     "--doc-type",
                     "sample",
+                    "--yes",
                 ],
-                input="y\n",
             )
         assert rename_res.exit_code == 0
         assert not target_file.exists()
@@ -67,13 +69,39 @@ def test_new_topic_management():
 
         with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
             del_res = runner.invoke(
-                app, ["new", "delete-topic", "chemistry", "--doc-type", "sample"], input="y\n"
+                app,
+                ["new", "delete-topic", "chemistry", "--doc-type", "sample", "--yes"],
             )
         assert del_res.exit_code == 0
         assert not renamed.exists()
         assert not Path(
             "data/sample/sample.analysis.chemistry.prompt.description.txt"
         ).exists()
+
+        # non-interactive rename and delete
+        runner.invoke(app, ["new", "topic", "physics", "--doc-type", "sample"])
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=False):
+            rename_res2 = runner.invoke(
+                app,
+                [
+                    "new",
+                    "rename-topic",
+                    "physics",
+                    "math",
+                    "--doc-type",
+                    "sample",
+                ],
+            )
+        assert rename_res2.exit_code == 0
+        math_file = Path("data/sample/sample.analysis.math.prompt.yaml")
+        assert math_file.is_file()
+
+        with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=False):
+            del_res2 = runner.invoke(
+                app, ["new", "delete-topic", "math", "--doc-type", "sample"]
+            )
+        assert del_res2.exit_code == 0
+        assert not math_file.exists()
 
 
 def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
@@ -104,8 +132,12 @@ def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
 def test_new_topic_prompts_for_topic():
     runner = CliRunner()
     repo_root = Path(__file__).resolve().parents[1]
-    analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
-    validate_tpl = repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
     topic_tpl = repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml"
 
     with runner.isolated_filesystem():
@@ -132,7 +164,5 @@ def test_new_topic_prompts_for_topic():
         assert topic_result.exit_code == 0
         target_file = Path("data/sample/sample.analysis.biology.prompt.yaml")
         assert target_file.is_file()
-        desc_file = Path(
-            "data/sample/sample.analysis.biology.prompt.description.txt"
-        )
+        desc_file = Path("data/sample/sample.analysis.biology.prompt.description.txt")
         assert desc_file.read_text().strip() == "desc"
