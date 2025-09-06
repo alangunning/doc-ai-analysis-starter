@@ -8,7 +8,6 @@ import typer
 
 from doc_ai.converter import OutputFormat
 
-from doc_ai.logging import configure_logging
 from doc_ai.utils import http_get
 
 from .utils import parse_config_formats as _parse_config_formats, resolve_bool

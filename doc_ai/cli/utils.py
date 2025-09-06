@@ -2,17 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Mapping, TypeVar
+from typing import Callable, Mapping, TypeVar, TYPE_CHECKING
 import logging
 import os
-import re
-import json
 import functools
-from datetime import datetime, timezone
 
-import click
 import typer
-from rich.console import Console
 from dotenv import dotenv_values
 from click.core import ParameterSource
 
@@ -24,6 +19,9 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
+
+if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
+    from rich.console import Console
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +212,8 @@ def validate_doc(
     force: bool = False,
 ) -> None:
     """Validate a converted document against its raw source."""
+    from datetime import datetime, timezone
+    import click
     if validate_file_func is None:
         from doc_ai.cli import validate_file as validate_file_func  # type: ignore
 
@@ -293,6 +293,8 @@ def analyze_doc(
     force: bool = False,
 ) -> None:
     """Run an analysis prompt on a markdown document and store results."""
+    import json
+    import re
     if run_prompt_func is None:
         from doc_ai.cli import run_prompt as run_prompt_func  # type: ignore
 
