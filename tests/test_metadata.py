@@ -1,4 +1,7 @@
+import logging
+
 from doc_ai.metadata import load_metadata, mark_step, save_metadata
+from doc_ai.metadata.dublin_core import DublinCoreDocument
 
 
 def test_save_metadata_records_size_and_filename(tmp_path):
@@ -26,3 +29,9 @@ def test_mark_step_records_outputs_and_inputs(tmp_path):
     assert loaded.extra["outputs"]["conversion"] == ["data.txt.converted.md"]
     assert loaded.extra["inputs"]["conversion"]["formats"] == ["markdown"]
     assert loaded.extra["inputs"]["conversion"]["source"] == str(doc)
+
+
+def test_decode_content_invalid_logs_warning(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert DublinCoreDocument.decode_content("!!!") is None
+    assert "Failed to decode content" in caplog.text

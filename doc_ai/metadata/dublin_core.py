@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import datetime
 import json
+import logging
 import lzma
 import pickle
 import uuid
@@ -15,6 +17,8 @@ from typing import Any, Dict, List, Literal, Optional, cast
 from xml.etree import ElementTree
 
 COMPRESSION_TYPE: Optional[Literal["zlib", "lzma"]] = "zlib"
+
+logger = logging.getLogger(__name__)
 
 # namespaces
 XML_NAMESPACES = {
@@ -159,7 +163,8 @@ class DublinCoreDocument:
             if COMPRESSION_TYPE == "lzma":
                 return lzma.decompress(base64.b64decode(encoded_content))
             return base64.b64decode(encoded_content)
-        except Exception:  # pylint: disable=broad-except
+        except (binascii.Error, lzma.LZMAError, zlib.error) as exc:
+            logger.warning("Failed to decode content: %s", exc)
             return None
 
     def normalize_dates(self) -> bool:
