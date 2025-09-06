@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 import functools
+import re
 
 import questionary
 
@@ -165,6 +166,24 @@ def resolve_str(
     """Return string from config if option not explicitly provided."""
     if ctx.get_parameter_source(name) is ParameterSource.DEFAULT:
         return cfg.get(key, value)  # type: ignore[return-value]
+    return value
+
+
+NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def sanitize_name(value: str) -> str:
+    """Validate *value* only contains safe characters.
+
+    The CLI uses this to ensure names cannot include characters that might
+    lead to path traversal or other unexpected behaviour. Only letters,
+    numbers, underscores and hyphens are permitted.
+    """
+
+    if not NAME_RE.fullmatch(value):
+        raise typer.BadParameter(
+            "Invalid name. Use only letters, numbers, underscores and hyphens."
+        )
     return value
 
 
