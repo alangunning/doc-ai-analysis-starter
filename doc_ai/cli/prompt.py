@@ -9,6 +9,7 @@ import subprocess
 from pathlib import Path
 
 import typer
+import questionary
 
 DATA_DIR = Path("data")
 
@@ -82,3 +83,17 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
             raise RuntimeError("No editor found. Please edit the file manually.")
 
     subprocess.run(editor_cmd + [str(path)], check=True)
+
+
+def edit_prompt_inline(doc_type: str, topic: str | None) -> None:
+    """Edit the prompt file using an inline questionary textarea."""
+    path = resolve_prompt_path(doc_type, topic)
+    try:
+        new_text = questionary.text(
+            "Edit prompt", default=path.read_text(), multiline=True
+        ).ask()
+    except Exception:
+        new_text = None
+    if new_text is None:
+        return
+    path.write_text(new_text.rstrip() + "\n")

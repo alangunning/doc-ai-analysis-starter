@@ -12,6 +12,7 @@ from typing import Any, Callable, Iterable, Mapping, TypeVar, cast
 
 import click
 import click_repl.utils as repl_utils
+import questionary
 import typer
 from click.core import Command
 from click.exceptions import Exit as ClickExit
@@ -246,7 +247,7 @@ def _repl_edit_prompt(args: list[str]) -> None:
     if _REPL_CTX is None:
         click.echo("Prompt editing unavailable.")
         return
-    from .prompt import edit_prompt
+    from .prompt import edit_prompt_inline
 
     cfg = _REPL_CTX.obj.get("config", {}) if _REPL_CTX.obj else {}
     doc_type = args[0] if args else cfg.get("default_doc_type")
@@ -255,7 +256,7 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo("Document type required")
         return
     try:
-        edit_prompt(doc_type, topic)
+        edit_prompt_inline(doc_type, topic)
     except click.ClickException as exc:
         click.echo(exc.format_message())
 
@@ -370,6 +371,151 @@ def _repl_urls(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_edit_url_list(args: list[str]) -> None:
+    """Edit the stored URL list for a document type."""
+    if _REPL_CTX is None:
+        click.echo("URL editing unavailable.")
+        return
+    from . import manage_urls as manage_urls_mod
+
+    doc_types, _ = discover_doc_types_topics()
+    doc_type = args[0] if args else None
+    if doc_type is None:
+        if not doc_types:
+            click.echo("No document types available.")
+            return
+        try:
+            doc_type = questionary.select("Document type", choices=doc_types).ask()
+        except Exception:
+            doc_type = None
+    if not doc_type:
+        click.echo("Document type required")
+        return
+    path, urls = manage_urls_mod._load_urls(doc_type)
+    try:
+        raw = questionary.text(
+            "Edit URLs", default="\n".join(urls), multiline=True
+        ).ask()
+    except Exception:
+        raw = None
+    if raw is None:
+        return
+    new_urls: list[str] = []
+    for entry in raw.split():
+        entry = entry.strip()
+        if not manage_urls_mod._valid_url(entry):
+            click.echo(f"Skipping invalid URL: {entry}")
+            continue
+        if entry not in new_urls:
+            new_urls.append(entry)
+    manage_urls_mod.save_urls(path, new_urls)
+    refresh_completer()
+
+
+def _wizard_new_doc_type() -> None:
+    """Wizard to create a new document type."""
+    if _REPL_CTX is None:
+        click.echo("Wizard unavailable.")
+        return
+    answers = None
+    try:
+        answers = questionary.form(
+            name=questionary.text("Document type"),
+            description=questionary.text("Description", default=""),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers or not answers.get("name"):
+        return
+    from . import new_doc_type as new_doc_type_mod
+
+    new_doc_type_mod.doc_type(
+        cast(typer.Context, _REPL_CTX),
+        answers["name"],
+        description=answers.get("description", ""),
+    )
+
+
+def _wizard_new_topic() -> None:
+    """Wizard to create a new topic for an existing document type."""
+    if _REPL_CTX is None:
+        click.echo("Wizard unavailable.")
+        return
+    doc_types, _ = discover_doc_types_topics()
+    if not doc_types:
+        click.echo("No document types available.")
+        return
+    answers = None
+    try:
+        answers = questionary.form(
+            doc_type=questionary.select("Document type", choices=doc_types),
+            topic=questionary.text("Topic"),
+            description=questionary.text("Description", default=""),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers or not answers.get("doc_type") or not answers.get("topic"):
+        return
+    from . import new_topic as new_topic_mod
+
+    new_topic_mod.topic(
+        cast(typer.Context, _REPL_CTX),
+        answers["topic"],
+        doc_type=answers["doc_type"],
+        description=answers.get("description", ""),
+    )
+
+
+def _wizard_urls() -> None:
+    """Wizard to bulk add URLs for a document type."""
+    if _REPL_CTX is None:
+        click.echo("Wizard unavailable.")
+        return
+    doc_types, _ = discover_doc_types_topics()
+    if not doc_types:
+        click.echo("No document types available.")
+        return
+    answers = None
+    try:
+        answers = questionary.form(
+            doc_type=questionary.select("Document type", choices=doc_types),
+            urls=questionary.text("Enter URL(s) (one per line)", multiline=True),
+        ).ask()
+    except Exception:
+        answers = None
+    if not answers or not answers.get("doc_type") or not answers.get("urls"):
+        return
+    from . import manage_urls as manage_urls_mod
+
+    path, existing = manage_urls_mod._load_urls(answers["doc_type"])
+    new_urls = existing[:]
+    for entry in answers["urls"].split():
+        entry = entry.strip()
+        if not manage_urls_mod._valid_url(entry):
+            click.echo(f"Skipping invalid URL: {entry}")
+            continue
+        if entry not in new_urls:
+            new_urls.append(entry)
+    manage_urls_mod.save_urls(path, new_urls)
+    refresh_completer()
+
+
+def _repl_wizard(args: list[str]) -> None:
+    """Dispatch to interactive wizards."""
+    if not args:
+        click.echo("Available wizards: new-doc-type, new-topic, urls")
+        return
+    cmd = args[0]
+    if cmd == "new-doc-type":
+        _wizard_new_doc_type()
+    elif cmd == "new-topic":
+        _wizard_new_topic()
+    elif cmd == "urls":
+        _wizard_urls()
+    else:
+        click.echo(f"Unknown wizard: {cmd}")
+
+
 def _repl_set_default(args: list[str]) -> None:
     """Set default document type and optional topic."""
     if _REPL_CTX is None:
@@ -406,8 +552,10 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":clear-history", _repl_clear_history)
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
+    plugins.register_repl_command(":edit-url-list", _repl_edit_url_list)
     plugins.register_repl_command(":urls", _repl_urls)
     plugins.register_repl_command(":manage-urls", _repl_urls)
+    plugins.register_repl_command(":wizard", _repl_wizard)
     plugins.register_repl_command(":new-doc-type", _repl_new_doc_type)
     plugins.register_repl_command(":delete-doc-type", _repl_delete_doc_type)
     plugins.register_repl_command(":rename-doc-type", _repl_rename_doc_type)
