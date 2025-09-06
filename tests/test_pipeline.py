@@ -1,12 +1,13 @@
-from pathlib import Path
+import importlib
 import logging
+from pathlib import Path
 
 from typer.testing import CliRunner
 
 from doc_ai.cli import app
-import importlib
-pipeline_module = importlib.import_module("doc_ai.cli.pipeline")
 from doc_ai.cli.pipeline import pipeline as run_pipeline
+
+pipeline_module = importlib.import_module("doc_ai.cli.pipeline")
 
 
 def _setup_docs(tmp_path: Path) -> Path:
@@ -44,12 +45,14 @@ def test_pipeline_keep_going_reports_failures(monkeypatch, tmp_path):
     assert "Validation failed" in result.stdout
     assert "Analysis failed" in result.stdout
     assert "Failures encountered" in result.stdout
-    assert sorted(calls) == sorted([
-        "validate:a.pdf",
-        "analyze:a.pdf.converted.md",
-        "validate:b.pdf",
-        "analyze:b.pdf.converted.md",
-    ])
+    assert sorted(calls) == sorted(
+        [
+            "validate:a.pdf",
+            "analyze:a.pdf.converted.md",
+            "validate:b.pdf",
+            "analyze:b.pdf.converted.md",
+        ]
+    )
 
 
 def test_pipeline_fail_fast_stops(monkeypatch, tmp_path):
@@ -114,7 +117,7 @@ def test_pipeline_workers_option(monkeypatch, tmp_path):
 
     class DummyExecutor:
         def __init__(self, max_workers):
-            captured['max_workers'] = max_workers
+            captured["max_workers"] = max_workers
 
         def submit(self, fn, *args, **kwargs):
             fn(*args, **kwargs)
@@ -142,18 +145,26 @@ def test_pipeline_workers_option(monkeypatch, tmp_path):
     monkeypatch.setattr("doc_ai.cli.build_vector_store", dummy_build_vector_store)
 
     run_pipeline(src, workers=3)
-    assert captured['max_workers'] == 3
-    assert captured_build['workers'] == 3
+    assert captured["max_workers"] == 3
+    assert captured_build["workers"] == 3
 
 
 def test_pipeline_dry_run(monkeypatch, tmp_path, caplog):
     src = _setup_docs(tmp_path)
     calls: list[str] = []
 
-    monkeypatch.setattr("doc_ai.cli.convert_path", lambda *a, **k: calls.append("convert"))
-    monkeypatch.setattr("doc_ai.cli.validate_doc", lambda *a, **k: calls.append("validate"))
-    monkeypatch.setattr("doc_ai.cli.analyze_doc", lambda *a, **k: calls.append("analyze"))
-    monkeypatch.setattr("doc_ai.cli.build_vector_store", lambda *a, **k: calls.append("build"))
+    monkeypatch.setattr(
+        "doc_ai.cli.convert_path", lambda *a, **k: calls.append("convert")
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.validate_doc", lambda *a, **k: calls.append("validate")
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.analyze_doc", lambda *a, **k: calls.append("analyze")
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.build_vector_store", lambda *a, **k: calls.append("build")
+    )
 
     with caplog.at_level(logging.INFO):
         run_pipeline(src, dry_run=True)

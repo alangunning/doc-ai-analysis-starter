@@ -394,11 +394,18 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | Lint | Push/PR touching Python files | Run Ruff style checks |
 | Security | Push/PR | Scan code with Bandit |
 
-Run pre-commit to format and lint the code:
+## Linting
+
+This project uses [pre-commit](https://pre-commit.com) with [Ruff](https://github.com/astral-sh/ruff)
+and [Black](https://github.com/psf/black) to keep code style consistent. Install the hooks and
+run them before committing:
 
 ```bash
+pre-commit install
 pre-commit run --all-files
 ```
+
+The hooks will sort imports, remove unused ones, and format the code.
 
 Run Bandit locally to scan for common security issues:
 

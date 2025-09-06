@@ -60,6 +60,8 @@ dev = [
     "pytest==8.4.2",
     "bandit==1.8.6",
     "mypy==1.11.2",
+    "black==24.10.0",
+    "pre-commit==3.8.0",
 ]
 
 [tool.setuptools.package-data]
@@ -72,7 +74,7 @@ local_scheme = "no-local-version"
 
 [tool.ruff]
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = ["E", "F", "W", "I"]
 ignore = ["E501"]
 
 [tool.pytest.ini_options]

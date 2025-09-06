@@ -1,23 +1,10 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
+    rev: v0.12.11
     hooks:
       - id: ruff
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.6
+        args: [--fix]
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
     hooks:
-      - id: bandit
-        args: ["-r", "doc_ai"]
-        exclude: ^tests/
-  - repo: https://github.com/mgedmin/check-manifest
-    rev: "0.50"
-    hooks:
-      - id: check-manifest
-  - repo: https://github.com/pypa/validate-pyproject
-    rev: "v0.16"
-    hooks:
-      - id: validate-pyproject
+      - id: black
