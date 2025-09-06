@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Callable, Mapping, TypeVar, TYPE_CHECKING
 import logging
 import os
+import sys
 import functools
+
+import questionary
 
 import typer
 from dotenv import dotenv_values
@@ -160,6 +163,32 @@ def resolve_str(
     if ctx.get_parameter_source(name) is ParameterSource.DEFAULT:
         return cfg.get(key, value)  # type: ignore[return-value]
     return value
+
+
+def prompt_if_missing(
+    ctx: typer.Context, value: str | None, message: str
+) -> str | None:
+    """Return *value* or interactively prompt for it when ``None``.
+
+    The prompt is only shown when the CLI is running in an interactive
+    environment (``stdin`` is a TTY and ``ctx.obj['interactive']`` is truthy).
+    Any errors from ``questionary`` are suppressed so non-interactive
+    sessions fall back gracefully.
+    """
+
+    if value is not None:
+        return value
+    try:
+        interactive = bool(ctx.obj.get("interactive", True)) and sys.stdin.isatty()
+    except Exception:
+        interactive = False
+    if not interactive:
+        return value
+    try:
+        answer = questionary.text(message).ask()
+    except Exception:  # pragma: no cover - best effort
+        return value
+    return answer or value
 
 
 DEFAULT_ENV_VARS: dict[str, str | None] = {

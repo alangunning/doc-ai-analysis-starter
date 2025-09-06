@@ -7,6 +7,8 @@ sidebar_position: 2
 
 The `doc_ai.cli` package provides a Typer-based command line interface for orchestrating the document workflow. It reads defaults from a platform-specific **global config file**, a project `.env` file and environment variables, then exposes subcommands for each major step. Each command lives in its own module within `doc_ai.cli` and is registered with the top-level app.
 
+When required arguments such as the source path are omitted, commands like `convert`, `analyze`, and `pipeline` prompt for the missing values using interactive Questionary dialogs. If standard input is not a TTY the prompts are skipped and the commands fail with the usual parameter error.
+
 ## Commands
 
 - `config` – manage runtime configuration
