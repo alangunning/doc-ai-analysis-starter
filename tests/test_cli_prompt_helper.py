@@ -129,3 +129,25 @@ def test_embed_missing_source_no_interactive(monkeypatch):
         pass
     else:
         raise AssertionError("BadParameter not raised")
+
+
+def test_select_doc_type(monkeypatch):
+    ctx = typer.Context(click.Command("dummy"))
+    ctx.obj = {"config": {}}
+    monkeypatch.setattr(
+        utils, "discover_doc_types_topics", lambda: (["letters"], [])
+    )
+    monkeypatch.setattr(
+        utils.questionary, "select", lambda *a, **k: DummyQuestion("letters")
+    )
+    assert utils.select_doc_type(ctx, None) == "letters"
+
+
+def test_select_topic(monkeypatch):
+    ctx = typer.Context(click.Command("dummy"))
+    ctx.obj = {"config": {}}
+    monkeypatch.setattr(utils, "discover_topics", lambda doc_type: ["old"])
+    monkeypatch.setattr(
+        utils.questionary, "select", lambda *a, **k: DummyQuestion("old")
+    )
+    assert utils.select_topic(ctx, None, "letters") == "old"

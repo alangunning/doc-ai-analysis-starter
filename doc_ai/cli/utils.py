@@ -23,6 +23,7 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
+from .interactive import discover_doc_types_topics, discover_topics
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
     from rich.console import Console
@@ -192,6 +193,42 @@ def prompt_if_missing(
     except Exception:  # pragma: no cover - best effort
         return value
     return answer or value
+
+
+def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
+    """Return a document type, prompting or selecting if needed."""
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")  # type: ignore[assignment]
+    if doc_type is None:
+        doc_types, _ = discover_doc_types_topics()
+        if doc_types:
+            try:
+                doc_type = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
+            except Exception:
+                doc_type = None
+        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
+    return doc_type
+
+
+def select_topic(ctx: typer.Context, topic: str | None, doc_type: str) -> str:
+    """Return a topic for *doc_type*, prompting or selecting if needed."""
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    topic = topic or cfg.get("default_topic")  # type: ignore[assignment]
+    if topic is None:
+        topics = discover_topics(doc_type)
+        if topics:
+            try:
+                topic = questionary.select("Select topic", choices=topics).ask()
+            except Exception:
+                topic = None
+        topic = prompt_if_missing(ctx, topic, "Topic")
+    if topic is None:
+        raise typer.BadParameter("Topic required")
+    return topic
 
 
 DEFAULT_ENV_VARS: dict[str, str | None] = {

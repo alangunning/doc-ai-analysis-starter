@@ -73,7 +73,7 @@ def load_global_config() -> dict[str, str]:
             else:
                 data = json.loads(GLOBAL_CONFIG_PATH.read_text())
             if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+                return {str(k): str(v) for k, v in data.items()}
         except Exception as exc:
             logger.warning(
                 "Failed to load global config from %s: %s",
