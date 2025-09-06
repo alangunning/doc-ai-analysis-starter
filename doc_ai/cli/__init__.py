@@ -456,8 +456,13 @@ def _register_plugins() -> None:
             continue
         try:
             actual_hash = _hash_distribution(dist)
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to hash plugin %s: %s", ep.name, exc)
+        except (OSError, ValueError) as exc:  # pragma: no cover - defensive
+            logger.error(
+                "Failed to hash plugin %s: %s",
+                ep.name,
+                exc,
+                exc_info=True,
+            )
             continue
         if not hmac.compare_digest(actual_hash, expected_hash):
             logger.error("Hash mismatch for plugin %s", ep.name)
@@ -465,8 +470,17 @@ def _register_plugins() -> None:
 
         try:
             plugin_app = ep.load()
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to load plugin %s: %s", ep.name, exc)
+        except (
+            ImportError,
+            OSError,
+            ValueError,
+        ) as exc:  # pragma: no cover - defensive
+            logger.error(
+                "Failed to load plugin %s: %s",
+                ep.name,
+                exc,
+                exc_info=True,
+            )
             continue
         if isinstance(plugin_app, typer.Typer):
             app.add_typer(plugin_app, name=ep.name)

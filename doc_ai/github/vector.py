@@ -10,7 +10,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from openai import OpenAI
+import httpx
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter
@@ -94,21 +95,62 @@ def build_vector_store(
                 resp = client.embeddings.create(**kwargs)
                 success = True
                 break
-            except Exception as exc:  # pragma: no cover - network error
+            except RateLimitError as exc:  # pragma: no cover - network error
                 wait = 2**attempt
                 _log.error(
-                    "Embedding request failed for %s (attempt %s/%s): %s",
+                    "Rate limit error for %s (attempt %s/%s): %s",
                     md_file,
                     attempt,
                     max_attempts,
                     exc,
+                    exc_info=True,
                 )
-                if attempt == max_attempts:
-                    if fail_fast:
-                        raise
-                    _log.error("Skipping %s after repeated failures", md_file)
-                    break
-                time.sleep(wait)
+            except APIError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "OpenAI API error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except APIConnectionError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Connection error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except httpx.TimeoutException as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Timeout during embedding for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except Exception as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Unexpected error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            if attempt == max_attempts:
+                if fail_fast:
+                    raise
+                _log.warning("Exceeded max retries for %s", md_file)
+                break
+            time.sleep(wait)
 
         if not success:
             return
