@@ -5,7 +5,7 @@ import typer
 from typer.main import get_command
 
 from doc_ai.cli import app
-from doc_ai.cli.interactive import run_batch
+from doc_ai.batch import run_batch
 
 
 def test_run_batch_sets_defaults(tmp_path):
@@ -24,3 +24,13 @@ def test_run_batch_propagates_exit(tmp_path):
     ctx = click.Context(cmd)
     with pytest.raises(typer.Exit):
         run_batch(ctx, init)
+
+
+def test_run_batch_reports_parse_error(tmp_path):
+    init = tmp_path / "init.txt"
+    init.write_text("add url 'unterminated\n")
+    cmd = get_command(app)
+    ctx = click.Context(cmd)
+    with pytest.raises(click.ClickException) as excinfo:
+        run_batch(ctx, init)
+    assert str(init) in str(excinfo.value)

@@ -11,18 +11,13 @@ from platformdirs import PlatformDirs
 import click
 from click_repl import repl, ClickCompleter
 from doc_ai import plugins
-from click_repl.utils import (
-    dispatch_repl_commands,
-    handle_internal_commands,
-    split_arg_string,
-)
-from click_repl.exceptions import CommandLineParserError
 from click.exceptions import Exit as ClickExit
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.completion import Completer, WordCompleter
 from prompt_toolkit.document import Document
 import typer
 from typer.main import get_command
+from doc_ai.batch import run_batch
 
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
@@ -131,6 +126,48 @@ def _repl_history(args: list[str]) -> None:
         click.echo(f"{i}: {entry}")
 
 
+def _repl_config(args: list[str]) -> None:
+    """Invoke the config command from the REPL."""
+    if _REPL_CTX is None:
+        click.echo("Config is unavailable.")
+        return
+    from doc_ai.cli import config as config_mod
+
+    cmd = get_command(config_mod.app)
+    sub_ctx: click.Context | None = None
+    try:
+        sub_ctx = cmd.make_context(
+            "config", args, obj=_REPL_CTX.obj, default_map=_REPL_CTX.default_map
+        )
+        cmd.invoke(sub_ctx)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+    except ClickExit as exc:
+        raise typer.Exit(exc.exit_code)
+    finally:
+        if sub_ctx is not None:
+            _REPL_CTX.default_map = sub_ctx.default_map
+
+
+def _repl_edit_prompt(args: list[str]) -> None:
+    """Edit prompt for the current or given doc type/topic."""
+    if _REPL_CTX is None:
+        click.echo("Prompt editing unavailable.")
+        return
+    from .prompt import edit_prompt
+
+    cfg = _REPL_CTX.obj.get("config", {}) if _REPL_CTX.obj else {}
+    doc_type = args[0] if args else cfg.get("default_doc_type")
+    topic = args[1] if len(args) > 1 else cfg.get("default_topic")
+    if doc_type is None:
+        click.echo("Document type required")
+        return
+    try:
+        edit_prompt(doc_type, topic)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
 def _register_repl_commands(ctx: click.Context) -> None:
     """Register built-in REPL commands for the given context."""
 
@@ -139,6 +176,8 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":help", _repl_help)
     plugins.register_repl_command(":reload", _repl_reload)
     plugins.register_repl_command(":history", _repl_history)
+    plugins.register_repl_command(":config", _repl_config)
+    plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
 
 
 def discover_doc_types_topics(
@@ -276,59 +315,6 @@ def refresh_after(func):
     return wrapper
 
 
-def _parse_command(command: str) -> list[str] | None:
-    """Parse a command line similar to click-repl's REPL parser."""
-    if dispatch_repl_commands(command):
-        return None
-    result = handle_internal_commands(command)
-    if isinstance(result, str):
-        click.echo(result)
-        return None
-    try:
-        parts = split_arg_string(command, posix=False)
-        cleaned = []
-        for part in parts:
-            if len(part) >= 2 and part[0] == part[-1] and part[0] in {'"', "'"}:
-                cleaned.append(part[1:-1])
-            else:
-                cleaned.append(part)
-        if cleaned and cleaned[0] in plugins.iter_repl_commands():
-            plugins.iter_repl_commands()[cleaned[0]](cleaned[1:])
-            return None
-        return cleaned
-    except ValueError as exc:  # pragma: no cover - handled by caller
-        raise CommandLineParserError(str(exc)) from exc
-
-
-def run_batch(ctx: click.Context, path: Path) -> None:
-    """Execute commands from *path* before starting the REPL."""
-    for lineno, raw in enumerate(path.read_text().splitlines(), start=1):
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        args = _parse_command(line)
-        if args is None:
-            continue
-        sub_ctx: click.Context | None = None
-        try:
-            sub_ctx = ctx.command.make_context(
-                ctx.command.name,
-                args,
-                obj=ctx.obj,
-                default_map=ctx.default_map,
-            )
-            ctx.command.invoke(sub_ctx)
-        except click.ClickException as exc:
-            err = click.ClickException(
-                f"{path}:{lineno}: {exc.format_message()}"
-            )
-            err.exit_code = exc.exit_code
-            raise err from exc
-        except ClickExit as exc:
-            raise typer.Exit(exc.exit_code)
-        finally:
-            if sub_ctx is not None:
-                ctx.default_map = sub_ctx.default_map
 
 
 def _prompt_name() -> str:

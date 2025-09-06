@@ -75,3 +75,27 @@ def test_new_topic_management():
             "data/sample/sample.analysis.chemistry.prompt.description.txt"
         ).exists()
 
+
+def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/sample")
+    doc_dir.mkdir(parents=True)
+    target_file = doc_dir / "sample.analysis.old.prompt.yaml"
+    target_file.write_text("")
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    monkeypatch.setattr(
+        "doc_ai.cli.new_topic.questionary.select",
+        lambda *a, **k: DummyPrompt("old"),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["new", "delete-topic", "--doc-type", "sample"])
+    assert result.exit_code == 0, result.output
+    assert not target_file.exists()
