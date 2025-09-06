@@ -22,7 +22,7 @@ app = typer.Typer(help="Add documents to the data directory.")
 @app.command("url")
 def add_url(
     ctx: typer.Context,
-    link: str = typer.Argument(..., help="URL to download"),
+    link: str | None = typer.Argument(None, help="URL to download"),
     doc_type: str | None = typer.Option(
         None, "--doc-type", help="Document type"
     ),
@@ -42,6 +42,9 @@ def add_url(
     """Download *link* and convert it under ``data/<doc-type>/``."""
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    link = prompt_if_missing(ctx, link, "URL to download")
+    if link is None:
+        raise typer.BadParameter("URL to download required")
     doc_type = doc_type or cfg.get("default_doc_type")
     if doc_type is None:
         doc_types, _ = discover_doc_types_topics()
@@ -65,7 +68,7 @@ def add_url(
 @app.command("urls")
 def add_urls(
     ctx: typer.Context,
-    path: Path = typer.Argument(..., help="File containing URLs"),
+    path: Path | None = typer.Argument(None, help="File containing URLs"),
     doc_type: str | None = typer.Option(
         None, "--doc-type", help="Document type"
     ),
@@ -85,6 +88,10 @@ def add_urls(
     """Download URLs from *path* and convert them."""
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    path_val = prompt_if_missing(ctx, str(path) if path is not None else None, "File containing URLs")
+    if path_val is None:
+        raise typer.BadParameter("File containing URLs required")
+    path = Path(path_val)
     doc_type = doc_type or cfg.get("default_doc_type")
     if doc_type is None:
         doc_types, _ = discover_doc_types_topics()

@@ -103,7 +103,7 @@ def topic(
 def rename_topic(
     ctx: typer.Context,
     old: str | None = typer.Argument(None, help="Existing topic"),
-    new: str = typer.Argument(..., help="New topic name"),
+    new: str | None = typer.Argument(None, help="New topic name"),
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
 ) -> None:
     """Rename topic *old* to *new* under *doc_type*."""
@@ -131,6 +131,9 @@ def rename_topic(
         old = prompt_if_missing(ctx, old, "Topic")
     if old is None:
         raise typer.BadParameter("Topic required")
+    new = prompt_if_missing(ctx, new, "New topic name")
+    if new is None:
+        raise typer.BadParameter("New topic name required")
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
