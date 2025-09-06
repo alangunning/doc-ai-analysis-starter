@@ -299,27 +299,33 @@ def _parse_command(command: str) -> list[str] | None:
 
 def run_batch(ctx: click.Context, path: Path) -> None:
     """Execute commands from *path* before starting the REPL."""
-    for raw in path.read_text().splitlines():
+    for lineno, raw in enumerate(path.read_text().splitlines(), start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
         args = _parse_command(line)
         if args is None:
             continue
-        sub_ctx = ctx.command.make_context(
-            ctx.command.name,
-            args,
-            obj=ctx.obj,
-            default_map=ctx.default_map,
-        )
+        sub_ctx: click.Context | None = None
         try:
+            sub_ctx = ctx.command.make_context(
+                ctx.command.name,
+                args,
+                obj=ctx.obj,
+                default_map=ctx.default_map,
+            )
             ctx.command.invoke(sub_ctx)
-        except click.ClickException:
-            raise
+        except click.ClickException as exc:
+            err = click.ClickException(
+                f"{path}:{lineno}: {exc.format_message()}"
+            )
+            err.exit_code = exc.exit_code
+            raise err from exc
         except ClickExit as exc:
             raise typer.Exit(exc.exit_code)
         finally:
-            ctx.default_map = sub_ctx.default_map
+            if sub_ctx is not None:
+                ctx.default_map = sub_ctx.default_map
 
 
 def _prompt_name() -> str:
