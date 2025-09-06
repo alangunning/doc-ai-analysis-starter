@@ -1,7 +1,9 @@
 """Plugin registry for Doc AI.
 
 Plugins can register additional REPL commands or completion providers by
-calling the functions in this module at import time.
+calling the functions in this module at import time. Each registered callable
+must conform to a specific signature so the host application knows how to
+invoke it.
 """
 
 from __future__ import annotations
@@ -24,7 +26,8 @@ _COMPLETION_PROVIDERS: List[
 def register_repl_command(name: str, func: Callable[[List[str]], None]) -> None:
     """Register *func* as a REPL command named *name*.
 
-    The callback receives the remaining arguments as a list of strings.
+    The callback must have the signature ``(args: list[str]) -> None`` where
+    *args* contains the remaining tokens from the input line.
     """
 
     _REPL_COMMANDS[name] = func
@@ -41,8 +44,9 @@ def register_completion_provider(
 ) -> None:
     """Register a custom completion *provider*.
 
-    Providers receive the current :class:`~prompt_toolkit.document.Document` and
-    should yield :class:`~prompt_toolkit.completion.Completion` objects.
+    The callable must match the signature ``(document: Document, event:
+    object | None) -> Iterable[Completion]`` and should yield
+    :class:`~prompt_toolkit.completion.Completion` objects.
     """
 
     _COMPLETION_PROVIDERS.append(provider)
