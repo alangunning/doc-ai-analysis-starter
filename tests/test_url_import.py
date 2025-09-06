@@ -138,20 +138,26 @@ def test_manage_urls_command(tmp_path, monkeypatch):
 
         def ask(self) -> str:
             return self.response
+    selections = iter(["remove", "http://a", "add", "done"])
 
-    # Replace prompts with edited content: remove "a", keep "b", add "c"
     monkeypatch.setattr(
-        "doc_ai.cli.add.questionary.text",
-        lambda *a, **k: DummyPrompt("http://b\nhttp://c\n"),
+        "doc_ai.cli.manage_urls.questionary.select",
+        lambda *a, **k: DummyPrompt(next(selections)),
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.text",
+        lambda *a, **k: DummyPrompt("http://c"),
     )
     called = []
-    monkeypatch.setattr("doc_ai.cli.add.refresh_completer", lambda: called.append(True))
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
 
     runner = CliRunner()
     result = runner.invoke(app, ["add", "manage-urls", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://b", "http://c"]
-    assert called == [True]
+    assert called == [True, True]
 
 
 def test_manage_urls_bulk_delete(tmp_path, monkeypatch):
@@ -168,9 +174,13 @@ def test_manage_urls_bulk_delete(tmp_path, monkeypatch):
         def ask(self) -> str:
             return self.response
 
-    # User clears all entries
+    selections = iter(["remove", "http://a", "remove", "http://b", "done"])
     monkeypatch.setattr(
-        "doc_ai.cli.add.questionary.text",
+        "doc_ai.cli.manage_urls.questionary.select",
+        lambda *a, **k: DummyPrompt(next(selections)),
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.text",
         lambda *a, **k: DummyPrompt(""),
     )
 
@@ -186,6 +196,37 @@ def test_add_url_rejects_invalid(monkeypatch):
         app, ["add", "url", "notaurl", "--doc-type", "letters"], input=""
     )
     assert result.exit_code != 0
+
+
+def test_add_url_prompts_for_doc_type(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (Path("data/letters")).mkdir(parents=True)
+    monkeypatch.setattr(
+        "doc_ai.cli.convert.http_get", _mock_http_get({"http://x/y.txt": b"y"})
+    )
+    called = []
+
+    def fake_convert_path(path, fmts, force=False):
+        called.append(Path(path))
+        return {}
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", fake_convert_path)
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    monkeypatch.setattr(
+        "doc_ai.cli.add.questionary.select", lambda *a, **k: DummyPrompt("letters")
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["add", "url", "http://x/y.txt"])
+    assert result.exit_code == 0, result.output
+    assert called == [Path("data/letters")]
 
 
 def test_download_sanitizes_and_uniquifies(tmp_path, monkeypatch):

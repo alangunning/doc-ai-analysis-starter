@@ -1,6 +1,6 @@
 import click
 from click.testing import CliRunner
-from doc_ai.cli.interactive import _parse_command
+from doc_ai.batch import _parse_command
 
 @click.command()
 @click.argument("path")

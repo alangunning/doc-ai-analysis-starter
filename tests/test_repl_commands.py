@@ -4,7 +4,8 @@ from typer.main import get_command
 
 from doc_ai.cli import app
 import doc_ai.cli.interactive as interactive
-from doc_ai.cli.interactive import _parse_command, _register_repl_commands
+from doc_ai.cli.interactive import _register_repl_commands
+from doc_ai.batch import _parse_command
 from doc_ai import plugins
 
 

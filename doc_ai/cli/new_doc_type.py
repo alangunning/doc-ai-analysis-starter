@@ -7,9 +7,11 @@ import sys
 import shutil
 from pathlib import Path
 
+import questionary
 import typer
 
-from .interactive import refresh_after
+from .interactive import refresh_after, discover_doc_types_topics
+from .utils import prompt_if_missing
 
 app = typer.Typer(help="Scaffold a new document type with template prompts")
 
@@ -76,6 +78,14 @@ def rename_doc_type(
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     old = old or cfg.get("default_doc_type")
     if old is None:
+        doc_types, _ = discover_doc_types_topics()
+        if doc_types:
+            try:
+                old = questionary.select("Select document type", choices=doc_types).ask()
+            except Exception:
+                old = None
+        old = prompt_if_missing(ctx, old, "Document type")
+    if old is None:
         raise typer.BadParameter("Document type required")
     old_dir = DATA_DIR / old
     new_dir = DATA_DIR / new
@@ -111,6 +121,14 @@ def delete_doc_type(
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     name = name or cfg.get("default_doc_type")
+    if name is None:
+        doc_types, _ = discover_doc_types_topics()
+        if doc_types:
+            try:
+                name = questionary.select("Select document type", choices=doc_types).ask()
+            except Exception:
+                name = None
+        name = prompt_if_missing(ctx, name, "Document type")
     if name is None:
         raise typer.BadParameter("Document type required")
     target_dir = DATA_DIR / name
