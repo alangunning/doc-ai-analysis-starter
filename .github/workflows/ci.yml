@@ -26,6 +26,7 @@ jobs:
         with:
           python-version: '3.x'
       - run: pip install .[dev]
+      - run: mypy doc_ai
       - run: pytest
 
   security:

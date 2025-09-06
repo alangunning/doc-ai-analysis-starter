@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Scaffold new document type directories and prompt templates."""
 
 from __future__ import annotations
@@ -123,4 +124,3 @@ def delete_doc_type(
             return
 
     shutil.rmtree(target_dir)
-

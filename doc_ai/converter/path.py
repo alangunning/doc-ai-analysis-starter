@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from pathlib import Path
@@ -86,7 +87,9 @@ def convert_path(
 
     source_url: str | None = None
 
-    def _process(src: Path, src_url: str | None = None) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
+    def _process(
+        src: Path, src_url: str | None = None
+    ) -> Dict[Path, Tuple[Dict[OutputFormat, Path], Any]]:
         fmt_list = list(formats)
         output_suffixes = {_suffix(fmt) for fmt in OutputFormat}
         results: Dict[Path, Tuple[Dict[OutputFormat, Path], Any]] = {}
@@ -107,7 +110,11 @@ def convert_path(
 
             meta = load_metadata(file)
             file_hash = compute_hash(file)
-            if not force and meta.blake2b == file_hash and is_step_done(meta, "conversion"):
+            if (
+                not force
+                and meta.blake2b == file_hash
+                and is_step_done(meta, "conversion")
+            ):
                 return
             if meta.blake2b != file_hash:
                 meta.blake2b = file_hash

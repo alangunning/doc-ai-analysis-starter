@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Utilities for working with OpenAI file inputs.
 
 This module provides helper functions to upload files using the

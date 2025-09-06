@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 import shutil
@@ -6,7 +7,10 @@ import typer
 
 from .utils import resolve_bool, resolve_str
 
-app = typer.Typer(invoke_without_command=True, help="Copy GitHub Actions workflow templates into a project.")
+app = typer.Typer(
+    invoke_without_command=True,
+    help="Copy GitHub Actions workflow templates into a project.",
+)
 
 TEMPLATE_DIR = Path(__file__).resolve().parents[2] / ".github" / "workflows"
 
@@ -23,7 +27,9 @@ def init_workflows(
         help="Overwrite existing files (prompt before replacing unless --yes)",
     ),
     dry_run: bool = typer.Option(
-        False, "--dry-run", help="Show actions without writing files",
+        False,
+        "--dry-run",
+        help="Show actions without writing files",
     ),
     yes: bool = typer.Option(
         False,

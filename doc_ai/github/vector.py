@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Embedding helpers for Markdown files."""
 
 from __future__ import annotations
@@ -86,7 +87,7 @@ def build_vector_store(
                 success = True
                 break
             except Exception as exc:  # pragma: no cover - network error
-                wait = 2 ** attempt
+                wait = 2**attempt
                 _log.error(
                     "Embedding request failed for %s (attempt %s/%s): %s",
                     md_file,
@@ -115,9 +116,7 @@ def build_vector_store(
         save_metadata(md_file, meta)
 
     with Progress(transient=True) as progress:
-        task = progress.add_task(
-            "Embedding markdown files", total=len(md_files)
-        )
+        task = progress.add_task("Embedding markdown files", total=len(md_files))
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(process, md): md for md in md_files}
             for fut in as_completed(futures):

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Scaffold new topic prompt templates for existing document types."""
 
 from __future__ import annotations
@@ -24,9 +25,7 @@ DATA_DIR = Path("data")
 def topic(
     ctx: typer.Context,
     topic: str,
-    doc_type: str | None = typer.Option(
-        None, "--doc-type", help="Document type"
-    ),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
     description: str = typer.Option(
         "",
         "--description",
@@ -139,4 +138,3 @@ def delete_topic(
     desc = target_file.with_suffix(".description.txt")
     if desc.exists():
         desc.unlink()
-

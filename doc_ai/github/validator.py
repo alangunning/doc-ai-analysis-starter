@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Rendering validation helpers."""
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ def validate_file(
     show_progress: bool = False,
     logger: logging.Logger | None = None,
     console: Console | None = None,
-    ) -> Dict:
+) -> Dict:
     """Validate ``rendered_path`` against ``raw_path`` for ``fmt``.
 
     The raw and rendered files may be local paths or remote URLs. Local files are
@@ -80,7 +81,9 @@ def validate_file(
     prompt_path = sanitize_path(prompt_path)
     spec = yaml.safe_load(prompt_path.read_text())
     system_msgs = [m["content"] for m in spec["messages"] if m.get("role") == "system"]
-    user_msgs: List[str] = [m["content"] for m in spec["messages"] if m.get("role") == "user"]
+    user_msgs: List[str] = [
+        m["content"] for m in spec["messages"] if m.get("role") == "user"
+    ]
     user_text = user_msgs[0].replace("{format}", fmt.value) if user_msgs else ""
 
     def _is_url(value: Path | str) -> bool:
@@ -131,7 +134,9 @@ def validate_file(
                     )
                 )
         if progress and upload_task is not None:
-            progress.update(upload_task, completed=sum(p.stat().st_size for p in file_paths))
+            progress.update(
+                upload_task, completed=sum(p.stat().st_size for p in file_paths)
+            )
             progress.remove_task(upload_task)
         if progress:
             validate_task = progress.add_task("Validating", total=100)

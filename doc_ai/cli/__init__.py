@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """CLI orchestrator for AI document analysis pipeline."""
 
 from __future__ import annotations

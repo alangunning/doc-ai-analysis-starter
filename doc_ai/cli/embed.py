@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from __future__ import annotations
 
 from pathlib import Path
@@ -7,7 +8,9 @@ import typer
 from . import build_vector_store
 from .utils import resolve_bool, resolve_int
 
-app = typer.Typer(invoke_without_command=True, help="Generate embeddings for Markdown files.")
+app = typer.Typer(
+    invoke_without_command=True, help="Generate embeddings for Markdown files."
+)
 
 
 @app.callback()
@@ -17,9 +20,7 @@ def embed(
     fail_fast: bool = typer.Option(
         False, "--fail-fast", help="Abort immediately on the first HTTP error"
     ),
-    workers: int = typer.Option(
-        1, "--workers", "-w", help="Number of worker threads"
-    ),
+    workers: int = typer.Option(1, "--workers", "-w", help="Number of worker threads"),
 ) -> None:
     """Generate embeddings for Markdown files.
 
