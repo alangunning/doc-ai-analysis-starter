@@ -154,7 +154,7 @@ def _repl_help(args: list[str]) -> None:
     cur_ctx = ctx
     path: list[str] = []
     for arg in args:
-        if isinstance(cmd, click.MultiCommand):  # type: ignore[arg-type]
+        if isinstance(cmd, click.Group):  # type: ignore[arg-type]
             sub = cmd.get_command(cur_ctx, arg)
             if sub is None:
                 click.echo(f"Unknown command: {' '.join(path + [arg])}")
@@ -176,7 +176,7 @@ def _repl_help(args: list[str]) -> None:
             click.echo("\nREPL commands: " + ", ".join(repl_cmds))
             click.echo("Example: :history")
         click.echo("\nType ':help COMMAND' for command-specific help.")
-    elif isinstance(cmd, click.MultiCommand):  # type: ignore[arg-type]
+    elif isinstance(cmd, click.Group):  # type: ignore[arg-type]
         subs = sorted(cmd.list_commands(cur_ctx))
         if subs:
             click.echo("\nSubcommands: " + ", ".join(subs))
