@@ -9,6 +9,7 @@ from platformdirs import PlatformDirs
 
 import click
 from click_repl import repl, ClickCompleter
+from doc_ai import plugins
 from click_repl.utils import (
     dispatch_repl_commands,
     handle_internal_commands,
@@ -148,6 +149,8 @@ class DocAICompleter(Completer):
                     return
 
         yield from self._click.get_completions(document, complete_event)
+        for provider in plugins.iter_completion_providers():
+            yield from provider(document, complete_event)
 
 
 def refresh_completer() -> None:
@@ -188,6 +191,9 @@ def _parse_command(command: str) -> list[str] | None:
                 cleaned.append(part[1:-1])
             else:
                 cleaned.append(part)
+        if cleaned and cleaned[0] in plugins.iter_repl_commands():
+            plugins.iter_repl_commands()[cleaned[0]](cleaned[1:])
+            return None
         return cleaned
     except ValueError as exc:  # pragma: no cover - handled by caller
         raise CommandLineParserError(str(exc)) from exc
