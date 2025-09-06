@@ -1,40 +1,21 @@
-# mypy: ignore-errors
 """Scaffold new topic prompt templates for existing document types."""
 
 from __future__ import annotations
 
 import sys
 import shutil
-import re
 from pathlib import Path
 
 import questionary
 import typer
 
-from .interactive import refresh_after, discover_doc_types_topics
+from .interactive import refresh_after, discover_doc_types_topics, discover_topics
 from .utils import prompt_if_missing
 
 app = typer.Typer(help="Scaffold a new analysis topic prompt for a document type")
 
 TEMPLATE_TOPIC = Path(".github/prompts/doc-analysis.topic.prompt.yaml")
 DATA_DIR = Path("data")
-
-
-def _discover_topics(doc_type: str) -> list[str]:
-    """Return sorted topics available under *doc_type*."""
-    topics: set[str] = set()
-    doc_dir = DATA_DIR / doc_type
-    if not doc_dir.exists():
-        return []
-    for p in doc_dir.glob("analysis_*.prompt.yaml"):
-        m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
-        if m:
-            topics.add(m.group(1))
-    for p in doc_dir.glob(f"{doc_type}.analysis.*.prompt.yaml"):
-        m = re.match(rf"{re.escape(doc_type)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
-        if m:
-            topics.add(m.group(1))
-    return sorted(topics)
 
 
 @app.command(
@@ -63,7 +44,9 @@ def topic(
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                doc_type = questionary.select("Select document type", choices=doc_types).ask()
+                doc_type = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
             except Exception:
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
@@ -114,13 +97,15 @@ def rename_topic(
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                doc_type = questionary.select("Select document type", choices=doc_types).ask()
+                doc_type = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
             except Exception:
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
-    topics = _discover_topics(doc_type)
+    topics = discover_topics(doc_type)
     old = old or cfg.get("default_topic")
     if old is None:
         if topics:
@@ -174,13 +159,15 @@ def delete_topic(
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                doc_type = questionary.select("Select document type", choices=doc_types).ask()
+                doc_type = questionary.select(
+                    "Select document type", choices=doc_types
+                ).ask()
             except Exception:
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
-    topics = _discover_topics(doc_type)
+    topics = discover_topics(doc_type)
     topic = topic or cfg.get("default_topic")
     if topic is None:
         if topics:

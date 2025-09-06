@@ -212,6 +212,8 @@ DEFAULT_ENV_VARS: dict[str, str | None] = {
     "ENABLE_DOCS_WORKFLOW": "true",
     "ENABLE_LINT_WORKFLOW": "true",
     "ENABLE_AUTO_MERGE_WORKFLOW": "false",
+    "DOC_AI_ALLOW_SHELL": "true",
+    "DOC_AI_HISTORY_FILE": "",
 }
 
 

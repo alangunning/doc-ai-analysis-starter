@@ -32,7 +32,12 @@ BOOLEAN_KEYS = {
     "DRY_RUN",
     "YES",
     "DOC_AI_BANNER",
-} | {k for k, v in _defaults.items() if isinstance(v, str) and v.lower() in TRUE_SET | FALSE_SET}
+    "DOC_AI_ALLOW_SHELL",
+} | {
+    k
+    for k, v in _defaults.items()
+    if isinstance(v, str) and v.lower() in TRUE_SET | FALSE_SET
+}
 
 KNOWN_KEYS = set(_defaults) | {
     "MODEL",
@@ -56,6 +61,8 @@ KNOWN_KEYS = set(_defaults) | {
     "LOG_FILE",
     "VERBOSE",
     "DOC_AI_BANNER",
+    "DOC_AI_ALLOW_SHELL",
+    "DOC_AI_HISTORY_FILE",
     "INTERACTIVE",
 }
 
@@ -155,9 +162,7 @@ def _parse_value(value: str) -> bool | str:
 
 def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
     """Persist ``VAR=VALUE`` pairs to config sources."""
-    force_global = use_global or any(
-        p.split("=", 1)[0] == "interactive" for p in pairs
-    )
+    force_global = use_global or any(p.split("=", 1)[0] == "interactive" for p in pairs)
     if force_global:
         cfg = dict(ctx.obj.get("global_config", {}))
         for item in pairs:
@@ -169,7 +174,11 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
             if key not in KNOWN_KEYS:
                 raise typer.BadParameter(f"Unknown config key '{key}'")
             parsed = _parse_value(value)
-            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            env_val = (
+                "true"
+                if parsed is True
+                else "false" if parsed is False else str(parsed)
+            )
             os.environ[key] = env_val
             cfg[key] = parsed
         save_global_config(cfg)
@@ -187,7 +196,11 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
             if key not in KNOWN_KEYS:
                 raise typer.BadParameter(f"Unknown config key '{key}'")
             parsed = _parse_value(value)
-            env_val = "true" if parsed is True else "false" if parsed is False else str(parsed)
+            env_val = (
+                "true"
+                if parsed is True
+                else "false" if parsed is False else str(parsed)
+            )
             os.environ[key] = env_val
             set_key(str(env_path), key, env_val, quote_mode="never")
             env_path.chmod(0o600)
@@ -271,12 +284,15 @@ def set_value(
         items = [pair]
     _set_pairs(ctx, items, global_scope)
 
+
 @app.command()
 def toggle(
     ctx: typer.Context,
     key: str | None = typer.Argument(None, metavar="KEY"),
     global_scope: bool = typer.Option(
-        False, "--global", help="Modify global config instead of project .env",
+        False,
+        "--global",
+        help="Modify global config instead of project .env",
     ),
 ) -> None:
     """Toggle a boolean configuration value."""
@@ -330,7 +346,8 @@ def default_topic(
 
 
 def set_defaults(
-    ctx: typer.Context, pairs: list[str] | None = typer.Argument(None, metavar="VAR=VALUE")
+    ctx: typer.Context,
+    pairs: list[str] | None = typer.Argument(None, metavar="VAR=VALUE"),
 ) -> None:
     """Update runtime default options for the current session."""
     items = list(pairs or [])
