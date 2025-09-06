@@ -125,7 +125,7 @@ def test_add_urls_command(tmp_path, monkeypatch):
     assert called == [dest]
 
 
-def test_manage_urls_command(tmp_path, monkeypatch):
+def test_urls_command(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     doc_dir = Path("data/reports")
     doc_dir.mkdir(parents=True)
@@ -154,13 +154,13 @@ def test_manage_urls_command(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["add", "manage-urls", "reports"])
+    result = runner.invoke(app, ["urls", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://b", "http://c"]
     assert called == [True, True]
 
 
-def test_manage_urls_bulk_delete(tmp_path, monkeypatch):
+def test_urls_bulk_delete(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     doc_dir = Path("data/reports")
     doc_dir.mkdir(parents=True)
@@ -185,7 +185,7 @@ def test_manage_urls_bulk_delete(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["add", "manage-urls", "reports"])
+    result = runner.invoke(app, ["urls", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == []
 

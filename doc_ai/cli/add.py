@@ -14,7 +14,7 @@ from .utils import (
     resolve_bool,
     prompt_if_missing,
 )
-from .manage_urls import _valid_url, manage_urls as manage_urls_command
+from .manage_urls import _valid_url
 
 app = typer.Typer(help="Add documents to the data directory.")
 
@@ -120,5 +120,3 @@ def add_urls(
     download_and_convert(links, doc_type, fmts, force)
 
 
-
-app.command("manage-urls")(manage_urls_command)

@@ -168,6 +168,20 @@ def _repl_edit_prompt(args: list[str]) -> None:
         click.echo(exc.format_message())
 
 
+def _repl_urls(args: list[str]) -> None:
+    """Invoke the URL management command from the REPL."""
+    if _REPL_CTX is None:
+        click.echo("URL management unavailable.")
+        return
+    from . import manage_urls as manage_urls_mod
+
+    doc_type = args[0] if args else None
+    try:
+        manage_urls_mod.manage_urls(_REPL_CTX, doc_type)
+    except click.ClickException as exc:
+        click.echo(exc.format_message())
+
+
 def _register_repl_commands(ctx: click.Context) -> None:
     """Register built-in REPL commands for the given context."""
 
@@ -178,6 +192,7 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":history", _repl_history)
     plugins.register_repl_command(":config", _repl_config)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
+    plugins.register_repl_command(":urls", _repl_urls)
 
 
 def discover_doc_types_topics(
@@ -283,15 +298,15 @@ class DocAICompleter(Completer):
                         Document(parts[-1]), complete_event
                     )
                     return
-            if cmd == "add" and len(parts) >= 2 and parts[1] == "manage-urls":
-                if len(parts) == 2 and text.endswith(" "):
+            if cmd == "urls":
+                if len(parts) == 1 and text.endswith(" "):
                     yield from self._doc_types.get_completions(
                         Document(""), complete_event
                     )
                     return
-                if len(parts) == 3 and not parts[2].startswith("-"):
+                if len(parts) == 2 and not parts[1].startswith("-"):
                     yield from self._doc_types.get_completions(
-                        Document(parts[2]), complete_event
+                        Document(parts[1]), complete_event
                     )
                     return
 
