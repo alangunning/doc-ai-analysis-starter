@@ -261,7 +261,24 @@ Guides for each part of the template live in the `docs/` folder and are publishe
 - [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
 - [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
 - [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
-- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands; see [docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a template
+- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands, REPL commands, and completion providers; see [docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a template
+
+## Plugin Development
+
+Create a package that exposes a `typer.Typer` app in the
+`doc_ai.plugins` entry-point group:
+
+```toml
+[project.entry-points."doc_ai.plugins"]
+"example" = "plugin_example:app"
+```
+
+Plugins may extend the interactive shell by calling
+`doc_ai.plugins.register_repl_command` to add REPL-only commands and
+`doc_ai.plugins.register_completion_provider` to supply additional
+completions. See
+[docs/examples/plugin_example.py](docs/examples/plugin_example.py) for a
+complete example.
 
 ## Automated Workflows
 
@@ -277,11 +294,12 @@ GitHub Actions tie the pieces together. Each workflow runs on a specific trigger
 | Docs | Push to `docs/**` on `main` | Build and publish the documentation site |
 | Auto Merge | `/merge` issue comment | Approve and merge a pull request after review |
 | Lint | Push/PR touching Python files | Run Ruff style checks |
+| Security | Push/PR | Scan code with Bandit |
 
 Run Bandit locally to scan for common security issues:
 
 ```bash
-python scripts/run_bandit.py
+bandit -r doc_ai
 ```
 
 Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md).

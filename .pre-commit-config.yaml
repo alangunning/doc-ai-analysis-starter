@@ -3,8 +3,9 @@ repos:
     rev: 1.8.6
     hooks:
       - id: bandit
-        args: ["--severity-level", "high"]
+        args: ["-r", "doc_ai", "--severity-level", "high"]
         exclude: ^tests/
+        pass_filenames: false
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.12
     hooks:
