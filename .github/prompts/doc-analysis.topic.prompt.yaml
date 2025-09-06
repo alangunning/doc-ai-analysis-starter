@@ -1,0 +1,12 @@
+name: Topic analysis
+description: Analyze documents for a specific topic.
+model: openai/gpt-4o
+modelParameters:
+  temperature: 0
+messages:
+  - role: system
+    content: |-
+      You analyze documents with respect to a topic.
+  - role: user
+    content: |-
+      Analyze the following document for the specified topic.
