@@ -24,7 +24,11 @@ truncates the file during a session. Under the hood the shell leverages
 Typer-based projects.
 
 Use `show doc-types` and `show topics` to list document types under the
-``data/`` directory and analysis topics discovered from prompt files.
+``data/`` directory and analysis topics discovered from prompt files. When
+completing environment variables, only ``PATH`` and ``HOME`` are suggested by
+default. Configure additional variables with ``doc-ai config safe-env`` or by
+setting ``DOC_AI_SAFE_ENV_VARS`` to a comma-separated allow/deny list (include
+``PATH`` and ``HOME`` if you still want them available).
 
 ## Built-in commands
 

@@ -147,16 +147,17 @@ under ``data/`` and analysis topics discovered from prompt files. Use
 ``--no-interactive`` (or set ``doc-ai config set interactive=false``) to show
 help and exit instead of starting the REPL.
 
-By default only ``PATH`` and ``HOME`` are offered for completion. Use
-``doc-ai config safe-env`` subcommands or set ``DOC_AI_SAFE_ENV_VARS`` in the
-project ``.env`` or global config to explicitly allow or deny additional
-variables. The value is a comma-separated list where entries prefixed with ``-``
-are hidden and others are exposed. If ``DOC_AI_SAFE_ENV_VARS`` is unset and the
-configuration would reveal many variables, the CLI emits a warning. For
-example::
+By default only ``PATH`` and ``HOME`` are suggested when completing environment
+variables. To expose additional variables, either run ``doc-ai config safe-env``
+or set ``DOC_AI_SAFE_ENV_VARS`` to a comma-separated allow/deny list. Entries
+prefixed with ``-`` are denied while the rest are allowed. When setting
+``DOC_AI_SAFE_ENV_VARS`` you must include ``PATH`` and ``HOME`` explicitly if you
+still want them available. For example:
 
     doc-ai config safe-env add MY_API_KEY
     doc-ai config safe-env add -DEBUG_TOKEN
+    # or in the environment
+    export DOC_AI_SAFE_ENV_VARS="PATH,HOME,MY_API_KEY,-DEBUG_TOKEN"
 
    #### cd command
 

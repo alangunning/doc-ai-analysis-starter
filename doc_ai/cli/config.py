@@ -83,7 +83,7 @@ app.add_typer(safe_env_app, name="safe-env")
 
 def _read_safe_env(ctx: typer.Context) -> tuple[set[str], set[str]]:
     cfg = ctx.obj.get("global_config", {}) if ctx.obj else {}
-    raw = cfg.get(SAFE_ENV_VARS_ENV, "")
+    raw = cfg.get(SAFE_ENV_VARS_ENV)
     return _parse_allow_deny(raw)
 
 

@@ -24,9 +24,10 @@ When the same setting is defined in multiple places the resolution order is:
 The interactive shell exposes only a minimal set of environment variables
 (``PATH`` and ``HOME``) for completion. Use ``doc-ai config safe-env`` or set
 ``DOC_AI_SAFE_ENV_VARS`` in configuration files to explicitly allow or deny
-additional variables. If ``DOC_AI_SAFE_ENV_VARS`` is unset and many variables
-would otherwise be shown, the CLI warns to encourage deliberate
-configuration.
+additional variables. The value is a comma-separated list where entries
+prefixed with ``-`` are denied while the rest are allowed. When overriding this
+setting remember to include ``PATH`` and ``HOME`` if you still want them
+completed. Unlisted variables are omitted from suggestions.
 
 ## API Keys and Endpoints
 

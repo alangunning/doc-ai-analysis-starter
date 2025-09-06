@@ -12,7 +12,10 @@ def test_show_completion():
 
     runner = CliRunner()
     result = runner.invoke(
-        cli_mod.app, ["--show-completion"], env={"SHELL": "/bin/bash"}, prog_name="doc-ai"
+        cli_mod.app,
+        ["--show-completion"],
+        env={"SHELL": "/bin/bash"},
+        prog_name="doc-ai",
     )
     assert result.exit_code == 0
     assert "_DOC_AI_COMPLETE=complete_bash" in result.stdout
@@ -73,6 +76,25 @@ def test_completer_blocks_blacklisted_env(tmp_path, monkeypatch):
     completions = list(comp.get_completions(Document("$"), None))
     texts = {c.text for c in completions}
     assert "$VISIBLE" not in texts
+
+
+def test_completer_respects_env_var_allowlist(tmp_path, monkeypatch):
+    import doc_ai.cli as cli_mod
+
+    monkeypatch.setenv("MY_API_KEY", "x")
+    monkeypatch.setenv("SECRET_TOKEN", "y")
+    monkeypatch.setenv("DOC_AI_SAFE_ENV_VARS", "MY_API_KEY")
+    monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_PATH", tmp_path / "config.json")
+    monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_DIR", tmp_path)
+    importlib.reload(cli_mod)
+    monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_PATH", tmp_path / "config.json")
+    monkeypatch.setattr(cli_mod, "GLOBAL_CONFIG_DIR", tmp_path)
+    cmd = get_command(cli_mod.app)
+    ctx = click.Context(cmd)
+    comp = DocAICompleter(cmd, ctx)
+    completions = {c.text for c in comp.get_completions(Document("$"), None)}
+    assert "$MY_API_KEY" in completions
+    assert "$SECRET_TOKEN" not in completions
 
 
 def test_safe_env_config_updates_completion(tmp_path, monkeypatch):

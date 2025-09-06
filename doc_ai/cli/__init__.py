@@ -65,7 +65,7 @@ else:
     GLOBAL_CONFIG_PATH = GLOBAL_CONFIG_DIR / "config.json"
 
 
-def load_global_config() -> dict[str, str]:
+def load_global_config() -> dict[str, object]:
     if GLOBAL_CONFIG_PATH.exists():
         try:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
@@ -73,7 +73,7 @@ def load_global_config() -> dict[str, str]:
             else:
                 data = json.loads(GLOBAL_CONFIG_PATH.read_text())
             if isinstance(data, dict):
-                return {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+                return {str(k): v for k, v in data.items() if v is not None}
         except Exception as exc:
             logger.warning(
                 "Failed to load global config from %s: %s",
@@ -84,7 +84,7 @@ def load_global_config() -> dict[str, str]:
     return {}
 
 
-def save_global_config(cfg: dict[str, str]) -> None:
+def save_global_config(cfg: dict[str, object]) -> None:
     GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
         GLOBAL_CONFIG_PATH.write_text(yaml.safe_dump(cfg))
@@ -92,13 +92,13 @@ def save_global_config(cfg: dict[str, str]) -> None:
         GLOBAL_CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
 
 
-def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
+def read_configs() -> tuple[dict[str, object], dict[str, str], dict[str, object]]:
     global_cfg = load_global_config()
     env_vals: dict[str, str] = {}
     if Path(ENV_FILE).exists():
         raw_env = dotenv_values(ENV_FILE)
         env_vals = {k: v for k, v in raw_env.items() if v is not None}
-    merged = {**global_cfg, **env_vals, **os.environ}
+    merged: dict[str, object] = {**global_cfg, **env_vals, **os.environ}
     return global_cfg, env_vals, merged
 
 
@@ -281,9 +281,6 @@ def _version_command() -> None:
     """Show the installed ``doc-ai`` version."""
     typer.echo(__version__)
     raise typer.Exit()
-
-
-from typing import Any
 
 
 def validate_file(*args: Any, **kwargs: Any) -> Any:
@@ -512,9 +509,7 @@ def untrust_plugin(name: str) -> None:
         typer.echo(f"Plugin '{name}' not trusted")
 
     if name in _LOADED_PLUGINS:
-        app.registered_groups = [
-            g for g in app.registered_groups if g.name != name
-        ]
+        app.registered_groups = [g for g in app.registered_groups if g.name != name]
         _LOADED_PLUGINS.pop(name, None)
         setattr(app, "_command", None)
     _register_plugins()

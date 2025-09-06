@@ -45,13 +45,18 @@ SAFE_ENV_VARS: set[str] = {"PATH", "HOME"}
 """Base names of environment variables that may be exposed in the REPL."""
 
 
-def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
+def _parse_allow_deny(value: str | None) -> tuple[set[str], set[str]]:
     """Return allow and deny sets parsed from a comma-separated *value*.
 
-    Items prefixed with ``-`` are placed in the deny set; all others are
-    considered allowed. Empty items are ignored. ``+`` prefixes are optional and
-    treated the same as no prefix.
+    When *value* is ``None`` a minimal whitelist is returned consisting of
+    :data:`SAFE_ENV_VARS`. Otherwise ``value`` is treated as a comma-separated
+    list where items prefixed with ``-`` are placed in the deny set and all
+    others are considered allowed. Empty items are ignored. ``+`` prefixes are
+    optional and treated the same as no prefix.
     """
+
+    if value is None:
+        return set(SAFE_ENV_VARS), set()
 
     allow: set[str] = set()
     deny: set[str] = set()
@@ -63,6 +68,8 @@ def _parse_allow_deny(value: str) -> tuple[set[str], set[str]]:
             deny.add(name[1:].strip())
         else:
             allow.add(name.lstrip("+").strip())
+    # Remove any denied names from the allow list
+    allow.difference_update(deny)
     return allow, deny
 
 
@@ -466,12 +473,13 @@ class DocAICompleter(Completer):
             cfg = {}
         if self._ctx.obj and isinstance(self._ctx.obj.get("config"), dict):
             cfg.update(self._ctx.obj["config"])
-        raw = cfg.get(SAFE_ENV_VARS_ENV, "") or os.getenv(SAFE_ENV_VARS_ENV, "")
+        cfg_val = cfg.get(SAFE_ENV_VARS_ENV)
+        env_val = os.getenv(SAFE_ENV_VARS_ENV)
+        raw = cfg_val if cfg_val is not None else env_val
         allow, deny = _parse_allow_deny(raw)
-        allowed = SAFE_ENV_VARS.union(allow)
 
-        exposed = [name for name in os.environ if name in allowed and name not in deny]
-        if not raw and len(exposed) > 5:
+        exposed = [name for name in os.environ if name in allow and name not in deny]
+        if raw is None and len(exposed) > 5:
             warnings.warn(
                 f"{SAFE_ENV_VARS_ENV} is unset; completions will expose many environment variables.",
                 stacklevel=1,
