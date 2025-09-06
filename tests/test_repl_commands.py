@@ -42,3 +42,21 @@ def test_history_outputs_entries(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "1: first" in out
     assert "2: second" in out
+
+
+def test_chmod_failure_is_handled(monkeypatch, tmp_path):
+    plugins._reset()
+    monkeypatch.setattr(
+        interactive.os,
+        "chmod",
+        lambda *a, **k: (_ for _ in ()).throw(OSError("boom")),
+    )
+
+    class DummyDirs:
+        def __init__(self, *a, **k):
+            self.user_data_path = tmp_path
+
+    monkeypatch.setattr(interactive, "PlatformDirs", DummyDirs)
+    monkeypatch.setattr(interactive, "repl", lambda *a, **k: None)
+    interactive.interactive_shell(app)
+    assert (tmp_path / "history").exists()
