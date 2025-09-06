@@ -59,7 +59,9 @@ def _valid_url(url: str) -> bool:
 def add_url(
     ctx: typer.Context,
     link: str = typer.Argument(..., help="URL to download"),
-    doc_type: str = typer.Option(..., "--doc-type", help="Document type"),
+    doc_type: str | None = typer.Option(
+        None, "--doc-type", help="Document type"
+    ),
     format: list[OutputFormat] = typer.Option(
         None,
         "--format",
@@ -76,6 +78,9 @@ def add_url(
     """Download *link* and convert it under ``data/<doc-type>/``."""
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     if not _valid_url(link):
@@ -87,7 +92,9 @@ def add_url(
 def add_urls(
     ctx: typer.Context,
     path: Path = typer.Argument(..., help="File containing URLs"),
-    doc_type: str = typer.Option(..., "--doc-type", help="Document type"),
+    doc_type: str | None = typer.Option(
+        None, "--doc-type", help="Document type"
+    ),
     format: list[OutputFormat] = typer.Option(
         None,
         "--format",
@@ -104,6 +111,9 @@ def add_urls(
     """Download URLs from *path* and convert them."""
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     links: list[str] = []
@@ -127,8 +137,15 @@ def add_urls(
 
 
 @app.command("manage-urls")
-def manage_urls(doc_type: str = typer.Argument(..., help="Document type")) -> None:
+def manage_urls(
+    ctx: typer.Context,
+    doc_type: str | None = typer.Argument(None, help="Document type"),
+) -> None:
     """Interactively manage stored URLs for *doc_type*."""
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     path, urls = show_urls(doc_type)
     edited = questionary.text(
         "Edit URLs (one per line)",
