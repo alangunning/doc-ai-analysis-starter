@@ -5,11 +5,11 @@
   "license": "MIT",
   "scripts": {
     "start": "docusaurus start",
-    "build": "npm run lint:alt-text && docusaurus build && npm run test:a11y",
-    "deploy": "docusaurus deploy",
-    "serve": "docusaurus serve",
-    "lint:alt-text": "bash -c \"if rg -n '!\\[]\\(' content; then echo 'Images missing alt text'; exit 1; fi\"",
-    "test:a11y": "pa11y file://$PWD/build/index.html"
+      "build": "npm run lint:alt-text && npm exec -- docusaurus build && npm run test:a11y",
+      "deploy": "docusaurus deploy",
+      "serve": "docusaurus serve",
+      "lint:alt-text": "bash -c \"if rg -n '!\\[]\\(' content; then echo 'Images missing alt text'; exit 1; fi\"",
+      "test:a11y": "pa11y file://$PWD/build/index.html"
   },
   "dependencies": {
     "@docusaurus/core": "^3.3.2",

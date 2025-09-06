@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Dict
+
+_log = logging.getLogger(__name__)
 
 
 def get_model_prices() -> Dict[str, Dict[str, float]]:
@@ -48,7 +51,8 @@ def estimate_tokens(text: str, model: str) -> int:
 
         encoding = tiktoken.encoding_for_model(model)
         return len(encoding.encode(text))
-    except Exception:
+    except Exception as exc:  # pragma: no cover - tiktoken optional
+        _log.debug("Falling back to rough token estimate: %s", exc)
         return max(1, len(text) // 4)
 
 
