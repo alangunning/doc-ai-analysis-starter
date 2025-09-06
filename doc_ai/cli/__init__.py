@@ -373,7 +373,15 @@ _LOADED_PLUGINS: dict[str, typer.Typer] = {}
 
 def _register_plugins() -> None:
     """Load Typer apps from ``doc_ai.plugins`` entry points."""
+    _, _, merged = read_configs()
+    raw = merged.get("DOC_AI_TRUSTED_PLUGINS", "")
+    allowed = {p.strip() for p in raw.split(",") if p.strip()}
     for ep in entry_points(group="doc_ai.plugins"):
+        if ep.name in _LOADED_PLUGINS:
+            continue
+        if ep.name not in allowed:
+            logger.info("Skipping untrusted plugin %s", ep.name)
+            continue
         try:
             plugin_app = ep.load()
         except Exception as exc:  # pragma: no cover - defensive
@@ -397,6 +405,22 @@ def list_plugins() -> None:
         raise typer.Exit()
     for name in sorted(_LOADED_PLUGINS):
         typer.echo(name)
+
+
+@plugins_app.command("trust")
+def trust_plugin(name: str) -> None:
+    """Add *name* to the plugin allowlist and attempt to load it."""
+    cfg = load_global_config()
+    raw = cfg.get("DOC_AI_TRUSTED_PLUGINS", "")
+    allowed = {p.strip() for p in raw.split(",") if p.strip()}
+    if name in allowed:
+        typer.echo(f"Plugin '{name}' already trusted")
+    else:
+        allowed.add(name)
+        cfg["DOC_AI_TRUSTED_PLUGINS"] = ",".join(sorted(allowed))
+        save_global_config(cfg)
+        typer.echo(f"Trusted plugin '{name}'")
+    _register_plugins()
 
 
 app.add_typer(plugins_app, name="plugins")

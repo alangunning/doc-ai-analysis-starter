@@ -220,10 +220,17 @@ class DocAICompleter(Completer):
     def refresh(self) -> None:
         """Refresh cached doc types, topics, and environment variables."""
         pattern = re.compile(r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE)
-        cfg = self._ctx.obj.get("config", {}) if self._ctx.obj else {}
-        raw = cfg.get(SAFE_ENV_VARS_ENV)
-        if raw is None:
-            raw = os.getenv(SAFE_ENV_VARS_ENV, "")
+        from . import read_configs  # local import to avoid circular
+
+        cfg: dict[str, str] = {}
+        try:
+            _, _, merged = read_configs()
+            cfg = dict(merged)
+        except Exception:
+            cfg = {}
+        if self._ctx.obj and isinstance(self._ctx.obj.get("config"), dict):
+            cfg.update(self._ctx.obj["config"])
+        raw = cfg.get(SAFE_ENV_VARS_ENV, "") or os.getenv(SAFE_ENV_VARS_ENV, "")
         allow, deny = _parse_allow_deny(raw)
         allowed = SAFE_ENV_VARS.union(allow)
         env_words = [

@@ -13,7 +13,7 @@ import questionary
 
 from .utils import get_logging_options, load_env_defaults
 from . import ENV_FILE, save_global_config, read_configs, console
-from .interactive import refresh_completer
+from .interactive import refresh_completer, SAFE_ENV_VARS_ENV, _parse_allow_deny
 
 TRUE_SET = {"1", "true", "yes"}
 FALSE_SET = {"0", "false", "no"}
@@ -63,6 +63,63 @@ logger = logging.getLogger(__name__)
 
 
 app = typer.Typer(help="Show or update runtime configuration.")
+
+safe_env_app = typer.Typer(help="Manage environment variable exposure in the REPL.")
+app.add_typer(safe_env_app, name="safe-env")
+
+
+def _read_safe_env(ctx: typer.Context) -> tuple[set[str], set[str]]:
+    cfg = ctx.obj.get("global_config", {}) if ctx.obj else {}
+    raw = cfg.get(SAFE_ENV_VARS_ENV, "")
+    return _parse_allow_deny(raw)
+
+
+def _write_safe_env(ctx: typer.Context, allow: set[str], deny: set[str]) -> None:
+    cfg = dict(ctx.obj.get("global_config", {}))
+    parts = list(sorted(allow)) + [f"-{d}" for d in sorted(deny)]
+    if parts:
+        cfg[SAFE_ENV_VARS_ENV] = ",".join(parts)
+    else:
+        cfg.pop(SAFE_ENV_VARS_ENV, None)
+    save_global_config(cfg)
+    ctx.obj["global_config"] = cfg
+    refresh_completer()
+
+
+@safe_env_app.command("list")
+def list_safe_env(ctx: typer.Context) -> None:
+    """Show allowed and denied environment variable names."""
+    allow, deny = _read_safe_env(ctx)
+    table = Table("Allowed", "Denied")
+    rows = max(len(allow), len(deny))
+    allow_list = sorted(allow)
+    deny_list = sorted(deny)
+    for i in range(rows):
+        a = allow_list[i] if i < len(allow_list) else ""
+        d = deny_list[i] if i < len(deny_list) else ""
+        table.add_row(a, d)
+    console.print(table)
+
+
+@safe_env_app.command("add")
+def add_safe_env(ctx: typer.Context, names: list[str] = typer.Argument(..., metavar="NAME")) -> None:
+    """Allow environment variables (prefix with '-' to deny)."""
+    allow, deny = _read_safe_env(ctx)
+    for raw in names:
+        a, d = _parse_allow_deny(raw)
+        allow |= a
+        deny |= d
+    _write_safe_env(ctx, allow, deny)
+
+
+@safe_env_app.command("remove")
+def remove_safe_env(ctx: typer.Context, names: list[str] = typer.Argument(..., metavar="NAME")) -> None:
+    """Remove environment variables from allow/deny lists."""
+    allow, deny = _read_safe_env(ctx)
+    for name in names:
+        allow.discard(name.lstrip("+-"))
+        deny.discard(name.lstrip("+-"))
+    _write_safe_env(ctx, allow, deny)
 
 
 def _parse_value(value: str) -> bool | str:
