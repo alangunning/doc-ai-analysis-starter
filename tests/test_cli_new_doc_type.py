@@ -9,8 +9,12 @@ from doc_ai.cli import app
 
 def _setup_templates() -> tuple[Path, Path]:
     repo_root = Path(__file__).resolve().parents[1]
-    analysis_tpl = repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
-    validate_tpl = repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
     return analysis_tpl, validate_tpl
 
 
@@ -61,7 +65,7 @@ def test_new_doc_type_prompts_for_name():
         assert (new_dir / "description.txt").read_text().strip() == "description"
 
 
-def test_rename_and_delete_doc_type():
+def test_rename_and_delete_doc_type_yes_and_non_interactive():
     runner = CliRunner()
     analysis_tpl, validate_tpl = _setup_templates()
 
@@ -83,7 +87,15 @@ def test_rename_and_delete_doc_type():
 
         with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=True):
             rename_res = runner.invoke(
-                app, ["new", "rename-doc-type", "new", "--doc-type", "old"], input="y\n"
+                app,
+                [
+                    "new",
+                    "rename-doc-type",
+                    "new",
+                    "--doc-type",
+                    "old",
+                    "--yes",
+                ],
             )
         assert rename_res.exit_code == 0
         assert Path("data/new/new.analysis.prompt.yaml").is_file()
@@ -91,8 +103,23 @@ def test_rename_and_delete_doc_type():
 
         with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=True):
             del_res = runner.invoke(
-                app, ["new", "delete-doc-type", "--doc-type", "new"], input="y\n"
+                app, ["new", "delete-doc-type", "--doc-type", "new", "--yes"]
             )
         assert del_res.exit_code == 0
         assert not Path("data/new").exists()
 
+        # non-interactive rename and delete
+        runner.invoke(app, ["new", "doc-type", "temp"])
+        with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=False):
+            rename_res2 = runner.invoke(
+                app, ["new", "rename-doc-type", "temp2", "--doc-type", "temp"]
+            )
+        assert rename_res2.exit_code == 0
+        assert Path("data/temp2/temp2.analysis.prompt.yaml").is_file()
+
+        with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=False):
+            del_res2 = runner.invoke(
+                app, ["new", "delete-doc-type", "--doc-type", "temp2"]
+            )
+        assert del_res2.exit_code == 0
+        assert not Path("data/temp2").exists()

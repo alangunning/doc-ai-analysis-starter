@@ -88,6 +88,11 @@ def rename_topic(
     old: str | None = typer.Argument(None, help="Existing topic"),
     new: str | None = typer.Argument(None, help="New topic name"),
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the rename and skip the prompt",
+    ),
 ) -> None:
     """Rename topic *old* to *new* under *doc_type*."""
 
@@ -133,7 +138,7 @@ def rename_topic(
         typer.echo(f"Prompt file {new_file} already exists", err=True)
         raise typer.Exit(code=1)
 
-    if sys.stdin.isatty():
+    if sys.stdin.isatty() and not yes:
         if not typer.confirm(f"Rename topic {old} to {new}?", default=True):
             typer.echo("Aborted")
             return
@@ -150,6 +155,11 @@ def delete_topic(
     ctx: typer.Context,
     topic: str | None = typer.Argument(None, help="Topic"),
     doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the deletion and skip the prompt",
+    ),
 ) -> None:
     """Delete the topic prompt *topic* under *doc_type*."""
 
@@ -188,7 +198,7 @@ def delete_topic(
         typer.echo(f"Prompt file {target_file} does not exist", err=True)
         raise typer.Exit(code=1)
 
-    if sys.stdin.isatty():
+    if sys.stdin.isatty() and not yes:
         if not typer.confirm(f"Delete topic {topic}?", default=False):
             typer.echo("Aborted")
             return
