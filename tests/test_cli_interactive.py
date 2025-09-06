@@ -5,7 +5,8 @@ from prompt_toolkit.history import FileHistory
 from typer.main import get_command
 
 from doc_ai.cli import app, interactive_shell
-from doc_ai.cli.interactive import DocAICompleter, _prompt_name
+from doc_ai.cli.interactive import DocAICompleter, _prompt_name, _allow_shell_from_config
+import pytest
 
 
 def test_interactive_shell_uses_click_repl(tmp_path, monkeypatch):
@@ -72,3 +73,23 @@ def test_prompt_updates_on_cd(tmp_path, monkeypatch):
         assert pk["message"]() == f"{_prompt_name()}>"
     finally:
         os.chdir(start)
+
+
+def test_allow_shell_default(monkeypatch):
+    monkeypatch.delenv("DOC_AI_ALLOW_SHELL", raising=False)
+    assert not _allow_shell_from_config({})
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    assert _allow_shell_from_config({})
+
+
+def test_repl_warns_when_shell_enabled(monkeypatch):
+    called: dict[str, object] = {}
+
+    def fake_repl(ctx, prompt_kwargs=None, **_):  # type: ignore[no-redef]
+        called["ctx"] = ctx
+        called["prompt_kwargs"] = prompt_kwargs
+
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    monkeypatch.setattr("doc_ai.cli.interactive.repl", fake_repl)
+    with pytest.warns(UserWarning, match="Shell escapes enabled"):
+        interactive_shell(app)

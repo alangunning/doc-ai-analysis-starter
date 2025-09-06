@@ -86,9 +86,9 @@ __all__ = [
 
 
 def _allow_shell_from_config(cfg: Mapping[str, object]) -> bool:
-    """Return ``True`` if shell escapes are allowed by *cfg* or the environment."""
+    """Return ``True`` only when shell escapes are explicitly enabled."""
 
-    raw = str(cfg.get(ALLOW_SHELL_ENV) or os.getenv(ALLOW_SHELL_ENV, "true")).lower()
+    raw = str(cfg.get(ALLOW_SHELL_ENV) or os.getenv(ALLOW_SHELL_ENV, "")).lower()
     return raw in {"1", "true", "yes"}
 
 
@@ -593,9 +593,9 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     global_cfg, _env_vals, merged = read_configs()
     ctx.obj = {"global_config": global_cfg, "config": merged, "interactive": True}
 
-    if not _allow_shell_from_config(merged):
+    if _allow_shell_from_config(merged):
         warnings.warn(
-            f"Shell escapes disabled. Set {ALLOW_SHELL_ENV}=true to enable.",
+            "Shell escapes enabled; !command will execute in your system shell.",
             stacklevel=1,
         )
 
