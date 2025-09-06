@@ -6,6 +6,8 @@ from __future__ import annotations
 from pathlib import Path
 import os
 import re
+import stat
+import warnings
 from platformdirs import PlatformDirs
 
 import click
@@ -350,12 +352,27 @@ def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
     dirs = PlatformDirs("doc_ai")
     data_dir = dirs.user_data_path
     data_dir.mkdir(parents=True, exist_ok=True)
-    data_dir.chmod(0o700)
+    if os.name != "nt":
+        try:
+            data_dir.chmod(0o700)
+        except OSError:
+            pass
     history_path = data_dir / "history"
     exists = history_path.exists()
     history_path.touch(mode=0o600, exist_ok=True)
-    if exists:
-        history_path.chmod(0o600)
+    if os.name != "nt":
+        if exists:
+            try:
+                history_path.chmod(0o600)
+            except OSError:
+                pass
+    else:
+        try:
+            mode = history_path.stat().st_mode
+            if os.access(history_path, os.R_OK) and mode & (stat.S_IRGRP | stat.S_IROTH):
+                warnings.warn("History file is world-readable.")
+        except OSError:
+            pass
     history = FileHistory(history_path)
     global PROMPT_KWARGS
     PROMPT_KWARGS = {
