@@ -140,7 +140,7 @@ def test_urls_command(tmp_path, monkeypatch):
             return self.response
     selections = iter(["remove", "http://a", "add", "done"])
     monkeypatch.setattr(
-        "doc_ai.cli.manage_urls._get_doc_type", lambda ctx, doc_type: "reports"
+        "doc_ai.cli.manage_urls.select_doc_type", lambda ctx, doc_type=None: "reports"
     )
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.questionary.select",
@@ -178,7 +178,7 @@ def test_urls_bulk_delete(tmp_path, monkeypatch):
 
     selections = iter(["remove", "http://a", "remove", "http://b", "done"])
     monkeypatch.setattr(
-        "doc_ai.cli.manage_urls._get_doc_type", lambda ctx, doc_type: "reports"
+        "doc_ai.cli.manage_urls.select_doc_type", lambda ctx, doc_type=None: "reports"
     )
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.questionary.select",
@@ -211,7 +211,7 @@ def test_urls_add_multiple(tmp_path, monkeypatch):
 
     selections = iter(["add", "done"])
     monkeypatch.setattr(
-        "doc_ai.cli.manage_urls._get_doc_type", lambda ctx, doc_type: "reports"
+        "doc_ai.cli.manage_urls.select_doc_type", lambda ctx, doc_type=None: "reports"
     )
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.questionary.select",
@@ -258,7 +258,7 @@ def test_urls_import_action(tmp_path, monkeypatch):
 
     selections = iter(["import", "done"])
     monkeypatch.setattr(
-        "doc_ai.cli.manage_urls._get_doc_type", lambda ctx, doc_type: "reports"
+        "doc_ai.cli.manage_urls.select_doc_type", lambda ctx, doc_type=None: "reports"
     )
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.questionary.select",
