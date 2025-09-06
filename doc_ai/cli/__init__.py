@@ -66,7 +66,12 @@ def load_global_config() -> dict[str, str]:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
                 return yaml.safe_load(GLOBAL_CONFIG_PATH.read_text()) or {}
             return json.loads(GLOBAL_CONFIG_PATH.read_text())
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Failed to load global config from %s: %s",
+                GLOBAL_CONFIG_PATH,
+                exc,
+            )
             return {}
     return {}
 
