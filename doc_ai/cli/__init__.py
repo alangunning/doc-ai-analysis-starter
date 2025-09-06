@@ -171,6 +171,16 @@ def _main_callback(
         level_name = "DEBUG"
     if level_name is None:
         level_name = "DEBUG" if verbose_default else "WARNING"
+    if isinstance(level_name, str):
+        numeric_level = logging.getLevelName(level_name.upper())
+        if isinstance(numeric_level, str):
+            allowed = ", ".join(
+                ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "NOTSET"]
+            )
+            raise typer.BadParameter(
+                f"Invalid log level '{level_name}'. Allowed levels: {allowed}"
+            )
+        level_name = level_name.upper()
     log_file_val = log_file if log_file is not None else merged.get("LOG_FILE")
     log_file_path = (
         Path(log_file_val)
