@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from pathlib import Path
@@ -52,7 +51,7 @@ def analyze(
     base_model_url: Optional[str] = typer.Option(
         None, "--base-model-url", help="Model base URL override"
     ),
-    topic: List[str] = typer.Option(
+    topic: list[str] | None = typer.Option(
         None,
         "--topic",
         "-t",
@@ -111,14 +110,14 @@ def analyze(
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
     try:
-        topics = list(topic) if topic else []
-        if not topics:
+        topics_list: list[str | None] = list(topic) if topic else []
+        if not topics_list:
             default_topic = cfg.get("default_topic")
             if default_topic:
-                topics = [default_topic]
-        if not topics:
-            topics = [None]
-        for tp in topics:
+                topics_list = [default_topic]
+        if not topics_list:
+            topics_list = [None]
+        for tp in topics_list:
             analyze_doc(
                 markdown_doc,
                 prompt,

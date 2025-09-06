@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """CLI orchestrator for AI document analysis pipeline."""
 
 from __future__ import annotations
@@ -16,6 +15,8 @@ from pathlib import Path
 
 import click
 import typer
+from typer import Typer
+from typing import Any
 from dotenv import find_dotenv, load_dotenv, dotenv_values
 from platformdirs import PlatformDirs
 from rich.console import Console
@@ -48,7 +49,7 @@ if __package__ in (None, ""):
 ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
 
 console = Console()
-app = typer.Typer(
+app: Typer = Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
     add_completion=True,
 )
@@ -68,15 +69,18 @@ def load_global_config() -> dict[str, str]:
     if GLOBAL_CONFIG_PATH.exists():
         try:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
-                return yaml.safe_load(GLOBAL_CONFIG_PATH.read_text()) or {}
-            return json.loads(GLOBAL_CONFIG_PATH.read_text())
+                data = yaml.safe_load(GLOBAL_CONFIG_PATH.read_text())
+            else:
+                data = json.loads(GLOBAL_CONFIG_PATH.read_text())
+            if isinstance(data, dict):
+                return {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
         except Exception as exc:
             logger.warning(
                 "Failed to load global config from %s: %s",
                 GLOBAL_CONFIG_PATH,
                 exc,
             )
-            return {}
+        return {}
     return {}
 
 
@@ -92,7 +96,8 @@ def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     global_cfg = load_global_config()
     env_vals: dict[str, str] = {}
     if Path(ENV_FILE).exists():
-        env_vals = dotenv_values(ENV_FILE)  # type: ignore[assignment]
+        raw_env = dotenv_values(ENV_FILE)
+        env_vals = {k: v for k, v in raw_env.items() if v is not None}
     merged = {**global_cfg, **env_vals, **os.environ}
     return global_cfg, env_vals, merged
 
@@ -266,7 +271,7 @@ def cd(ctx: typer.Context, path: Path | None = typer.Argument(None)) -> None:
     try:  # pragma: no cover - defensive
         from . import config as config_module
 
-        config_module.ENV_FILE = ENV_FILE
+        setattr(config_module, "ENV_FILE", ENV_FILE)
     except Exception:
         pass
 
@@ -278,19 +283,22 @@ def _version_command() -> None:
     raise typer.Exit()
 
 
-def validate_file(*args, **kwargs):
+from typing import Any
+
+
+def validate_file(*args: Any, **kwargs: Any) -> Any:
     from doc_ai.github.validator import validate_file as _validate_file
 
     return _validate_file(*args, **kwargs)
 
 
-def build_vector_store(*args, **kwargs):
+def build_vector_store(*args: Any, **kwargs: Any) -> None:
     from doc_ai.github.vector import build_vector_store as _build_vector_store
 
-    return _build_vector_store(*args, **kwargs)
+    _build_vector_store(*args, **kwargs)
 
 
-def run_prompt(*args, **kwargs):
+def run_prompt(*args: Any, **kwargs: Any) -> Any:
     from doc_ai.github.prompts import run_prompt as _run_prompt
 
     return _run_prompt(*args, **kwargs)
@@ -312,13 +320,13 @@ from . import new_doc_type as new_doc_type_cmd  # noqa: E402
 from . import new_topic as new_topic_cmd  # noqa: E402
 from . import prompt as prompt_cmd  # noqa: E402
 
-app.add_typer(config_cmd.app, name="config")
+app.add_typer(config_cmd.app, name="config")  # type: ignore[has-type]
 app.add_typer(convert_cmd.app, name="convert")
-app.add_typer(validate_cmd.app, name="validate")
-app.add_typer(analyze_cmd.app, name="analyze")
-app.add_typer(embed_cmd.app, name="embed")
+app.add_typer(validate_cmd.app, name="validate")  # type: ignore[has-type]
+app.add_typer(analyze_cmd.app, name="analyze")  # type: ignore[has-type]
+app.add_typer(embed_cmd.app, name="embed")  # type: ignore[has-type]
 app.add_typer(pipeline_cmd.app, name="pipeline")
-app.add_typer(query_cmd.app, name="query")
+app.add_typer(query_cmd.app, name="query")  # type: ignore[has-type]
 app.add_typer(init_workflows_cmd.app, name="init-workflows")
 
 new_app = typer.Typer(help="Scaffold new document types and topic prompts")
@@ -486,6 +494,29 @@ def trust_plugin(name: str) -> None:
         cfg["DOC_AI_TRUSTED_PLUGINS"] = ",".join(sorted(allowed))
         save_global_config(cfg)
         typer.echo(f"Trusted plugin '{name}'")
+    _register_plugins()
+
+
+@plugins_app.command("untrust")
+def untrust_plugin(name: str) -> None:
+    """Remove *name* from the plugin allowlist and unload it."""
+    cfg = load_global_config()
+    raw = cfg.get("DOC_AI_TRUSTED_PLUGINS", "")
+    allowed = {p.strip() for p in raw.split(",") if p.strip()}
+    if name in allowed:
+        allowed.remove(name)
+        cfg["DOC_AI_TRUSTED_PLUGINS"] = ",".join(sorted(allowed))
+        save_global_config(cfg)
+        typer.echo(f"Untrusted plugin '{name}'")
+    else:
+        typer.echo(f"Plugin '{name}' not trusted")
+
+    if name in _LOADED_PLUGINS:
+        app.registered_groups = [
+            g for g in app.registered_groups if g.name != name
+        ]
+        _LOADED_PLUGINS.pop(name, None)
+        setattr(app, "_command", None)
     _register_plugins()
 
 

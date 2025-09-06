@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Scaffold new document type directories and prompt templates."""
 
 from __future__ import annotations
@@ -24,7 +23,7 @@ DATA_DIR = Path("data")
     "doc-type",
     help="Create a new document type directory under data/ with template prompts.",
 )
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def doc_type(
     ctx: typer.Context,
     name: str | None = typer.Argument(None, help="Document type"),
@@ -72,7 +71,7 @@ def doc_type(
 
 
 @app.command("rename-doc-type", help="Rename a document type and its prompt files.")
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def rename_doc_type(
     ctx: typer.Context,
     new: str,
@@ -117,7 +116,7 @@ def rename_doc_type(
 
 
 @app.command("delete-doc-type", help="Delete a document type directory.")
-@refresh_after
+@refresh_after  # type: ignore[misc]
 def delete_doc_type(
     ctx: typer.Context,
     name: str | None = typer.Option(None, "--doc-type", help="Document type"),

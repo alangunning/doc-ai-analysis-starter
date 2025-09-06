@@ -68,6 +68,11 @@ $ doc-ai plugins list
 example
 ```
 
+Trusted plugin names are stored in the global configuration file. Add a
+plugin to the allowlist with `doc-ai plugins trust NAME` and remove it with
+`doc-ai plugins untrust NAME`. Untrusting a plugin removes it from the
+allowlist and unloads it from the current CLI session.
+
 See the [template plugin](../../../examples/plugin_example.py) for a complete
 file and entry‑point declaration.
 
