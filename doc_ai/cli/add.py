@@ -4,6 +4,8 @@ from pathlib import Path
 
 import typer
 
+from .interactive import refresh_completer
+
 from doc_ai.converter import OutputFormat
 from .convert import download_and_convert
 from .utils import parse_config_formats as _parse_config_formats, resolve_bool
@@ -115,4 +117,5 @@ def manage_urls(doc_type: str = typer.Argument(..., help="Document type")) -> No
         else:
             urls.append(choice)
     save_urls(path, urls)
+    refresh_completer()
 

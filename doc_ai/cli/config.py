@@ -11,6 +11,7 @@ from dotenv import set_key, dotenv_values
 
 from .utils import get_logging_options, load_env_defaults
 from . import ENV_FILE, save_global_config, read_configs, console
+from .interactive import refresh_completer
 
 TRUE_SET = {"1", "true", "yes"}
 FALSE_SET = {"0", "false", "no"}
@@ -111,6 +112,7 @@ def _set_pairs(ctx: typer.Context, pairs: list[str], use_global: bool) -> None:
             env_path.chmod(0o600)
     global_cfg, _env_vals, merged = read_configs()
     ctx.obj.update({"global_config": global_cfg, "config": merged})
+    refresh_completer()
 
 
 @app.callback()
