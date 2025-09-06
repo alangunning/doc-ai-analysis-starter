@@ -144,12 +144,13 @@ under ``data/`` and analysis topics discovered from prompt files. Use
 ``--no-interactive`` (or set ``doc-ai config set interactive=false``) to show
 help and exit instead of starting the REPL.
 
-Environment variable names offered for completion skip entries containing
-sensitive words like ``TOKEN`` or ``PASSWORD``. Manage the allow/deny lists with
+By default only ``PATH`` and ``HOME`` are offered for completion. Use
 ``doc-ai config safe-env`` subcommands or set ``DOC_AI_SAFE_ENV_VARS`` in the
-project ``.env`` or global config. The value is a comma-separated list where
-entries prefixed with ``-`` are explicitly hidden and others are always shown.
-For example::
+project ``.env`` or global config to explicitly allow or deny additional
+variables. The value is a comma-separated list where entries prefixed with ``-``
+are hidden and others are exposed. If ``DOC_AI_SAFE_ENV_VARS`` is unset and the
+configuration would reveal many variables, the CLI emits a warning. For
+example::
 
     doc-ai config safe-env add MY_API_KEY
     doc-ai config safe-env add -DEBUG_TOKEN

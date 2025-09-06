@@ -29,7 +29,7 @@ import doc_ai.batch as batch_mod
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
 """Config key with comma-separated allow/deny env var names."""
 
-SAFE_ENV_VARS: set[str] = set()
+SAFE_ENV_VARS: set[str] = {"PATH", "HOME"}
 """Base names of environment variables that may be exposed in the REPL."""
 
 
@@ -331,7 +331,6 @@ class DocAICompleter(Completer):
 
     def refresh(self) -> None:
         """Refresh cached doc types, topics, and environment variables."""
-        pattern = re.compile(r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE)
         from . import read_configs  # local import to avoid circular
 
         cfg: dict[str, str] = {}
@@ -345,11 +344,14 @@ class DocAICompleter(Completer):
         raw = cfg.get(SAFE_ENV_VARS_ENV, "") or os.getenv(SAFE_ENV_VARS_ENV, "")
         allow, deny = _parse_allow_deny(raw)
         allowed = SAFE_ENV_VARS.union(allow)
-        env_words = [
-            f"${name}"
-            for name in os.environ
-            if name not in deny and (name in allowed or not pattern.search(name))
-        ]
+
+        exposed = [name for name in os.environ if name in allowed and name not in deny]
+        if not raw and len(exposed) > 5:
+            warnings.warn(
+                f"{SAFE_ENV_VARS_ENV} is unset; completions will expose many environment variables.",
+                stacklevel=1,
+            )
+        env_words = [f"${name}" for name in exposed]
         self._env = WordCompleter(env_words, ignore_case=True)
 
         doc_types, topics = discover_doc_types_topics(Path("data"))

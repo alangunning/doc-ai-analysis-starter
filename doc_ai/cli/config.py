@@ -64,7 +64,13 @@ logger = logging.getLogger(__name__)
 
 app = typer.Typer(help="Show or update runtime configuration.")
 
-safe_env_app = typer.Typer(help="Manage environment variable exposure in the REPL.")
+safe_env_app = typer.Typer(
+    help=(
+        "Manage environment variable exposure in the REPL. Only a minimal set "
+        "like PATH and HOME is exposed by default; use allow/deny lists to "
+        "change what variables are available."
+    )
+)
 app.add_typer(safe_env_app, name="safe-env")
 
 

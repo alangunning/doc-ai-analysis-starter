@@ -19,6 +19,15 @@ When the same setting is defined in multiple places the resolution order is:
 4. Values from the global config file
 5. Built-in defaults in code or prompt files
 
+## Environment Variable Exposure
+
+The interactive shell exposes only a minimal set of environment variables
+(``PATH`` and ``HOME``) for completion. Use ``doc-ai config safe-env`` or set
+``DOC_AI_SAFE_ENV_VARS`` in configuration files to explicitly allow or deny
+additional variables. If ``DOC_AI_SAFE_ENV_VARS`` is unset and many variables
+would otherwise be shown, the CLI warns to encourage deliberate
+configuration.
+
 ## API Keys and Endpoints
 
 Set `GITHUB_TOKEN` with the **Models:read** scope to access GitHub Models at
