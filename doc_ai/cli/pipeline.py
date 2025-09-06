@@ -1,27 +1,32 @@
 # mypy: ignore-errors
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional, List
-from enum import Enum
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from enum import Enum
+from pathlib import Path
 from threading import Lock
+from typing import List, Optional
 
 import typer
 from rich.progress import Progress
 
 from doc_ai.converter import OutputFormat
+
+from . import RAW_SUFFIXES, ModelName, _validate_prompt
+from .interactive import discover_doc_types_topics
 from .utils import (
     parse_config_formats as _parse_config_formats,
+)
+from .utils import (
     prompt_if_missing,
     resolve_bool,
     resolve_int,
     resolve_str,
+)
+from .utils import (
     suffix as _suffix,
 )
-from . import RAW_SUFFIXES, ModelName, _validate_prompt
-from .interactive import discover_doc_types_topics
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +86,16 @@ def pipeline(
 ) -> None:
     """Run the full pipeline: convert, validate, analyze, and embed."""
     from . import (
-        convert_path as _convert_path,
-        validate_doc as _validate_doc,
         analyze_doc as _analyze_doc,
+    )
+    from . import (
         build_vector_store as _build_vector_store,
+    )
+    from . import (
+        convert_path as _convert_path,
+    )
+    from . import (
+        validate_doc as _validate_doc,
     )
 
     fmts = format or [OutputFormat.MARKDOWN]
@@ -260,7 +271,6 @@ def _entrypoint(
         False,
         "--show-cost",
         help="Display token cost estimates",
-        is_flag=True,
     ),
     estimate: bool = typer.Option(
         True,
@@ -277,13 +287,11 @@ def _entrypoint(
         False,
         "--force",
         help="Re-run steps even if metadata indicates completion",
-        is_flag=True,
     ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
         help="Log steps without executing conversion, validation, or analysis",
-        is_flag=True,
     ),
     resume_from: PipelineStep = typer.Option(
         PipelineStep.CONVERT,
