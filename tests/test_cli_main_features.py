@@ -1,12 +1,12 @@
-import sys
 import importlib
+import sys
 from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
 import doc_ai.cli as cli_module
-from doc_ai.cli import app, main, ASCII_ART
+from doc_ai.cli import ASCII_ART, app, main
 
 
 def test_main_no_tty_shows_help(monkeypatch, capsys):
@@ -106,7 +106,9 @@ def test_logging_configuration(monkeypatch):
         recorded["log_file"] = log_file
 
     monkeypatch.setattr(cli_module, "configure_logging", fake_configure)
-    result = runner.invoke(app, ["--log-level", "DEBUG", "--log-file", "x.log", "config", "show"])
+    result = runner.invoke(
+        app, ["--log-level", "DEBUG", "--log-file", "x.log", "config", "show"]
+    )
     assert result.exit_code == 0
     assert recorded["level"] == "DEBUG"
     assert recorded["log_file"] == Path("x.log")

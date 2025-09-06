@@ -14,8 +14,9 @@ def test_vector_output_file_permissions(tmp_path, monkeypatch):
             )
         )
     )
-    monkeypatch.setattr("doc_ai.github.vector.OpenAI", lambda api_key, base_url: mock_client)
+    monkeypatch.setattr(
+        "doc_ai.github.vector.OpenAI", lambda api_key, base_url: mock_client
+    )
     vector.build_vector_store(tmp_path)
     out_file = md.with_suffix(".embedding.json")
     assert oct(out_file.stat().st_mode & 0o777) == "0o600"
-

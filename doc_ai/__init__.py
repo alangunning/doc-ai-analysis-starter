@@ -1,15 +1,16 @@
 """Reusable helpers for the Doc AI Analysis Starter template."""
 
-from importlib.metadata import PackageNotFoundError, version as _version
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 
 try:  # pragma: no cover - runtime metadata
     __version__ = _version("doc-ai")
 except PackageNotFoundError:  # pragma: no cover - fallback for local runs
     __version__ = "0.0.0"
 
-from .metadata import DublinCoreDocument
 from .converter import OutputFormat, convert_file, convert_files, suffix_for_format
-from .github import run_prompt, review_pr, merge_pr, validate_file, build_vector_store
+from .github import build_vector_store, merge_pr, review_pr, run_prompt, validate_file
+from .metadata import DublinCoreDocument
 
 __all__ = [
     "DublinCoreDocument",

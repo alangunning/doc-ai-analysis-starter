@@ -2,19 +2,18 @@
 """Shared utilities for doc_ai CLI."""
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Callable, Mapping, TypeVar, TYPE_CHECKING
+import functools
 import logging
 import os
-import sys
-import functools
 import re
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, Mapping, TypeVar
 
 import questionary
-
 import typer
-from dotenv import dotenv_values
 from click.core import ParameterSource
+from dotenv import dotenv_values
 
 from doc_ai.converter import OutputFormat, suffix_for_format
 from doc_ai.metadata import (
@@ -24,6 +23,7 @@ from doc_ai.metadata import (
     mark_step,
     save_metadata,
 )
+
 from .interactive import discover_doc_types_topics, discover_topics
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
@@ -303,6 +303,7 @@ def validate_doc(
 ) -> None:
     """Validate a converted document against its raw source."""
     from datetime import datetime, timezone
+
     import click
 
     if validate_file_func is None:

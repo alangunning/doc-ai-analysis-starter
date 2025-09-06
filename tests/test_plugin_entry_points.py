@@ -1,8 +1,8 @@
+import hashlib
 import importlib
 import sys
 import types
 
-import hashlib
 import typer
 
 
@@ -30,10 +30,14 @@ def test_dummy_plugin_trust_required(monkeypatch, tmp_path):
             return dummy.app
 
     import importlib.metadata as metadata
+
     original = metadata.entry_points
-    monkeypatch.setattr(metadata, "entry_points", lambda group=None: [DummyEntryPoint()])
+    monkeypatch.setattr(
+        metadata, "entry_points", lambda group=None: [DummyEntryPoint()]
+    )
 
     import doc_ai.cli as cli
+
     importlib.reload(cli)
     cli._LOADED_PLUGINS.clear()
     monkeypatch.setattr(cli, "read_configs", lambda: ({}, {}, {}))

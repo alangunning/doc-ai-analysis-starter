@@ -1,10 +1,10 @@
 import os
-import click
 from pathlib import Path
+
+import click
+import pytest
 from prompt_toolkit.history import FileHistory
 from typer.main import get_command
-
-import pytest
 
 from doc_ai.cli import app, interactive_shell
 from doc_ai.cli.interactive import DocAICompleter, _prompt_name

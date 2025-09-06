@@ -1,20 +1,23 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional, List
 import logging
+from pathlib import Path
+from typing import Optional
 
 import typer
 
 from doc_ai.converter import OutputFormat
+
+from . import ModelName, _validate_prompt
 from .utils import (
     analyze_doc,
     prompt_if_missing,
-    suffix as _suffix,
     resolve_bool,
     resolve_str,
 )
-from . import ModelName, _validate_prompt
+from .utils import (
+    suffix as _suffix,
+)
 
 logger = logging.getLogger(__name__)
 

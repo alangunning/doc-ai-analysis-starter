@@ -1,4 +1,5 @@
 """Ensure project root is on sys.path for tests."""
+
 from __future__ import annotations
 
 import sys

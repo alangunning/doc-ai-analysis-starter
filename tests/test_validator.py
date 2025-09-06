@@ -1,14 +1,15 @@
-from unittest.mock import MagicMock, patch
+import os
 import runpy
 import sys
 from pathlib import Path
-import os
-import yaml
-import pytest
+from unittest.mock import MagicMock, patch
 
+import pytest
+import yaml
+
+from doc_ai.cli import validate_doc
 from doc_ai.converter import OutputFormat
 from doc_ai.github.validator import validate_file
-from doc_ai.cli import validate_doc
 from doc_ai.metadata import load_metadata, metadata_path
 
 
@@ -39,7 +40,7 @@ def test_validate_file_returns_json(tmp_path):
         )
     )
 
-    mock_response = MagicMock(output_text="{\"ok\": true}")
+    mock_response = MagicMock(output_text='{"ok": true}')
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
@@ -53,10 +54,11 @@ def test_validate_file_returns_json(tmp_path):
         uploads.append((Path(path).name, purpose))
         return f"{Path(path).name}-id"
 
-    with patch(
-        "doc_ai.github.validator.OpenAI", return_value=mock_client
-    ) as mock_openai, patch(
-        "doc_ai.github.validator.upload_file", side_effect=fake_upload_file
+    with (
+        patch(
+            "doc_ai.github.validator.OpenAI", return_value=mock_client
+        ) as mock_openai,
+        patch("doc_ai.github.validator.upload_file", side_effect=fake_upload_file),
     ):
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -105,8 +107,9 @@ def test_validate_file_strips_code_fences(tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.github.validator.upload_file", return_value="file-id"
+    with (
+        patch("doc_ai.github.validator.OpenAI", return_value=mock_client),
+        patch("doc_ai.github.validator.upload_file", return_value="file-id"),
     ):
         result = validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -139,8 +142,9 @@ def test_validate_file_bad_json(tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.github.validator.upload_file", return_value="file-id"
+    with (
+        patch("doc_ai.github.validator.OpenAI", return_value=mock_client),
+        patch("doc_ai.github.validator.upload_file", return_value="file-id"),
     ):
         with pytest.raises(ValueError, match="not valid JSON"):
             validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
@@ -233,8 +237,9 @@ def test_validate_file_env_purpose(monkeypatch, tmp_path):
     mock_client.responses.create.return_value = mock_response
 
     monkeypatch.setenv("OPENAI_FILE_PURPOSE", "assistants")
-    with patch("doc_ai.github.validator.OpenAI", return_value=mock_client), patch(
-        "doc_ai.github.validator.upload_file", side_effect=fake_upload_file
+    with (
+        patch("doc_ai.github.validator.OpenAI", return_value=mock_client),
+        patch("doc_ai.github.validator.upload_file", side_effect=fake_upload_file),
     ):
         validate_file(raw_path, rendered_path, OutputFormat.TEXT, prompt_path)
 
@@ -310,10 +315,11 @@ def test_validate_file_forces_openai_base(monkeypatch, tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    with patch(
-        "doc_ai.github.validator.OpenAI", return_value=mock_client
-    ) as mock_openai, patch(
-        "doc_ai.github.validator.upload_file", return_value="file1"
+    with (
+        patch(
+            "doc_ai.github.validator.OpenAI", return_value=mock_client
+        ) as mock_openai,
+        patch("doc_ai.github.validator.upload_file", return_value="file1"),
     ):
         validate_file(
             raw_path,
@@ -355,10 +361,11 @@ def test_validate_file_custom_base_uses_github_token(monkeypatch, tmp_path):
     mock_client = MagicMock()
     mock_client.responses.create.return_value = mock_response
 
-    with patch(
-        "doc_ai.github.validator.OpenAI", return_value=mock_client
-    ) as mock_openai, patch(
-        "doc_ai.github.validator.upload_file", return_value="file1"
+    with (
+        patch(
+            "doc_ai.github.validator.OpenAI", return_value=mock_client
+        ) as mock_openai,
+        patch("doc_ai.github.validator.upload_file", return_value="file1"),
     ):
         validate_file(
             raw_path,
@@ -498,14 +505,20 @@ def test_validate_script_uses_env_defaults(monkeypatch, tmp_path):
 
     called: dict[str, str] = {}
 
-    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs):
+    def fake_validate_file(
+        raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs
+    ):
         called["model"] = model
         called["base_url"] = base_url
         return {"match": True}
 
     monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
-    monkeypatch.setattr(sys, "argv", [str(script_path), "--prompt", str(prompt), str(raw), str(rendered)])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [str(script_path), "--prompt", str(prompt), str(raw), str(rendered)],
+    )
 
     runpy.run_path(str(script_path), run_name="__main__")
 
@@ -536,14 +549,30 @@ def test_validate_script_cli_overrides_env(monkeypatch, tmp_path):
 
     called: dict[str, str] = {}
 
-    def fake_validate_file(raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs):
+    def fake_validate_file(
+        raw_path, rendered_path, fmt, prompt_path, model=None, base_url=None, **kwargs
+    ):
         called["model"] = model
         called["base_url"] = base_url
         return {"match": True}
 
     monkeypatch.setattr("doc_ai.cli.validate_file", fake_validate_file)
     script_path = Path(__file__).resolve().parent.parent / "scripts" / "validate.py"
-    monkeypatch.setattr(sys, "argv", [str(script_path), "--prompt", str(prompt), "--model", "gpt-4o-mini", "--base-model-url", "https://cli.base", str(raw), str(rendered)])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(script_path),
+            "--prompt",
+            str(prompt),
+            "--model",
+            "gpt-4o-mini",
+            "--base-model-url",
+            "https://cli.base",
+            str(raw),
+            str(rendered),
+        ],
+    )
 
     runpy.run_path(str(script_path), run_name="__main__")
 

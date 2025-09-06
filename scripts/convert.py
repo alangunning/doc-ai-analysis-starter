@@ -1,7 +1,8 @@
 import sys
+
 from dotenv import load_dotenv
 
-from doc_ai.cli import app, ENV_FILE
+from doc_ai.cli import ENV_FILE, app
 
 
 def main(argv: list[str] | None = None) -> None:

@@ -2,8 +2,8 @@
 """Entry point wrapper for doc_ai CLI."""
 from __future__ import annotations
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 if __package__ in (None, ""):
     sys.path[0] = str(Path(__file__).resolve().parent.parent)

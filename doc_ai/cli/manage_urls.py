@@ -9,7 +9,6 @@ import typer
 from .interactive import refresh_completer
 from .utils import select_doc_type
 
-
 app = typer.Typer(
     help="Manage stored URLs; paste or import multiple entries.",
     invoke_without_command=True,

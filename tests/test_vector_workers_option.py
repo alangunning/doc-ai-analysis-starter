@@ -1,5 +1,5 @@
-from types import SimpleNamespace
 from concurrent.futures import Future
+from types import SimpleNamespace
 
 from doc_ai.github import vector
 
@@ -29,12 +29,16 @@ def test_build_vector_store_uses_workers(tmp_path, monkeypatch):
 
     mock_client = SimpleNamespace(
         embeddings=SimpleNamespace(
-            create=lambda **kwargs: SimpleNamespace(data=[SimpleNamespace(embedding=[0.1])])
+            create=lambda **kwargs: SimpleNamespace(
+                data=[SimpleNamespace(embedding=[0.1])]
+            )
         )
     )
 
     monkeypatch.setattr(vector, "ThreadPoolExecutor", DummyExecutor)
-    monkeypatch.setattr("doc_ai.github.vector.OpenAI", lambda api_key, base_url: mock_client)
+    monkeypatch.setattr(
+        "doc_ai.github.vector.OpenAI", lambda api_key, base_url: mock_client
+    )
 
     vector.build_vector_store(tmp_path, workers=7)
     assert captured["max_workers"] == 7

@@ -1,11 +1,12 @@
 import io
 from pathlib import Path
+
 import click
 import typer
 
+import doc_ai.cli.utils as utils
 from doc_ai.cli import convert as convert_mod
 from doc_ai.cli import embed as embed_mod
-import doc_ai.cli.utils as utils
 
 
 class DummyQuestion:
@@ -20,8 +21,12 @@ def test_convert_prompts_for_missing_source(monkeypatch, tmp_path):
     test_file = tmp_path / "sample.pdf"
     test_file.write_text("data", encoding="utf-8")
 
-    monkeypatch.setattr(utils.questionary, "text", lambda *a, **k: DummyQuestion(str(test_file)))
-    monkeypatch.setattr(utils.sys, "stdin", type("Tty", (io.StringIO,), {"isatty": lambda self: True})())
+    monkeypatch.setattr(
+        utils.questionary, "text", lambda *a, **k: DummyQuestion(str(test_file))
+    )
+    monkeypatch.setattr(
+        utils.sys, "stdin", type("Tty", (io.StringIO,), {"isatty": lambda self: True})()
+    )
 
     called = {}
 

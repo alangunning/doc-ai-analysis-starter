@@ -1,12 +1,13 @@
 """Convenience helpers for creating Responses API requests."""
+
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union, TYPE_CHECKING
 import json
 import logging
 import os
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 from openai import OpenAIError
 
@@ -20,7 +21,6 @@ from .files import (
     upload_file,
 )
 
-
 ALLOWED_PARAMS = {
     "temperature",
     "top_p",
@@ -31,6 +31,7 @@ ALLOWED_PARAMS = {
     "max_output_tokens",
     "text",
 }
+
 
 def input_text(text: str) -> Dict[str, Any]:
     """Create a basic ``input_text`` payload."""
@@ -149,17 +150,20 @@ def create_response(
         except OpenAIError as exc:  # pragma: no cover - network failures
             if logger:
                 logger.warning(
-                    "Responses API request failed", extra={"attempt": attempt + 1, "error": str(exc)}
+                    "Responses API request failed",
+                    extra={"attempt": attempt + 1, "error": str(exc)},
                 )
             if attempt == retries - 1:
                 if logger:
                     logger.error(
-                        "Responses API request failed after %s attempts", retries, extra={"error": str(exc)}
+                        "Responses API request failed after %s attempts",
+                        retries,
+                        extra={"error": str(exc)},
                     )
                 raise RuntimeError(
                     f"Responses API request failed after {retries} attempts"
                 ) from exc
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
 
     if logger and result is not None:
         try:

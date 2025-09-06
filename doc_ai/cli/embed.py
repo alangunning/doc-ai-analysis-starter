@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from . import build_vector_store
-from .utils import resolve_bool, resolve_int, prompt_if_missing
+from .utils import prompt_if_missing, resolve_bool, resolve_int
 
 app = typer.Typer(
     invoke_without_command=True, help="Generate embeddings for Markdown files."

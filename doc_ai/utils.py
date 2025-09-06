@@ -6,8 +6,8 @@ from typing import Any, Set
 
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from slugify import slugify
+from urllib3.util.retry import Retry
 
 DEFAULT_TIMEOUT = 30
 DEFAULT_RETRIES = 3

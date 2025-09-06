@@ -338,7 +338,9 @@ def _repl_duplicate_doc_type(args: list[str]) -> None:
     new = args[0]
     old = args[1] if len(args) > 1 else None
     try:
-        new_doc_type_mod.duplicate_doc_type(cast(typer.Context, _REPL_CTX), new, old=old)
+        new_doc_type_mod.duplicate_doc_type(
+            cast(typer.Context, _REPL_CTX), new, old=old
+        )
     except click.ClickException as exc:
         click.echo(exc.format_message())
 

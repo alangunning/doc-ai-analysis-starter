@@ -1,4 +1,5 @@
 """Logging utilities with Rich formatting and redaction."""
+
 from __future__ import annotations
 
 import logging
@@ -8,7 +9,6 @@ from pathlib import Path
 from typing import Iterable
 
 from rich.logging import RichHandler
-
 
 # Patterns that likely represent API keys or tokens that should be redacted
 _SECRET_PATTERNS: list[re.Pattern[str]] = [
@@ -44,6 +44,7 @@ class RedactFilter(logging.Filter):
 
     def _redact(self, value: str) -> str:
         for pat in self.patterns:
+
             def mask(match: re.Match[str]) -> str:
                 token = match.group(0)
                 if len(token) <= 8:
@@ -53,17 +54,22 @@ class RedactFilter(logging.Filter):
             value = pat.sub(mask, value)
         return value
 
-    def filter(self, record: logging.LogRecord) -> bool:  # pragma: no cover - exercised via tests
+    def filter(
+        self, record: logging.LogRecord
+    ) -> bool:  # pragma: no cover - exercised via tests
         if isinstance(record.msg, str):
             record.msg = self._redact(record.msg)
         if record.args:
             record.args = tuple(
-                self._redact(arg) if isinstance(arg, str) else arg for arg in record.args
+                self._redact(arg) if isinstance(arg, str) else arg
+                for arg in record.args
             )
         return True
 
 
-def configure_logging(level: str | int = "WARNING", log_file: str | Path | None = None) -> None:
+def configure_logging(
+    level: str | int = "WARNING", log_file: str | Path | None = None
+) -> None:
     """Configure application logging with rich formatting and optional file output."""
 
     if isinstance(level, str):

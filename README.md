@@ -62,8 +62,8 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    Convert a document and validate the Markdown output:
 
    ```bash
-   python scripts/convert.py data/sec-form-8k/apple-sec-8-k.pdf --format markdown
-   python scripts/validate.py data/sec-form-8k/apple-sec-8-k.pdf data/sec-form-8k/apple-sec-8-k.pdf.converted.md
+   python scripts/convert.py --format markdown data/sec-form-8k/apple-sec-form-8k.pdf
+   python scripts/validate.py data/sec-form-8k/apple-sec-form-8k.pdf data/sec-form-8k/apple-sec-form-8k.pdf.converted.md
    ```
 
    Download and convert remote documents in one step:

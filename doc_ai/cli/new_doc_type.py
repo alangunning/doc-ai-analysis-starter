@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import sys
 import shutil
+import sys
 from pathlib import Path
 
 import typer

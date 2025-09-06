@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from pathlib import Path
 import logging
-from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from threading import Lock
+from urllib.parse import urlparse
 
 import typer
+from rich.progress import Progress
 
 from doc_ai.converter import OutputFormat
-
 from doc_ai.utils import http_get, sanitize_filename
-from rich.progress import Progress
 
 from .utils import (
     parse_config_formats as _parse_config_formats,
+)
+from .utils import (
     prompt_if_missing,
     resolve_bool,
 )
@@ -71,7 +72,8 @@ def download_and_convert(
 def convert(
     ctx: typer.Context,
     source: str | None = typer.Argument(
-        None, help="Path or URL to raw document or folder",
+        None,
+        help="Path or URL to raw document or folder",
     ),
     url: list[str] = typer.Option(
         None,
@@ -84,7 +86,9 @@ def convert(
         help="File containing URLs to download (one per line).",
     ),
     doc_type: str | None = typer.Option(
-        None, "--doc-type", help="Document type for downloaded URLs",
+        None,
+        "--doc-type",
+        help="Document type for downloaded URLs",
     ),
     format: list[OutputFormat] = typer.Option(
         None,
@@ -98,7 +102,6 @@ def convert(
         help="Re-run conversion even if metadata is present",
         is_flag=True,
     ),
-
 ) -> None:
     """Convert files using Docling.
 
@@ -123,9 +126,7 @@ def convert(
         url_list.extend(url)
     source = prompt_if_missing(ctx, source, "Path or URL to raw document or folder")
     if url_list and doc_type is None:
-        doc_type = prompt_if_missing(
-            ctx, doc_type, "Document type for downloaded URLs"
-        )
+        doc_type = prompt_if_missing(ctx, doc_type, "Document type for downloaded URLs")
         if doc_type is None:
             raise typer.BadParameter("--doc-type is required when providing URLs")
     if source is None and not url_list:
@@ -147,4 +148,3 @@ def convert(
 
     if not results:
         logger.warning("No new files to process.")
-

@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 from unittest.mock import patch
 
@@ -6,7 +7,6 @@ import typer
 
 from doc_ai.cli import pipeline
 from doc_ai.cli.pipeline import PipelineStep
-import importlib
 
 pipeline_module = importlib.import_module("doc_ai.cli.pipeline")
 

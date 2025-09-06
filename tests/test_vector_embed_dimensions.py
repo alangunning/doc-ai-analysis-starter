@@ -13,7 +13,9 @@ def test_build_vector_store_ignores_bad_embed_dimensions(tmp_path, monkeypatch, 
     monkeypatch.setenv("GITHUB_TOKEN", "tok")
     monkeypatch.setattr(vector, "EMBED_DIMENSIONS", value)
     mock_client = MagicMock()
-    mock_client.embeddings.create.return_value = SimpleNamespace(data=[SimpleNamespace(embedding=[0.1])])
+    mock_client.embeddings.create.return_value = SimpleNamespace(
+        data=[SimpleNamespace(embedding=[0.1])]
+    )
     with patch("doc_ai.github.vector.OpenAI", return_value=mock_client):
         vector.build_vector_store(tmp_path)
     kwargs = mock_client.embeddings.create.call_args.kwargs
@@ -26,7 +28,9 @@ def test_build_vector_store_uses_dimensions_when_positive(tmp_path, monkeypatch)
     monkeypatch.setenv("GITHUB_TOKEN", "tok")
     monkeypatch.setattr(vector, "EMBED_DIMENSIONS", "64")
     mock_client = MagicMock()
-    mock_client.embeddings.create.return_value = SimpleNamespace(data=[SimpleNamespace(embedding=[0.1])])
+    mock_client.embeddings.create.return_value = SimpleNamespace(
+        data=[SimpleNamespace(embedding=[0.1])]
+    )
     with patch("doc_ai.github.vector.OpenAI", return_value=mock_client):
         vector.build_vector_store(tmp_path)
     kwargs = mock_client.embeddings.create.call_args.kwargs

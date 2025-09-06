@@ -4,22 +4,22 @@
 from __future__ import annotations
 
 import json
-import re
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-from doc_ai.logging import RedactFilter
-
 import yaml
 from openai import OpenAI
+from rich.console import Console
+from rich.progress import Progress
+
+from doc_ai.logging import RedactFilter
 
 from ..converter import OutputFormat
 from ..openai import create_response, upload_file
 from ..utils import http_get, sanitize_path
-from rich.console import Console
-from rich.progress import Progress
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 OPENAI_BASE_URL = "https://api.openai.com/v1"

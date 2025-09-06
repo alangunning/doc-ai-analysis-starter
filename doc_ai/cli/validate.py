@@ -7,15 +7,20 @@ import typer
 from rich.console import Console
 
 from doc_ai.converter import OutputFormat
+
+from . import ModelName, _validate_prompt
 from .utils import (
     infer_format as _infer_format,
-    suffix as _suffix,
-    validate_doc,
+)
+from .utils import (
+    prompt_if_missing,
     resolve_bool,
     resolve_str,
-    prompt_if_missing,
+    validate_doc,
 )
-from . import ModelName, _validate_prompt
+from .utils import (
+    suffix as _suffix,
+)
 
 app = typer.Typer(
     invoke_without_command=True,
@@ -27,9 +32,7 @@ app = typer.Typer(
 def validate(
     ctx: typer.Context,
     raw: Path | None = typer.Argument(None, help="Path to raw document"),
-    rendered: Path | None = typer.Argument(
-        None, help="Path to converted file"
-    ),
+    rendered: Path | None = typer.Argument(None, help="Path to converted file"),
     fmt: Optional[OutputFormat] = typer.Option(None, "--format", "-f"),
     prompt: Optional[Path] = typer.Option(
         None,
@@ -96,4 +99,3 @@ def validate(
         console=console_local,
         force=force,
     )
-

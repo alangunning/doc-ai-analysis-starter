@@ -9,14 +9,14 @@ future backends to be swapped in without touching calling code.
 
 from __future__ import annotations
 
+import json
+import logging
+import threading
+from contextlib import nullcontext
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
-import json
-from contextlib import nullcontext
-import threading
 
-import logging
 from rich.console import Console
 from rich.progress import (
     BarColumn,

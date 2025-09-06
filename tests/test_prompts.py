@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
-import yaml
+
 import pytest
+import yaml
 
 from doc_ai.github.prompts import run_prompt
 
@@ -8,7 +9,9 @@ from doc_ai.github.prompts import run_prompt
 def test_run_prompt_uses_spec_and_input(tmp_path, monkeypatch):
     prompt_file = tmp_path / "prompt.yml"
     prompt_file.write_text(
-        yaml.dump({"model": "test-model", "messages": [{"role": "user", "content": "Hello"}]})
+        yaml.dump(
+            {"model": "test-model", "messages": [{"role": "user", "content": "Hello"}]}
+        )
     )
 
     monkeypatch.setenv("GITHUB_TOKEN", "token")
@@ -30,9 +33,7 @@ def test_run_prompt_uses_spec_and_input(tmp_path, monkeypatch):
 
 def test_run_prompt_uses_env_base_and_token(monkeypatch, tmp_path):
     prompt_file = tmp_path / "prompt.yml"
-    prompt_file.write_text(
-        yaml.dump({"model": "test-model", "messages": []})
-    )
+    prompt_file.write_text(yaml.dump({"model": "test-model", "messages": []}))
 
     monkeypatch.setenv("GITHUB_TOKEN", "gh-test")
     monkeypatch.setenv("BASE_MODEL_URL", "https://example.com")

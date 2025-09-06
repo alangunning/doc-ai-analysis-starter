@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
 from openai import OpenAI
-import logging
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter

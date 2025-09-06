@@ -5,16 +5,18 @@ from pathlib import Path
 import questionary
 import typer
 
-from .interactive import discover_doc_types_topics
-
 from doc_ai.converter import OutputFormat
+
 from .convert import download_and_convert
+from .interactive import discover_doc_types_topics
+from .manage_urls import _valid_url
 from .utils import (
     parse_config_formats as _parse_config_formats,
-    resolve_bool,
-    prompt_if_missing,
 )
-from .manage_urls import _valid_url
+from .utils import (
+    prompt_if_missing,
+    resolve_bool,
+)
 
 app = typer.Typer(help="Add documents to the data directory.")
 
@@ -23,9 +25,7 @@ app = typer.Typer(help="Add documents to the data directory.")
 def add_url(
     ctx: typer.Context,
     link: str | None = typer.Argument(None, help="URL to download"),
-    doc_type: str | None = typer.Option(
-        None, "--doc-type", help="Document type"
-    ),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
     format: list[OutputFormat] = typer.Option(
         None,
         "--format",
@@ -69,9 +69,7 @@ def add_url(
 def add_urls(
     ctx: typer.Context,
     path: Path | None = typer.Argument(None, help="File containing URLs"),
-    doc_type: str | None = typer.Option(
-        None, "--doc-type", help="Document type"
-    ),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
     format: list[OutputFormat] = typer.Option(
         None,
         "--format",
@@ -88,7 +86,9 @@ def add_urls(
     """Download URLs from *path* and convert them."""
 
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
-    path_val = prompt_if_missing(ctx, str(path) if path is not None else None, "File containing URLs")
+    path_val = prompt_if_missing(
+        ctx, str(path) if path is not None else None, "File containing URLs"
+    )
     if path_val is None:
         raise typer.BadParameter("File containing URLs required")
     path = Path(path_val)
@@ -125,5 +125,3 @@ def add_urls(
         typer.echo("No valid URLs found in file.")
         return
     download_and_convert(links, doc_type, fmts, force)
-
-

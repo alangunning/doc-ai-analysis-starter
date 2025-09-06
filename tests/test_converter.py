@@ -21,7 +21,9 @@ def test_convert_files_writes_outputs(tmp_path):
         patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
     ):
         from doc_ai.converter import document_converter as dc
+
         dc._converter_instance = None
+
         class DummyDoc:
             def export_to_text(self):
                 return "plain"
@@ -54,6 +56,7 @@ def test_convert_files_return_status_optional(tmp_path):
         patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
     ):
         from doc_ai.converter import document_converter as dc
+
         dc._converter_instance = None
 
         class DummyDoc:
@@ -84,9 +87,11 @@ def test_convert_files_passes_progress_flag(tmp_path):
         patch("doc_ai.converter.document_converter.Progress") as MockProgress,
     ):
         from doc_ai.converter import document_converter as dc
+
         dc._converter_instance = None
         # Use an in-memory console to avoid writing to stdout
         from rich.console import Console
+
         dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
         mock_progress = MockProgress.return_value.__enter__.return_value
         mock_progress.add_task.return_value = 1
@@ -103,9 +108,7 @@ def test_convert_files_passes_progress_flag(tmp_path):
 
         convert_files(input_file, outputs)
 
-        MockConverter.return_value.convert.assert_called_with(
-            input_file, progress=True
-        )
+        MockConverter.return_value.convert.assert_called_with(input_file, progress=True)
 
 
 def test_convert_files_handles_validation_error(tmp_path):
@@ -120,8 +123,10 @@ def test_convert_files_handles_validation_error(tmp_path):
         patch("doc_ai.converter.document_converter.Progress") as MockProgress,
     ):
         from doc_ai.converter import document_converter as dc
+
         dc._converter_instance = None
         from rich.console import Console
+
         dc._console = Console(file=open(os.devnull, "w"), force_terminal=True)
         mock_progress = MockProgress.return_value.__enter__.return_value
         mock_progress.add_task.return_value = 1
@@ -161,6 +166,7 @@ def test_get_docling_converter_thread_safe():
         patch("doc_ai.converter.document_converter._ensure_models_downloaded"),
     ):
         from doc_ai.converter import document_converter as dc
+
         dc._converter_instance = None
 
         call_lock = threading.Lock()

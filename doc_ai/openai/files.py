@@ -12,8 +12,8 @@ import base64
 import json
 import logging
 import mimetypes
-from pathlib import Path
 import os
+from pathlib import Path
 from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
 from openai import OpenAI

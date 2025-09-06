@@ -203,7 +203,9 @@ def test_env_overrides_init_workflows_dest(monkeypatch):
         monkeypatch.setenv("DEST", "wf")
         monkeypatch.setenv("DRY_RUN", "true")
         cli = importlib.reload(importlib.import_module("doc_ai.cli"))
-        init_mod = importlib.reload(importlib.import_module("doc_ai.cli.init_workflows"))
+        init_mod = importlib.reload(
+            importlib.import_module("doc_ai.cli.init_workflows")
+        )
 
         copied = {"called": False}
 

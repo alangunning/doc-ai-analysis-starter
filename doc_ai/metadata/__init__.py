@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 from .dublin_core import DublinCoreDocument
 
-
 _DEF_STEP_KEY = "steps"
 _DEF_OUTPUT_KEY = "outputs"
 _DEF_INPUT_KEY = "inputs"

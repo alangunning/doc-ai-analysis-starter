@@ -5,11 +5,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from doc_ai.openai import (
-    upload_file,
-    input_file_from_url,
-    input_file_from_path,
-    input_file_from_bytes,
     files,
+    input_file_from_bytes,
+    input_file_from_path,
+    input_file_from_url,
+    upload_file,
 )
 
 
@@ -58,7 +58,10 @@ def test_upload_file_via_uploads(tmp_path):
     assert file_id == "file-xyz"
 
     mock_client.uploads.create.assert_called_once_with(
-        purpose="user_data", filename="big.bin", bytes=10, mime_type="application/octet-stream"
+        purpose="user_data",
+        filename="big.bin",
+        bytes=10,
+        mime_type="application/octet-stream",
     )
     assert mock_client.uploads.parts.create.call_count == 3
     mock_client.uploads.complete.assert_called_once_with(
@@ -154,7 +157,10 @@ def test_upload_file_env_force_upload(monkeypatch, tmp_path):
     file_id = upload_file(mock_client, file_path)
     assert file_id == "file-x"
     mock_client.uploads.create.assert_called_once_with(
-        purpose="assistants", filename="file.bin", bytes=4, mime_type="application/octet-stream"
+        purpose="assistants",
+        filename="file.bin",
+        bytes=4,
+        mime_type="application/octet-stream",
     )
     mock_client.files.create.assert_not_called()
 

@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -13,6 +12,7 @@ def test_run_option_executes_batch_and_exits(monkeypatch, tmp_path):
     recorded = {}
 
     import doc_ai.cli.interactive as interactive_mod
+
     run_batch_orig = interactive_mod.run_batch
 
     def fake_run_batch(ctx, path):

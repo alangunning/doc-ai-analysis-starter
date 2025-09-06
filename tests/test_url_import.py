@@ -1,5 +1,5 @@
-from pathlib import Path
 import time
+from pathlib import Path
 
 from typer.testing import CliRunner
 
@@ -138,6 +138,7 @@ def test_urls_command(tmp_path, monkeypatch):
 
         def ask(self) -> str:
             return self.response
+
     selections = iter(["remove", "http://a", "add", "done"])
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.select_doc_type", lambda ctx, doc_type=None: "reports"
@@ -241,12 +242,14 @@ def test_urls_import_action(tmp_path, monkeypatch):
     url_file.write_text("")
     import_file = tmp_path / "list.txt"
     import_file.write_text(
-        "\n".join([
-            "http://a",
-            "notaurl",
-            "http://a",
-            "http://b",
-        ])
+        "\n".join(
+            [
+                "http://a",
+                "notaurl",
+                "http://a",
+                "http://b",
+            ]
+        )
     )
 
     class DummyPrompt:
@@ -331,9 +334,7 @@ def test_urls_import_subcommand(tmp_path, monkeypatch):
     url_file = doc_dir / "urls.txt"
     url_file.write_text("")
     import_file = tmp_path / "list.txt"
-    import_file.write_text(
-        "\n".join(["http://a", "notaurl", "http://a", "http://b"])
-    )
+    import_file.write_text("\n".join(["http://a", "notaurl", "http://a", "http://b"]))
     called: list[bool] = []
     monkeypatch.setattr(
         "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)

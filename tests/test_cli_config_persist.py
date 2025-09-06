@@ -1,6 +1,6 @@
-from pathlib import Path
-import os
 import importlib
+import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from typer.testing import CliRunner
@@ -26,4 +26,3 @@ def test_config_persists_to_env_file(monkeypatch):
         assert env_path.stat().st_mode & 0o777 == 0o600
         lines = env_path.read_text().strip().splitlines()
         assert "MODEL=foo" in lines and "FAIL_FAST=true" in lines
-

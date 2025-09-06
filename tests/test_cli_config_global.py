@@ -1,7 +1,6 @@
+import importlib
 import json
 import re
-import json
-import importlib
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -22,15 +21,20 @@ def test_global_config_precedence(monkeypatch):
         cli = importlib.reload(importlib.import_module("doc_ai.cli"))
         monkeypatch.setattr(cli, "ENV_FILE", ".env")
 
-        result = runner.invoke(cli.app, ["config", "set", "--global", "MODEL=global", "FAIL_FAST=true"])
+        result = runner.invoke(
+            cli.app, ["config", "set", "--global", "MODEL=global", "FAIL_FAST=true"]
+        )
         assert result.exit_code == 0
         from platformdirs import PlatformDirs
+
         cfg_file = Path(PlatformDirs("doc_ai").user_config_dir) / "config.json"
         data = json.loads(cfg_file.read_text())
         assert data["MODEL"] == "global"
         assert data["FAIL_FAST"] is True
 
-        result = runner.invoke(cli.app, ["config", "set", "MODEL=local", "FAIL_FAST=false"])
+        result = runner.invoke(
+            cli.app, ["config", "set", "MODEL=local", "FAIL_FAST=false"]
+        )
         assert result.exit_code == 0
         assert "MODEL=local" in Path(".env").read_text()
 

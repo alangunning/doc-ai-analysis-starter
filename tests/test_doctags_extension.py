@@ -9,7 +9,9 @@ from doc_ai.converter import OutputFormat
 
 def test_doctags_extension_mapping_only_intended():
     """Ensure DOCTAGS output only maps from the .doctags extension."""
-    doctag_extensions = [ext for ext, fmt in EXTENSION_MAP.items() if fmt == OutputFormat.DOCTAGS]
+    doctag_extensions = [
+        ext for ext, fmt in EXTENSION_MAP.items() if fmt == OutputFormat.DOCTAGS
+    ]
     assert doctag_extensions == [".doctags"]
 
 
