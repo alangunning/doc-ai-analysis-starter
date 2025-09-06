@@ -4,6 +4,8 @@ from pathlib import Path
 from prompt_toolkit.history import FileHistory
 from typer.main import get_command
 
+import pytest
+
 from doc_ai.cli import app, interactive_shell
 from doc_ai.cli.interactive import DocAICompleter, _prompt_name
 
@@ -72,3 +74,11 @@ def test_prompt_updates_on_cd(tmp_path, monkeypatch):
         assert pk["message"]() == f"{_prompt_name()}>"
     finally:
         os.chdir(start)
+
+
+def test_interactive_shell_warns_when_shell_enabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    monkeypatch.setattr("doc_ai.cli.interactive.repl", lambda *a, **k: None)
+    with pytest.warns(UserWarning, match="Shell escapes enabled"):
+        interactive_shell(app)

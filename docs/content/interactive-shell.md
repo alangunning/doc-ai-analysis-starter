@@ -34,8 +34,9 @@ commands. The command reloads any ``.env`` file and global configuration
 in the target directory so project-specific settings take effect. Other
 helpers include ``:delete-doc-type`` and ``:delete-topic`` for removing
 prompt files and ``:set-default DOC_TYPE [TOPIC]`` to persist defaults.
-Shell escapes (``!command``) may be disabled by setting
-``DOC_AI_ALLOW_SHELL=false``; when disabled, using ``!`` emits a warning.
+Shell escapes (``!command``) are disabled by default. Set
+``DOC_AI_ALLOW_SHELL=true`` to enable them—doing so emits a warning when the
+REPL starts. When disabled, using ``!`` emits a warning.
 
 ```
 doc-ai> cd docs
