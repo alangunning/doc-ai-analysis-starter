@@ -154,7 +154,7 @@ def test_urls_command(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["urls", "reports"])
+    result = runner.invoke(app, ["urls", "--doc-type", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://b", "http://c"]
     assert called == [True, True]
@@ -185,7 +185,7 @@ def test_urls_bulk_delete(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["urls", "reports"])
+    result = runner.invoke(app, ["urls", "--doc-type", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == []
 
@@ -219,7 +219,7 @@ def test_urls_add_multiple(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["urls", "reports"])
+    result = runner.invoke(app, ["urls", "--doc-type", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://a", "http://b", "http://c"]
     assert called == [True]
@@ -263,9 +263,107 @@ def test_urls_import_action(tmp_path, monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(app, ["urls", "reports"])
+    result = runner.invoke(app, ["urls", "--doc-type", "reports"])
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://a", "http://b"]
+    assert called == [True]
+
+
+def test_urls_list_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("http://a\nhttp://b\n")
+    runner = CliRunner()
+    result = runner.invoke(app, ["urls", "list", "--doc-type", "reports"])
+    assert result.exit_code == 0, result.output
+    assert "1. http://a" in result.output
+    assert "2. http://b" in result.output
+
+
+def test_urls_add_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    called = []
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "urls",
+            "add",
+            "--doc-type",
+            "reports",
+            "--url",
+            "http://a",
+            "--url",
+            "notaurl",
+            "--url",
+            "http://a",
+            "--url",
+            "http://b",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    url_file = Path("data/reports/urls.txt")
+    assert url_file.read_text().splitlines() == ["http://a", "http://b"]
+    assert called == [True]
+
+
+def test_urls_import_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    called = []
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
+    import_file = tmp_path / "list.txt"
+    import_file.write_text(
+        "\n".join(["http://a", "notaurl", "http://a", "http://b"])
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "urls",
+            "import",
+            "--doc-type",
+            "reports",
+            "--file",
+            str(import_file),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    url_file = Path("data/reports/urls.txt")
+    assert url_file.read_text().splitlines() == ["http://a", "http://b"]
+    assert called == [True]
+
+
+def test_urls_remove_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("http://a\nhttp://b\n")
+    called = []
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "urls",
+            "remove",
+            "--doc-type",
+            "reports",
+            "--url",
+            "http://a",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert url_file.read_text().splitlines() == ["http://b"]
     assert called == [True]
 
 

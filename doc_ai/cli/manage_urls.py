@@ -51,15 +51,15 @@ def _valid_url(url: str) -> bool:
     return bool(parsed.scheme in {"http", "https"} and parsed.netloc)
 
 
-@app.callback()
-def manage_urls(
-    ctx: typer.Context, doc_type: str | None = typer.Argument(None, help="Document type")
-) -> None:
-    """Interactively manage stored URLs for *doc_type*.
+def _load_urls(path: Path) -> list[str]:
+    """Return URLs stored at *path* without printing anything."""
+    if path.exists():
+        return [line.strip() for line in path.read_text().splitlines() if line.strip()]
+    return []
 
-    Use "add" to enter one or more URLs separated by whitespace or newlines, or
-    "import" to load URLs from a text file.
-    """
+
+def _resolve_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
+    """Resolve *doc_type* from config or interactive prompts."""
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     doc_type = doc_type or cfg.get("default_doc_type")
     if doc_type is None:
@@ -72,7 +72,11 @@ def manage_urls(
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
         raise typer.BadParameter("Document type required")
+    return doc_type
 
+
+def _interactive(doc_type: str) -> None:
+    """Run the interactive URL management loop."""
     path, urls = show_urls(doc_type)
 
     while True:
@@ -153,3 +157,129 @@ def manage_urls(
             save_urls(path, urls)
             refresh_completer()
             continue
+
+
+@app.callback()
+def manage_urls(ctx: typer.Context, doc_type: str | None = typer.Option(None, "--doc-type", help="Document type")) -> None:
+    """Manage stored URLs interactively when no subcommand is provided."""
+    if ctx.invoked_subcommand:
+        ctx.obj = ctx.obj or {}
+        if doc_type is not None:
+            ctx.obj["doc_type"] = doc_type
+        return
+    doc_type = _resolve_doc_type(ctx, doc_type)
+    _interactive(doc_type)
+
+
+@app.command("list")
+def list_urls(ctx: typer.Context, doc_type: str | None = typer.Option(None, "--doc-type", help="Document type")) -> None:
+    """List stored URLs for *doc_type*."""
+    doc_type = _resolve_doc_type(ctx, doc_type or ctx.obj.get("doc_type"))
+    show_urls(doc_type)
+
+
+@app.command("add")
+def add_urls(
+    ctx: typer.Context,
+    url: list[str] = typer.Option(None, "--url", "-u", help="URL to add", show_default=False),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Add one or more URLs to *doc_type*."""
+    doc_type = _resolve_doc_type(ctx, doc_type or ctx.obj.get("doc_type"))
+    path = _url_file(doc_type)
+    urls = _load_urls(path)
+
+    entries = list(url)
+    if not entries:
+        try:
+            raw = questionary.text("Enter URL(s)").ask()
+        except Exception:
+            raw = None
+        if not raw:
+            return
+        entries = raw.split()
+
+    new_urls: list[str] = []
+    for u in entries:
+        u = u.strip()
+        if not _valid_url(u):
+            typer.echo(f"Skipping invalid URL: {u}")
+            continue
+        if u in urls:
+            typer.echo(f"Skipping duplicate URL: {u}")
+            continue
+        urls.append(u)
+        new_urls.append(u)
+    if new_urls:
+        save_urls(path, urls)
+        refresh_completer()
+
+
+@app.command("import")
+def import_urls(
+    ctx: typer.Context,
+    file: Path | None = typer.Option(None, "--file", "-f", help="File containing URLs"),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Import URLs from *file* into *doc_type*."""
+    doc_type = _resolve_doc_type(ctx, doc_type or ctx.obj.get("doc_type"))
+    path = _url_file(doc_type)
+    urls = _load_urls(path)
+
+    file_path = file
+    if file_path is None:
+        try:
+            import_path = questionary.text("Path to file with URLs").ask()
+        except Exception:
+            import_path = None
+        if not import_path:
+            return
+        file_path = Path(import_path)
+    file_path = file_path.expanduser()
+    if not file_path.exists():
+        typer.echo(f"File not found: {file_path}")
+        return
+
+    raw = file_path.read_text()
+    new_urls: list[str] = []
+    for u in raw.split():
+        u = u.strip()
+        if not _valid_url(u):
+            typer.echo(f"Skipping invalid URL: {u}")
+            continue
+        if u in urls:
+            typer.echo(f"Skipping duplicate URL: {u}")
+            continue
+        urls.append(u)
+        new_urls.append(u)
+    if new_urls:
+        save_urls(path, urls)
+        refresh_completer()
+
+
+@app.command("remove")
+def remove_url(
+    ctx: typer.Context,
+    url: str | None = typer.Option(None, "--url", "-u", help="URL to remove"),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Remove a URL from *doc_type*."""
+    doc_type = _resolve_doc_type(ctx, doc_type or ctx.obj.get("doc_type"))
+    path = _url_file(doc_type)
+    urls = _load_urls(path)
+    if not urls:
+        typer.echo("No URLs to remove.")
+        return
+
+    to_remove = url
+    if to_remove is None:
+        try:
+            to_remove = questionary.select("Select URL to remove", choices=urls).ask()
+        except Exception:
+            to_remove = None
+    if not to_remove or to_remove not in urls:
+        return
+    urls = [u for u in urls if u != to_remove]
+    save_urls(path, urls)
+    refresh_completer()
+
