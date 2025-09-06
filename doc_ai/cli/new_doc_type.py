@@ -110,6 +110,48 @@ def rename_doc_type(
             desc_old.rename(new_path.with_suffix(".description.txt"))
 
 
+@app.command(
+    "duplicate-doc-type", help="Duplicate a document type and its prompt files."
+)
+@refresh_after  # type: ignore[misc]
+def duplicate_doc_type(
+    ctx: typer.Context,
+    new: str,
+    old: str | None = typer.Option(None, "--doc-type", help="Existing name"),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        help="Automatically confirm the duplication and skip the prompt",
+    ),
+) -> None:
+    """Duplicate existing document type *old* to *new*."""
+
+    new = sanitize_name(new)
+    old = select_doc_type(ctx, old)
+    old_dir = DATA_DIR / old
+    new_dir = DATA_DIR / new
+    if not old_dir.exists():
+        typer.echo(f"Directory {old_dir} does not exist", err=True)
+        raise typer.Exit(code=1)
+    if new_dir.exists():
+        typer.echo(f"Directory {new_dir} already exists", err=True)
+        raise typer.Exit(code=1)
+
+    if sys.stdin.isatty() and not yes:
+        if not typer.confirm(f"Duplicate {old} to {new}?", default=True):
+            typer.echo("Aborted")
+            return
+
+    shutil.copytree(old_dir, new_dir)
+    for p in new_dir.glob(f"{old}.analysis*.prompt.yaml"):
+        new_name = p.name.replace(f"{old}.analysis", f"{new}.analysis", 1)
+        new_path = new_dir / new_name
+        p.rename(new_path)
+        desc_old = p.with_suffix(".description.txt")
+        if desc_old.exists():
+            desc_old.rename(new_path.with_suffix(".description.txt"))
+
+
 @app.command("delete-doc-type", help="Delete a document type directory.")
 @refresh_after  # type: ignore[misc]
 def delete_doc_type(
