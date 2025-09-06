@@ -26,9 +26,7 @@ SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
 """Environment variable containing comma-separated safe env var names."""
 
 SAFE_ENV_VARS = {
-    v.strip()
-    for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",")
-    if v.strip()
+    v.strip() for v in os.getenv(SAFE_ENV_VARS_ENV, "").split(",") if v.strip()
 }
 """Names of environment variables that may be exposed in the REPL."""
 
@@ -38,10 +36,37 @@ __all__ = [
     "interactive_shell",
     "run_batch",
     "DocAICompleter",
+    "discover_doc_types_topics",
     "SAFE_ENV_VARS",
     "PROMPT_KWARGS",
     "_prompt_name",
 ]
+
+
+def discover_doc_types_topics(
+    data_dir: Path = Path("data"),
+) -> tuple[list[str], list[str]]:
+    """Return sorted document types and analysis topics under ``data_dir``.
+
+    This mirrors the discovery used by :class:`DocAICompleter` so other
+    commands can enumerate the same resources without duplicating logic.
+    """
+
+    if not data_dir.exists():
+        return [], []
+    doc_types = [p.name for p in data_dir.iterdir() if p.is_dir()]
+    topics: set[str] = set()
+    for dtype in doc_types:
+        doc_dir = data_dir / dtype
+        for p in doc_dir.glob("analysis_*.prompt.yaml"):
+            m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
+            if m:
+                topics.add(m.group(1))
+        for p in doc_dir.glob(f"{dtype}.analysis.*.prompt.yaml"):
+            m = re.match(rf"{re.escape(dtype)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
+            if m:
+                topics.add(m.group(1))
+    return sorted(doc_types), sorted(topics)
 
 
 class DocAICompleter(Completer):
@@ -49,9 +74,7 @@ class DocAICompleter(Completer):
 
     def __init__(self, cli: click.BaseCommand, ctx: click.Context) -> None:
         self._click = ClickCompleter(cli, ctx)
-        pattern = re.compile(
-            r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE
-        )
+        pattern = re.compile(r"TOKEN|SECRET|PASSWORD|APIKEY|API_KEY|KEY", re.IGNORECASE)
         allowed = SAFE_ENV_VARS.union(
             {
                 v.strip()
@@ -72,22 +95,9 @@ class DocAICompleter(Completer):
     def refresh(self) -> None:
         """Refresh cached doc types and topics from the ``data`` directory."""
 
-        data_dir = Path("data")
-        doc_types = [p.name for p in data_dir.iterdir() if p.is_dir()] if data_dir.exists() else []
-        self._doc_types = WordCompleter(sorted(doc_types), ignore_case=True)
-        topics: set[str] = set()
-        for dtype in doc_types:
-            doc_dir = data_dir / dtype
-            for p in doc_dir.glob("analysis_*.prompt.yaml"):
-                m = re.match(r"analysis_(.+)\.prompt\.yaml$", p.name)
-                if m:
-                    topics.add(m.group(1))
-            prefix = f"{dtype}.analysis."
-            for p in doc_dir.glob(f"{dtype}.analysis.*.prompt.yaml"):
-                m = re.match(fr"{re.escape(dtype)}\.analysis\.(.+)\.prompt\.yaml$", p.name)
-                if m:
-                    topics.add(m.group(1))
-        self._topics = WordCompleter(sorted(topics), ignore_case=True)
+        doc_types, topics = discover_doc_types_topics(Path("data"))
+        self._doc_types = WordCompleter(doc_types, ignore_case=True)
+        self._topics = WordCompleter(topics, ignore_case=True)
 
     def get_completions(self, document, complete_event=None):  # type: ignore[override]
         text = document.text_before_cursor
@@ -100,7 +110,9 @@ class DocAICompleter(Completer):
             cmd = parts[0]
             if cmd == "pipeline":
                 if len(parts) == 1 and text.endswith(" "):
-                    yield from self._doc_types.get_completions(Document(""), complete_event)
+                    yield from self._doc_types.get_completions(
+                        Document(""), complete_event
+                    )
                     return
                 if len(parts) == 2 and not parts[1].startswith("-"):
                     yield from self._doc_types.get_completions(
@@ -109,7 +121,9 @@ class DocAICompleter(Completer):
                     return
             if "--topic" in parts or "-t" in parts:
                 if parts[-1] in {"--topic", "-t"}:
-                    yield from self._topics.get_completions(Document(""), complete_event)
+                    yield from self._topics.get_completions(
+                        Document(""), complete_event
+                    )
                     return
                 if len(parts) >= 2 and parts[-2] in {"--topic", "-t"}:
                     yield from self._topics.get_completions(
@@ -118,7 +132,9 @@ class DocAICompleter(Completer):
                     return
             if cmd == "add" and len(parts) >= 2 and parts[1] == "manage-urls":
                 if len(parts) == 2 and text.endswith(" "):
-                    yield from self._doc_types.get_completions(Document(""), complete_event)
+                    yield from self._doc_types.get_completions(
+                        Document(""), complete_event
+                    )
                     return
                 if len(parts) == 3 and not parts[2].startswith("-"):
                     yield from self._doc_types.get_completions(

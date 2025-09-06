@@ -1,4 +1,5 @@
 """CLI orchestrator for AI document analysis pipeline."""
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,11 @@ from typer.main import get_command
 from doc_ai import __version__
 from doc_ai.converter import OutputFormat, convert_path  # noqa: F401
 from doc_ai.logging import configure_logging
-from .interactive import interactive_shell, run_batch  # noqa: F401
+from .interactive import (
+    interactive_shell,
+    run_batch,
+    discover_doc_types_topics,
+)  # noqa: F401
 import doc_ai.cli.interactive as interactive_module
 from .utils import (  # noqa: F401
     EXTENSION_MAP,
@@ -82,6 +87,7 @@ def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     merged = {**global_cfg, **env_vals, **os.environ}
     return global_cfg, env_vals, merged
 
+
 logger = logging.getLogger(__name__)
 
 # File extensions considered raw inputs for the pipeline.
@@ -99,6 +105,7 @@ RAW_SUFFIXES = {
     ".webp",
     ".svg",
 }
+
 
 class ModelName(str, Enum):
     """Supported model names for CLI options."""
@@ -152,7 +159,11 @@ def _main_callback(
 
     verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
     banner_default = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
-    interactive_default = merged.get("interactive", "true").lower() in {"1", "true", "yes"}
+    interactive_default = merged.get("interactive", "true").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
 
     effective_verbose = verbose if verbose is not None else verbose_default
     level_name = log_level if log_level is not None else merged.get("LOG_LEVEL")
@@ -161,7 +172,11 @@ def _main_callback(
     if level_name is None:
         level_name = "DEBUG" if verbose_default else "WARNING"
     log_file_val = log_file if log_file is not None else merged.get("LOG_FILE")
-    log_file_path = Path(log_file_val) if isinstance(log_file_val, (str, Path)) and log_file_val else None
+    log_file_path = (
+        Path(log_file_val)
+        if isinstance(log_file_val, (str, Path)) and log_file_val
+        else None
+    )
     configure_logging(level_name, log_file_path)
     ctx.obj["log_level"] = level_name
     ctx.obj["log_file"] = log_file_path
@@ -257,12 +272,14 @@ def run_prompt(*args, **kwargs):
 
     return _run_prompt(*args, **kwargs)
 
+
 # Register subcommands implemented in dedicated modules.
 from . import analyze as analyze_cmd  # noqa: E402
 from . import config as config_cmd  # noqa: E402
 from . import convert as convert_cmd  # noqa: E402
 from . import embed as embed_cmd  # noqa: E402
 from . import add as add_cmd  # noqa: E402
+
 pipeline_cmd = importlib.import_module("doc_ai.cli.pipeline")  # noqa: E402
 from . import validate as validate_cmd  # noqa: E402
 from . import query as query_cmd  # noqa: E402
@@ -293,14 +310,36 @@ show_app = typer.Typer(help="Display resources")
 edit_app = typer.Typer(help="Modify resources")
 
 
+@show_app.command("doc-types")
+def show_doc_types() -> None:
+    """List available document types discovered under the ``data`` directory."""
+
+    doc_types, _ = discover_doc_types_topics()
+    for name in doc_types:
+        typer.echo(name)
+
+
+@show_app.command("topics")
+def show_topics() -> None:
+    """List available analysis topics discovered from prompt files."""
+
+    _, topics = discover_doc_types_topics()
+    for name in topics:
+        typer.echo(name)
+
+
 @show_app.command("prompt")
-def show_prompt(doc_type: str, topic: str | None = typer.Option(None, "--topic")) -> None:
+def show_prompt(
+    doc_type: str, topic: str | None = typer.Option(None, "--topic")
+) -> None:
     """Print the contents of a prompt file for the given document type."""
     typer.echo(prompt_cmd.show_prompt(doc_type, topic))
 
 
 @edit_app.command("prompt")
-def edit_prompt(doc_type: str, topic: str | None = typer.Option(None, "--topic")) -> None:
+def edit_prompt(
+    doc_type: str, topic: str | None = typer.Option(None, "--topic")
+) -> None:
     """Open the prompt file in ``$EDITOR`` (falls back to ``vi``/``nano``)."""
     prompt_cmd.edit_prompt(doc_type, topic)
 
@@ -437,8 +476,6 @@ def main() -> None:
             app(prog_name="cli.py", args=["--help"])
         except SystemExit:
             pass
-    logger.info(
-        "Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave."
-    )
+    logger.info("Starting interactive Doc AI shell. Type 'exit' or 'quit' to leave.")
     interactive_shell(app, init=init_path)
     logger.info("Goodbye!")

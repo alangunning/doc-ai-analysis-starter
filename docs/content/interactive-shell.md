@@ -19,6 +19,9 @@ history is stored in ``~/.doc-ai-history`` for future sessions. Under the hood
 the shell leverages ``click-repl`` to provide tab completion and can be reused
 in other Typer-based projects.
 
+Use `show doc-types` and `show topics` to list document types under the
+``data/`` directory and analysis topics discovered from prompt files.
+
 ## Built-in commands
 
 The interactive prompt includes a minimal set of shell-like commands.
