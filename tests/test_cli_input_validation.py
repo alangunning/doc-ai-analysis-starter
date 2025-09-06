@@ -45,3 +45,11 @@ def test_validate_invalid_model(tmp_path):
     )
     assert result.exit_code != 0
     assert "Invalid value for '--model'" in result.output
+
+
+def test_invalid_log_level():
+    runner = CliRunner()
+    result = runner.invoke(app, ["--log-level", "bogus", "config", "show"])
+    assert result.exit_code != 0
+    assert "Invalid log level" in result.stderr or "Invalid log level" in result.stdout
+    assert "CRITICAL" in result.stderr or "CRITICAL" in result.stdout
