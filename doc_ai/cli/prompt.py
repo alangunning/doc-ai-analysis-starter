@@ -1,12 +1,12 @@
-from __future__ import annotations
-
 """Utilities for showing and editing prompt definition files."""
 
-from pathlib import Path
+from __future__ import annotations
+
 import os
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 
 import typer
 
@@ -59,7 +59,9 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
     editor_cmd: list[str] | None = None
     editor_env = os.environ.get("EDITOR")
 
-    if editor_env and not any(ch in editor_env for ch in invalid_chars.union(path_seps)):
+    if editor_env and not any(
+        ch in editor_env for ch in invalid_chars.union(path_seps)
+    ):
         parts = shlex.split(editor_env)
         if parts:
             resolved = shutil.which(parts[0])
@@ -77,8 +79,6 @@ def edit_prompt(doc_type: str, topic: str | None) -> None:
             if resolved:
                 editor_cmd = [resolved]
         if editor_cmd is None:
-            raise RuntimeError(
-                "No editor found. Please edit the file manually."
-            )
+            raise RuntimeError("No editor found. Please edit the file manually.")
 
     subprocess.run(editor_cmd + [str(path)], check=True)
