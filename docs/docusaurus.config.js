@@ -16,8 +16,8 @@ const config = {
   url: siteUrl,
   // When deploying to GitHub Pages, the base URL must match the repo name.
   baseUrl: baseUrl,
-  onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'throw',
+  onBrokenMarkdownLinks: 'throw',
   favicon: 'img/favicon.ico',
   organizationName,
   projectName,
