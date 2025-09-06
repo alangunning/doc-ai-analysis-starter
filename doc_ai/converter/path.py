@@ -18,7 +18,7 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
-from ..utils import http_get, sanitize_path
+from ..utils import http_get, sanitize_path, sanitize_filename
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +163,7 @@ def convert_path(
                 try:
                     resp.raise_for_status()
                     name = Path(urlparse(source).path).name or "downloaded"
+                    name = sanitize_filename(name)
                     source_path = Path(tmp) / name
                     total = 0
                     with open(source_path, "wb") as fh:

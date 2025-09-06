@@ -1,8 +1,10 @@
 from pathlib import Path
+import time
 
 from typer.testing import CliRunner
 
 from doc_ai.cli import app
+from doc_ai.cli.convert import download_and_convert
 
 
 class DummyResp:
@@ -126,4 +128,56 @@ def test_manage_urls_command(tmp_path, monkeypatch):
     )
     assert result.exit_code == 0, result.output
     assert url_file.read_text().splitlines() == ["http://a", "http://c"]
+
+
+def test_download_sanitizes_and_uniquifies(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    urls = {
+        "http://example.com/Hello World!.txt": b"a",
+        "http://example.com/hello-world!.txt": b"b",
+    }
+    monkeypatch.setattr("doc_ai.cli.convert.http_get", _mock_http_get(urls))
+    called = []
+
+    def fake_convert_path(path, fmts, force=False):
+        called.append(Path(path))
+        return {}
+
+    monkeypatch.setattr("doc_ai.cli.convert_path", fake_convert_path)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "convert",
+            "--doc-type",
+            "reports",
+            "--url",
+            "http://example.com/Hello World!.txt",
+            "--url",
+            "http://example.com/hello-world!.txt",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    dest = Path("data/reports")
+    assert (dest / "hello-world.txt").read_bytes() == b"a"
+    assert (dest / "hello-world-1.txt").read_bytes() == b"b"
+    assert called == [dest]
+
+
+def test_download_parallel_execution(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    urls = ["http://example.com/a.txt", "http://example.com/b.txt"]
+
+    def slow_http_get(u, stream=True):
+        time.sleep(0.2)
+        return DummyResp(b"x")
+
+    monkeypatch.setattr("doc_ai.cli.convert.http_get", slow_http_get)
+    monkeypatch.setattr("doc_ai.cli.convert_path", lambda path, fmts, force=False: {})
+
+    start = time.perf_counter()
+    download_and_convert(urls, "reports", [], False)
+    elapsed = time.perf_counter() - start
+    assert elapsed < 0.35
 
