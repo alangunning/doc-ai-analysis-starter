@@ -100,6 +100,28 @@ def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
     return global_cfg, env_vals, merged
 
 
+def _parse_embed_dimensions(val: str | None) -> int:
+    """Return a validated positive integer for ``EMBED_DIMENSIONS``.
+
+    Args:
+        val: Raw environment variable value.
+
+    Raises:
+        ValueError: If the value is missing, non-numeric, or not positive.
+    """
+    if val is None:
+        raise ValueError("Missing required environment variable: EMBED_DIMENSIONS")
+    try:
+        dim = int(val)
+    except ValueError as exc:  # pragma: no cover - defensive
+        raise ValueError(
+            f"EMBED_DIMENSIONS must be a positive integer; got {val}"
+        ) from exc
+    if dim <= 0:
+        raise ValueError(f"EMBED_DIMENSIONS must be a positive integer; got {val}")
+    return dim
+
+
 logger = logging.getLogger(__name__)
 
 # File extensions considered raw inputs for the pipeline.
@@ -134,7 +156,7 @@ def _validate_prompt(value: Path | None) -> Path | None:
     return value
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def _main_callback(
     ctx: typer.Context,
     version: bool = typer.Option(
@@ -157,6 +179,9 @@ def _main_callback(
         "--interactive/--no-interactive",
         help="Start interactive shell when no command is provided",
     ),
+    no_color: bool = typer.Option(
+        False, "--no-color", help="Disable colorized console output"
+    ),
 ) -> None:
     """Global options."""
     if version:
@@ -164,10 +189,21 @@ def _main_callback(
         raise typer.Exit()
 
     global_cfg, _env_vals, merged = read_configs()
+    try:
+        embed_dims = _parse_embed_dimensions(merged.get("EMBED_DIMENSIONS"))
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1)
     ctx.obj = {
         "config": merged,
         "global_config": global_cfg,
+        "embed_dimensions": embed_dims,
     }
+
+    if no_color:
+        os.environ["NO_COLOR"] = "1"
+        console.no_color = True
+    ctx.obj["no_color"] = no_color
 
     verbose_default = merged.get("VERBOSE", "").lower() in {"1", "true", "yes"}
     banner_default = merged.get("DOC_AI_BANNER", "").lower() in {"1", "true", "yes"}
@@ -290,6 +326,7 @@ def validate_file(*args: Any, **kwargs: Any) -> Any:
 def build_vector_store(*args: Any, **kwargs: Any) -> None:
     from doc_ai.github.vector import build_vector_store as _build_vector_store
 
+    kwargs.setdefault("console", console)
     _build_vector_store(*args, **kwargs)
 
 
@@ -456,8 +493,13 @@ def _register_plugins() -> None:
             continue
         try:
             actual_hash = _hash_distribution(dist)
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to hash plugin %s: %s", ep.name, exc)
+        except (OSError, ValueError) as exc:  # pragma: no cover - defensive
+            logger.error(
+                "Failed to hash plugin %s: %s",
+                ep.name,
+                exc,
+                exc_info=True,
+            )
             continue
         if not hmac.compare_digest(actual_hash, expected_hash):
             logger.error("Hash mismatch for plugin %s", ep.name)
@@ -465,8 +507,17 @@ def _register_plugins() -> None:
 
         try:
             plugin_app = ep.load()
-        except Exception as exc:  # pragma: no cover - defensive
-            logger.error("Failed to load plugin %s: %s", ep.name, exc)
+        except (
+            ImportError,
+            OSError,
+            ValueError,
+        ) as exc:  # pragma: no cover - defensive
+            logger.error(
+                "Failed to load plugin %s: %s",
+                ep.name,
+                exc,
+                exc_info=True,
+            )
             continue
         if isinstance(plugin_app, typer.Typer):
             app.add_typer(plugin_app, name=ep.name)

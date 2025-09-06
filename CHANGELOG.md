@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ## [0.1.0b2] - 2025-09-06
 ### Added
 - Use `setuptools-scm` for automatic versioning.
+- Release instructions for tagging and verifying the CLI version with `doc-ai --version`.
 
 ## [0.1.0b1] - 2025-09-06
 ### Added

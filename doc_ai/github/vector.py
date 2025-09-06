@@ -10,7 +10,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from openai import OpenAI
+from rich.console import Console
+import httpx
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 from rich.progress import Progress
 
 from doc_ai.logging import RedactFilter
@@ -25,14 +27,18 @@ from ..metadata import (
 from .prompts import DEFAULT_MODEL_BASE_URL
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
-EMBED_DIMENSIONS = os.getenv("EMBED_DIMENSIONS")
+EMBED_DIMENSIONS = int(os.environ["EMBED_DIMENSIONS"])
 
 _log = logging.getLogger(__name__)
 _log.addFilter(RedactFilter())
 
 
 def build_vector_store(
-    src_dir: Path, *, fail_fast: bool = False, workers: int = 1
+    src_dir: Path,
+    *,
+    fail_fast: bool = False,
+    workers: int = 1,
+    console: Console | None = None,
 ) -> None:
     """Generate embeddings for Markdown files in ``src_dir``.
 
@@ -70,22 +76,8 @@ def build_vector_store(
             "model": EMBED_MODEL,
             "input": text,
             "encoding_format": "float",
+            "dimensions": EMBED_DIMENSIONS,
         }
-        if EMBED_DIMENSIONS:
-            try:
-                dims = int(EMBED_DIMENSIONS)
-                if dims > 0:
-                    kwargs["dimensions"] = dims
-                else:
-                    _log.warning(
-                        "EMBED_DIMENSIONS must be a positive integer; got %s",
-                        EMBED_DIMENSIONS,
-                    )
-            except ValueError:
-                _log.warning(
-                    "EMBED_DIMENSIONS must be a positive integer; got %s",
-                    EMBED_DIMENSIONS,
-                )
 
         success = False
         max_attempts = 3
@@ -94,21 +86,62 @@ def build_vector_store(
                 resp = client.embeddings.create(**kwargs)
                 success = True
                 break
-            except Exception as exc:  # pragma: no cover - network error
+            except RateLimitError as exc:  # pragma: no cover - network error
                 wait = 2**attempt
                 _log.error(
-                    "Embedding request failed for %s (attempt %s/%s): %s",
+                    "Rate limit error for %s (attempt %s/%s): %s",
                     md_file,
                     attempt,
                     max_attempts,
                     exc,
+                    exc_info=True,
                 )
-                if attempt == max_attempts:
-                    if fail_fast:
-                        raise
-                    _log.error("Skipping %s after repeated failures", md_file)
-                    break
-                time.sleep(wait)
+            except APIError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "OpenAI API error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except APIConnectionError as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Connection error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except httpx.TimeoutException as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Timeout during embedding for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            except Exception as exc:  # pragma: no cover - network error
+                wait = 2**attempt
+                _log.error(
+                    "Unexpected error for %s (attempt %s/%s): %s",
+                    md_file,
+                    attempt,
+                    max_attempts,
+                    exc,
+                    exc_info=True,
+                )
+            if attempt == max_attempts:
+                if fail_fast:
+                    raise
+                _log.warning("Exceeded max retries for %s", md_file)
+                break
+            time.sleep(wait)
 
         if not success:
             return
@@ -123,7 +156,8 @@ def build_vector_store(
         mark_step(meta, "vector", outputs=[out_file.name])
         save_metadata(md_file, meta)
 
-    with Progress(transient=True) as progress:
+    console = console or Console()
+    with Progress(transient=True, console=console) as progress:
         task = progress.add_task("Embedding markdown files", total=len(md_files))
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(process, md): md for md in md_files}
@@ -132,6 +166,10 @@ def build_vector_store(
                 progress.update(task, description=f"Embedding {md_file}")
                 try:
                     fut.result()
+                    progress.console.print(f"Embedded {md_file}")
+                except Exception as exc:  # pragma: no cover - unexpected failure
+                    progress.console.print(f"Failed to embed {md_file}: {exc}")
+                    raise
                 finally:
                     progress.advance(task)
 
