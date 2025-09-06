@@ -10,7 +10,10 @@ from .interactive import refresh_completer, discover_doc_types_topics
 from .utils import prompt_if_missing
 
 
-app = typer.Typer(help="Manage stored URLs.", invoke_without_command=True)
+app = typer.Typer(
+    help="Manage stored URLs; paste or import multiple entries.",
+    invoke_without_command=True,
+)
 
 
 def _url_file(doc_type: str) -> Path:
@@ -52,7 +55,11 @@ def _valid_url(url: str) -> bool:
 def manage_urls(
     ctx: typer.Context, doc_type: str | None = typer.Argument(None, help="Document type")
 ) -> None:
-    """Interactively manage stored URLs for *doc_type*."""
+    """Interactively manage stored URLs for *doc_type*.
+
+    Use "add" to enter one or more URLs separated by whitespace or newlines, or
+    "import" to load URLs from a text file.
+    """
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     doc_type = doc_type or cfg.get("default_doc_type")
     if doc_type is None:
@@ -72,7 +79,7 @@ def manage_urls(
         try:
             action = questionary.select(
                 "Choose action",
-                choices=["list", "add", "remove", "done"],
+                choices=["list", "add", "import", "remove", "done"],
             ).ask()
         except Exception:
             action = "done"
@@ -83,18 +90,52 @@ def manage_urls(
             continue
         if action == "add":
             try:
-                url = questionary.text("Enter URL").ask()
+                raw = questionary.text("Enter URL(s)").ask()
             except Exception:
-                url = None
-            if not url:
+                raw = None
+            if not raw:
                 continue
-            url = url.strip()
-            if not _valid_url(url):
-                typer.echo(f"Skipping invalid URL: {url}")
+            new_urls: list[str] = []
+            for url in raw.split():
+                url = url.strip()
+                if not _valid_url(url):
+                    typer.echo(f"Skipping invalid URL: {url}")
+                    continue
+                if url in urls:
+                    typer.echo(f"Skipping duplicate URL: {url}")
+                    continue
+                urls.append(url)
+                new_urls.append(url)
+            if new_urls:
+                save_urls(path, urls)
+                refresh_completer()
+            continue
+        if action == "import":
+            try:
+                import_path = questionary.text("Path to file with URLs").ask()
+            except Exception:
+                import_path = None
+            if not import_path:
                 continue
-            urls.append(url)
-            save_urls(path, urls)
-            refresh_completer()
+            file_path = Path(import_path).expanduser()
+            if not file_path.exists():
+                typer.echo(f"File not found: {file_path}")
+                continue
+            raw = file_path.read_text()
+            new_urls: list[str] = []
+            for url in raw.split():
+                url = url.strip()
+                if not _valid_url(url):
+                    typer.echo(f"Skipping invalid URL: {url}")
+                    continue
+                if url in urls:
+                    typer.echo(f"Skipping duplicate URL: {url}")
+                    continue
+                urls.append(url)
+                new_urls.append(url)
+            if new_urls:
+                save_urls(path, urls)
+                refresh_completer()
             continue
         if action == "remove":
             if not urls:

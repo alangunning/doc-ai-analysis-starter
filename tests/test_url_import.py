@@ -190,6 +190,85 @@ def test_urls_bulk_delete(tmp_path, monkeypatch):
     assert url_file.read_text().splitlines() == []
 
 
+def test_urls_add_multiple(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("http://a\n")
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    selections = iter(["add", "done"])
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.select",
+        lambda *a, **k: DummyPrompt(next(selections)),
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.text",
+        lambda *a, **k: DummyPrompt("http://b http://c\nnotaurl http://a"),
+    )
+    called = []
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["urls", "reports"])
+    assert result.exit_code == 0, result.output
+    assert url_file.read_text().splitlines() == ["http://a", "http://b", "http://c"]
+    assert called == [True]
+
+
+def test_urls_import_action(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    doc_dir = Path("data/reports")
+    doc_dir.mkdir(parents=True)
+    url_file = doc_dir / "urls.txt"
+    url_file.write_text("")
+    import_file = tmp_path / "list.txt"
+    import_file.write_text(
+        "\n".join([
+            "http://a",
+            "notaurl",
+            "http://a",
+            "http://b",
+        ])
+    )
+
+    class DummyPrompt:
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def ask(self) -> str:
+            return self.response
+
+    selections = iter(["import", "done"])
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.select",
+        lambda *a, **k: DummyPrompt(next(selections)),
+    )
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.questionary.text",
+        lambda *a, **k: DummyPrompt(str(import_file)),
+    )
+    called = []
+    monkeypatch.setattr(
+        "doc_ai.cli.manage_urls.refresh_completer", lambda: called.append(True)
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(app, ["urls", "reports"])
+    assert result.exit_code == 0, result.output
+    assert url_file.read_text().splitlines() == ["http://a", "http://b"]
+    assert called == [True]
+
+
 def test_add_url_rejects_invalid(monkeypatch):
     runner = CliRunner()
     result = runner.invoke(
