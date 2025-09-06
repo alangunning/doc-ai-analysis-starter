@@ -68,8 +68,11 @@ $ doc-ai plugins list
 example
 ```
 
-Trusted plugin names are stored in the global configuration file. Add a
-plugin to the allowlist with `doc-ai plugins trust NAME` and remove it with
+Trusted plugin metadata is stored in the global configuration file. To
+activate a plugin, record both its version and a SHA256 hash of its
+distribution. Add a plugin to the allowlist with
+`doc-ai plugins trust NAME==VERSION` and record its hash with
+`doc-ai plugins trust --hash NAME=SHA256`. Remove a trusted plugin with
 `doc-ai plugins untrust NAME`. Untrusting a plugin removes it from the
 allowlist and unloads it from the current CLI session.
 
