@@ -8,6 +8,8 @@ import logging
 import os
 import sys
 import importlib
+import hashlib
+import hmac
 from importlib.metadata import entry_points
 from enum import Enum
 from pathlib import Path
@@ -371,17 +373,74 @@ app.add_typer(edit_app, name="edit")
 _LOADED_PLUGINS: dict[str, typer.Typer] = {}
 
 
+def _hash_distribution(dist: object) -> str:
+    """Return a SHA256 digest of a distribution's files."""
+    root = Path(getattr(dist, "locate_file", lambda x: "")("") or "")
+    digest = hashlib.sha256()
+    if root and root.exists():
+        for path in sorted(root.rglob("*")):
+            if path.is_file():
+                digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
 def _register_plugins() -> None:
     """Load Typer apps from ``doc_ai.plugins`` entry points."""
     _, _, merged = read_configs()
     raw = merged.get("DOC_AI_TRUSTED_PLUGINS", "")
-    allowed = {p.strip() for p in raw.split(",") if p.strip()}
+    allowed: dict[str, str | None] = {}
+    for item in raw.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if "==" in item:
+            name, ver = item.split("==", 1)
+            allowed[name.strip()] = ver.strip()
+        else:
+            allowed[item] = None
+
+    hashes_raw = merged.get("DOC_AI_TRUSTED_PLUGIN_HASHES", "")
+    expected_hashes: dict[str, str] = {}
+    for item in hashes_raw.split(","):
+        item = item.strip()
+        if not item or "=" not in item:
+            continue
+        name, digest = item.split("=", 1)
+        expected_hashes[name.strip()] = digest.strip()
+
     for ep in entry_points(group="doc_ai.plugins"):
         if ep.name in _LOADED_PLUGINS:
             continue
+
+        dist = getattr(ep, "dist", None)
+        pkg_name = getattr(dist, "metadata", {}).get("Name", "unknown")
+        version = getattr(dist, "version", "unknown")
+        logger.info("Discovered plugin %s from %s %s", ep.name, pkg_name, version)
+
         if ep.name not in allowed:
             logger.info("Skipping untrusted plugin %s", ep.name)
             continue
+        expected_version = allowed[ep.name]
+        if expected_version and expected_version != version:
+            logger.error(
+                "Skipping plugin %s: version %s does not match trusted %s",
+                ep.name,
+                version,
+                expected_version,
+            )
+            continue
+
+        expected_hash = expected_hashes.get(ep.name)
+        if expected_hash and dist is not None:
+            try:
+                actual_hash = _hash_distribution(dist)
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Failed to hash plugin %s: %s", ep.name, exc)
+                continue
+            if not hmac.compare_digest(actual_hash, expected_hash):
+                logger.error("Hash mismatch for plugin %s", ep.name)
+                continue
+
         try:
             plugin_app = ep.load()
         except Exception as exc:  # pragma: no cover - defensive
