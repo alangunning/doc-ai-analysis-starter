@@ -334,6 +334,17 @@ allowlisted. Add a plugin's entry-point name to the allowlist with:
 doc-ai plugins trust example
 ```
 
+### Plugin Trust Model
+
+The loader inspects each plugin's distribution metadata before activation.
+Add entries to the ``DOC_AI_TRUSTED_PLUGINS`` configuration variable as
+``name`` or ``name==version``. During registration, the package name and
+version are logged and compared against the allowlist; mismatches are
+skipped. For additional integrity guarantees, define
+``DOC_AI_TRUSTED_PLUGIN_HASHES`` with ``name=sha256`` pairs. When present,
+the loader hashes the plugin's distribution directory and verifies the
+digest before loading.
+
 ### Log Redaction
 
 Sensitive strings such as API keys are automatically masked in logs. Supply
