@@ -22,8 +22,11 @@ DATA_DIR = Path("data")
 )
 @refresh_after
 def topic(
-    doc_type: str,
+    ctx: typer.Context,
     topic: str,
+    doc_type: str | None = typer.Option(
+        None, "--doc-type", help="Document type"
+    ),
     description: str = typer.Option(
         "",
         "--description",
@@ -35,6 +38,10 @@ def topic(
         typer.echo("Template prompt file not found.", err=True)
         raise typer.Exit(code=1)
 
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
@@ -63,9 +70,18 @@ def topic(
 
 @app.command("rename-topic", help="Rename a topic prompt for a document type.")
 @refresh_after
-def rename_topic(doc_type: str, old: str, new: str) -> None:
+def rename_topic(
+    ctx: typer.Context,
+    old: str,
+    new: str,
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
     """Rename topic *old* to *new* under *doc_type*."""
 
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)
@@ -93,9 +109,17 @@ def rename_topic(doc_type: str, old: str, new: str) -> None:
 
 @app.command("delete-topic", help="Delete a topic prompt from a document type.")
 @refresh_after
-def delete_topic(doc_type: str, topic: str) -> None:
+def delete_topic(
+    ctx: typer.Context,
+    topic: str,
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
     """Delete the topic prompt *topic* under *doc_type*."""
 
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    doc_type = doc_type or cfg.get("default_doc_type")
+    if doc_type is None:
+        raise typer.BadParameter("Document type required")
     target_dir = DATA_DIR / doc_type
     if not target_dir.exists():
         typer.echo(f"Document type directory {target_dir} does not exist", err=True)

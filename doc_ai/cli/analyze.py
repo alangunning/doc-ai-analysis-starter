@@ -103,7 +103,13 @@ def analyze(
         used_fmt = fmt or OutputFormat.MARKDOWN
         markdown_doc = source.with_name(source.name + _suffix(used_fmt))
     try:
-        topics = list(topic) if topic else [None]
+        topics = list(topic) if topic else []
+        if not topics:
+            default_topic = cfg.get("default_topic")
+            if default_topic:
+                topics = [default_topic]
+        if not topics:
+            topics = [None]
         for tp in topics:
             analyze_doc(
                 markdown_doc,

@@ -1,5 +1,7 @@
 import shutil
 from pathlib import Path
+import shutil
+from pathlib import Path
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -51,19 +53,24 @@ def test_rename_and_delete_doc_type():
         # add a topic to ensure rename updates topic files
         topic_tpl = Path(".github/prompts/doc-analysis.topic.prompt.yaml")
         repo_root = Path(__file__).resolve().parents[1]
-        shutil.copy(repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml", topic_tpl)
-        runner.invoke(app, ["new", "topic", "old", "biology"])
+        shutil.copy(
+            repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml",
+            topic_tpl,
+        )
+        runner.invoke(app, ["new", "topic", "biology", "--doc-type", "old"])
 
         with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=True):
             rename_res = runner.invoke(
-                app, ["new", "rename-doc-type", "old", "new"], input="y\n"
+                app, ["new", "rename-doc-type", "new", "--doc-type", "old"], input="y\n"
             )
         assert rename_res.exit_code == 0
         assert Path("data/new/new.analysis.prompt.yaml").is_file()
         assert Path("data/new/new.analysis.biology.prompt.yaml").is_file()
 
         with patch("doc_ai.cli.new_doc_type.sys.stdin.isatty", return_value=True):
-            del_res = runner.invoke(app, ["new", "delete-doc-type", "new"], input="y\n")
+            del_res = runner.invoke(
+                app, ["new", "delete-doc-type", "--doc-type", "new"], input="y\n"
+            )
         assert del_res.exit_code == 0
         assert not Path("data/new").exists()
 

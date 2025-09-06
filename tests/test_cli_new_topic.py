@@ -29,8 +29,9 @@ def test_new_topic_management():
             [
                 "new",
                 "topic",
-                "sample",
                 "biology",
+                "--doc-type",
+                "sample",
                 "--description",
                 "desc",
             ],
@@ -49,9 +50,10 @@ def test_new_topic_management():
                 [
                     "new",
                     "rename-topic",
-                    "sample",
                     "biology",
                     "chemistry",
+                    "--doc-type",
+                    "sample",
                 ],
                 input="y\n",
             )
@@ -65,7 +67,7 @@ def test_new_topic_management():
 
         with patch("doc_ai.cli.new_topic.sys.stdin.isatty", return_value=True):
             del_res = runner.invoke(
-                app, ["new", "delete-topic", "sample", "chemistry"], input="y\n"
+                app, ["new", "delete-topic", "chemistry", "--doc-type", "sample"], input="y\n"
             )
         assert del_res.exit_code == 0
         assert not renamed.exists()

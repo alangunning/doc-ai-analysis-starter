@@ -81,6 +81,7 @@ class DocAICompleter(Completer):
         self._env = WordCompleter([], ignore_case=True)
         self._doc_types = WordCompleter([], ignore_case=True)
         self._topics = WordCompleter([], ignore_case=True)
+        self._ctx = ctx
         self.refresh()
 
     def refresh(self) -> None:
@@ -102,6 +103,13 @@ class DocAICompleter(Completer):
         self._env = WordCompleter(env_words, ignore_case=True)
 
         doc_types, topics = discover_doc_types_topics(Path("data"))
+        cfg = self._ctx.obj.get("config", {}) if self._ctx.obj else {}
+        default_doc_type = cfg.get("default_doc_type")
+        default_topic = cfg.get("default_topic")
+        if default_doc_type in doc_types:
+            doc_types = [default_doc_type] + [d for d in doc_types if d != default_doc_type]
+        if default_topic in topics:
+            topics = [default_topic] + [t for t in topics if t != default_topic]
         self._doc_types = WordCompleter(doc_types, ignore_case=True)
         self._topics = WordCompleter(topics, ignore_case=True)
 

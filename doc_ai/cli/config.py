@@ -203,6 +203,44 @@ def toggle(
     _set_pairs(ctx, [f"{key}={new_val}"], global_scope)
 
 
+@app.command("default-doc-type")
+def default_doc_type(
+    ctx: typer.Context,
+    doc_type: str | None = typer.Argument(None, help="Default document type"),
+) -> None:
+    """Set or clear the default document type."""
+    cfg = dict(ctx.obj.get("global_config", {}))
+    if doc_type:
+        cfg["default_doc_type"] = doc_type
+        typer.echo(f"Default document type set to '{doc_type}'")
+    else:
+        cfg.pop("default_doc_type", None)
+        typer.echo("Default document type cleared")
+    save_global_config(cfg)
+    global_cfg, _env_vals, merged = read_configs()
+    ctx.obj.update({"global_config": global_cfg, "config": merged})
+    refresh_completer()
+
+
+@app.command("default-topic")
+def default_topic(
+    ctx: typer.Context,
+    topic: str | None = typer.Argument(None, help="Default analysis topic"),
+) -> None:
+    """Set or clear the default analysis topic."""
+    cfg = dict(ctx.obj.get("global_config", {}))
+    if topic:
+        cfg["default_topic"] = topic
+        typer.echo(f"Default topic set to '{topic}'")
+    else:
+        cfg.pop("default_topic", None)
+        typer.echo("Default topic cleared")
+    save_global_config(cfg)
+    global_cfg, _env_vals, merged = read_configs()
+    ctx.obj.update({"global_config": global_cfg, "config": merged})
+    refresh_completer()
+
+
 def set_defaults(
     ctx: typer.Context, pairs: list[str] = typer.Argument(..., metavar="VAR=VALUE")
 ) -> None:

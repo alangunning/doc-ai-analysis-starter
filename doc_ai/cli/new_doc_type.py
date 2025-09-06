@@ -65,9 +65,17 @@ def doc_type(
 
 @app.command("rename-doc-type", help="Rename a document type and its prompt files.")
 @refresh_after
-def rename_doc_type(old: str, new: str) -> None:
+def rename_doc_type(
+    ctx: typer.Context,
+    new: str,
+    old: str | None = typer.Option(None, "--doc-type", help="Existing name"),
+) -> None:
     """Rename existing document type *old* to *new*."""
 
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    old = old or cfg.get("default_doc_type")
+    if old is None:
+        raise typer.BadParameter("Document type required")
     old_dir = DATA_DIR / old
     new_dir = DATA_DIR / new
     if not old_dir.exists():
@@ -94,9 +102,16 @@ def rename_doc_type(old: str, new: str) -> None:
 
 @app.command("delete-doc-type", help="Delete a document type directory.")
 @refresh_after
-def delete_doc_type(name: str) -> None:
+def delete_doc_type(
+    ctx: typer.Context,
+    name: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
     """Remove the document type directory named *name*."""
 
+    cfg = ctx.obj.get("config", {}) if ctx.obj else {}
+    name = name or cfg.get("default_doc_type")
+    if name is None:
+        raise typer.BadParameter("Document type required")
     target_dir = DATA_DIR / name
     if not target_dir.exists():
         typer.echo(f"Directory {target_dir} does not exist", err=True)
