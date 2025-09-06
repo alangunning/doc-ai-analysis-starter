@@ -119,6 +119,26 @@ RAW_SUFFIXES = {
 }
 
 
+def _validate_env() -> None:
+    """Warn if known environment variables are misconfigured."""
+    embed_dims = os.getenv("EMBED_DIMENSIONS")
+    if embed_dims:
+        try:
+            if int(embed_dims) <= 0:
+                logger.warning(
+                    "EMBED_DIMENSIONS must be a positive integer; got %s",
+                    embed_dims,
+                )
+        except ValueError:
+            logger.warning(
+                "EMBED_DIMENSIONS must be a positive integer; got %s",
+                embed_dims,
+            )
+
+
+_validate_env()
+
+
 class ModelName(str, Enum):
     """Supported model names for CLI options."""
 

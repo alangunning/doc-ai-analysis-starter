@@ -31,6 +31,29 @@ _log = logging.getLogger(__name__)
 _log.addFilter(RedactFilter())
 
 
+def _parse_embed_dimensions() -> int | None:
+    """Return EMBED_DIMENSIONS as a positive integer or ``None``.
+
+    Logs a warning if the environment variable is set to an invalid value.
+    """
+    if not EMBED_DIMENSIONS:
+        return None
+    try:
+        dims = int(EMBED_DIMENSIONS)
+        if dims > 0:
+            return dims
+    except ValueError:
+        pass
+    _log.warning(
+        "EMBED_DIMENSIONS must be a positive integer; got %s", EMBED_DIMENSIONS
+    )
+    return None
+
+
+# Validate at import time so misconfiguration is surfaced early
+_parse_embed_dimensions()
+
+
 def build_vector_store(
     src_dir: Path, *, fail_fast: bool = False, workers: int = 1
 ) -> None:
@@ -71,21 +94,9 @@ def build_vector_store(
             "input": text,
             "encoding_format": "float",
         }
-        if EMBED_DIMENSIONS:
-            try:
-                dims = int(EMBED_DIMENSIONS)
-                if dims > 0:
-                    kwargs["dimensions"] = dims
-                else:
-                    _log.warning(
-                        "EMBED_DIMENSIONS must be a positive integer; got %s",
-                        EMBED_DIMENSIONS,
-                    )
-            except ValueError:
-                _log.warning(
-                    "EMBED_DIMENSIONS must be a positive integer; got %s",
-                    EMBED_DIMENSIONS,
-                )
+        dims = _parse_embed_dimensions()
+        if dims is not None:
+            kwargs["dimensions"] = dims
 
         success = False
         max_attempts = 3
