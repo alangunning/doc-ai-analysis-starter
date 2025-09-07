@@ -288,9 +288,9 @@ def select_topic(ctx: typer.Context, doc_type: str, topic: str | None) -> str:
 
 DEFAULT_ENV_VARS: dict[str, str | None] = {
     "DOCS_SITE_URL": "https://alangunning.github.io",
-    "DOCS_BASE_URL": "/doc-ai-analysis-starter/docs/",
+    "DOCS_BASE_URL": "/doc-ai/docs/",
     "GITHUB_ORG": "alangunning",
-    "GITHUB_REPO": "doc-ai-analysis-starter",
+    "GITHUB_REPO": "doc-ai",
     "PR_REVIEW_MODEL": "gpt-4.1",
     "MODEL_PRICE_GPT_4O_INPUT": "0.005",
     "MODEL_PRICE_GPT_4O_OUTPUT": "0.015",

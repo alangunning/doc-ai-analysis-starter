@@ -8,7 +8,7 @@ A simple commit under `data/` triggers the full pipeline—conversion, validatio
 
 > **Note:** The repository stores small example documents directly in Git for clarity. For production use or large datasets, extend the workflows to handle big files with [Git LFS](https://git-lfs.com/) and back them with an object storage service.
 
-Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/).
+Full documentation lives in the `docs/` folder and is published at [https://alangunning.github.io/doc-ai/docs/](https://alangunning.github.io/doc-ai/docs/).
 
 ## Quick Start
 
@@ -45,7 +45,7 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    `doc-ai config toggle KEY` to flip common booleans, and
    `doc-ai config show` to display current settings. The CLI creates or updates
    the file with `0600` permissions for security. See the
-   [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md)
+  [Configuration guide](https://github.com/alangunning/doc-ai/blob/main/docs/content/guides/configuration.md)
    for details on workflow toggles and model settings. Set
    `EMBED_DIMENSIONS` to the embedding size expected by your chosen model (for
    example `1536` for `text-embedding-3-small`). If this variable is unset the
@@ -332,18 +332,18 @@ from Git tags. The package exposes ``doc_ai.__version__`` via
 
 ## Documentation
 
-Guides for each part of the template live in the `docs/` folder and are published at [https://alangunning.github.io/doc-ai-analysis-starter/docs/](https://alangunning.github.io/doc-ai-analysis-starter/docs/). Useful starting points:
+Guides for each part of the template live in the `docs/` folder and are published at [https://alangunning.github.io/doc-ai/docs/](https://alangunning.github.io/doc-ai/docs/). Useful starting points:
 
-- [Introduction](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/intro) – project overview and navigation
-- [Workflow Overview](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/workflows) – how the GitHub Actions fit together
-- [CLI Scripts and Prompts](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/scripts-and-prompts) – run conversions and analyses locally
-- [Converter Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/converter) – programmatic file conversion
-- [GitHub Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/github) – helpers for GitHub Models
-- [OpenAI Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/openai) – reusable file and response helpers
-- [Metadata Module](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) – track processing state
-- [Configuration](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/configuration) – environment variables and model settings
-- [Pull Request Reviews](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/pr-review) – automate AI feedback on PRs
-- [Plugin System](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/doc_ai/plugins) – extend the CLI with custom commands, REPL commands, and completion providers; see [docs/content/examples/plugin_example.py](docs/content/examples/plugin_example.py) for a template
+- [Introduction](https://alangunning.github.io/doc-ai/docs/content/intro) – project overview and navigation
+- [Workflow Overview](https://alangunning.github.io/doc-ai/docs/content/workflows) – how the GitHub Actions fit together
+- [CLI Scripts and Prompts](https://alangunning.github.io/doc-ai/docs/content/scripts-and-prompts) – run conversions and analyses locally
+- [Converter Module](https://alangunning.github.io/doc-ai/docs/content/converter) – programmatic file conversion
+- [GitHub Module](https://alangunning.github.io/doc-ai/docs/content/github) – helpers for GitHub Models
+- [OpenAI Module](https://alangunning.github.io/doc-ai/docs/content/openai) – reusable file and response helpers
+- [Metadata Module](https://alangunning.github.io/doc-ai/docs/content/metadata) – track processing state
+- [Configuration](https://alangunning.github.io/doc-ai/docs/content/configuration) – environment variables and model settings
+- [Pull Request Reviews](https://alangunning.github.io/doc-ai/docs/content/pr-review) – automate AI feedback on PRs
+- [Plugin System](https://alangunning.github.io/doc-ai/docs/content/doc_ai/plugins) – extend the CLI with custom commands, REPL commands, and completion providers; see [docs/content/examples/plugin_example.py](docs/content/examples/plugin_example.py) for a template
 
 ## Plugin Development
 
@@ -424,7 +424,7 @@ Run Bandit locally to scan for common security issues:
 bandit -r doc_ai
 ```
 
-Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai-analysis-starter/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md).
+Each run updates the companion metadata so completed steps are skipped. See the [metadata docs](https://alangunning.github.io/doc-ai/docs/content/metadata) for a full overview of the schema and available fields. Configure which steps run using the environment variables described in the [Configuration guide](https://github.com/alangunning/doc-ai/blob/main/docs/content/guides/configuration.md).
 
 ```mermaid
 graph LR
