@@ -155,8 +155,8 @@ def _allow_shell() -> bool:
         try:
             _, _, merged = read_configs()
             cfg = merged
-        except Exception as exc:
-            logger.debug("Failed to read configs: %s", exc)
+        except Exception:
+            logger.exception("Failed to read configs")
             cfg = {}
     return _allow_shell_from_config(cfg)
 
@@ -526,8 +526,8 @@ def _repl_edit_url_list(args: list[str]) -> None:
             return
         try:
             doc_type = questionary.select("Document type", choices=doc_types).ask()
-        except Exception as exc:
-            logger.debug("Failed to prompt for document type: %s", exc)
+        except Exception:
+            logger.exception("Failed to prompt for document type")
             doc_type = None
     if not doc_type:
         click.echo("Document type required")
@@ -560,8 +560,8 @@ def _wizard_new_doc_type() -> None:
             name=questionary.text("Document type"),
             description=questionary.text("Description", default=""),
         ).ask()
-    except Exception as exc:
-        logger.debug("New document type wizard failed: %s", exc)
+    except Exception:
+        logger.exception("New document type wizard failed")
         answers = None
     if not answers or not answers.get("name"):
         return
@@ -590,8 +590,8 @@ def _wizard_new_topic() -> None:
             topic=questionary.text("Topic"),
             description=questionary.text("Description", default=""),
         ).ask()
-    except Exception as exc:
-        logger.debug("New topic wizard failed: %s", exc)
+    except Exception:
+        logger.exception("New topic wizard failed")
         answers = None
     if not answers or not answers.get("doc_type") or not answers.get("topic"):
         return
@@ -620,8 +620,8 @@ def _wizard_urls() -> None:
             doc_type=questionary.select("Document type", choices=doc_types),
             urls=questionary.text("Enter URL(s) (one per line)", multiline=True),
         ).ask()
-    except Exception as exc:
-        logger.debug("URL wizard failed: %s", exc)
+    except Exception:
+        logger.exception("URL wizard failed")
         answers = None
     if not answers or not answers.get("doc_type") or not answers.get("urls"):
         return
@@ -777,8 +777,8 @@ class DocAICompleter(Completer):
         try:
             _, _, merged = read_configs()
             cfg = dict(merged)
-        except Exception as exc:
-            logger.debug("Failed to read configs: %s", exc)
+        except Exception:
+            logger.exception("Failed to read configs")
             cfg = {}
         if self._ctx.obj and isinstance(self._ctx.obj.get("config"), dict):
             cfg.update(self._ctx.obj["config"])

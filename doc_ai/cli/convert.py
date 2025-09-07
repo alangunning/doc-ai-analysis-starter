@@ -142,7 +142,9 @@ def convert(
             else:
                 results.update(_convert_path(Path(source), fmts, force=force))
         except Exception as exc:  # pragma: no cover - error handling
+            logger.exception("Conversion failed for %s", source)
             logger.error(str(exc))
+            typer.echo(f"Error: {exc}", err=True)
             raise typer.Exit(1)
 
     if not results:

@@ -389,7 +389,8 @@ def wizard(
         ctx.obj = {}
     try:
         interactive = bool(ctx.obj.get("interactive", True)) and sys.stdin.isatty()
-    except Exception:
+    except AttributeError as exc:
+        logger.debug("Failed to determine interactive mode: %s", exc)
         interactive = False
     if not interactive:
         typer.echo("Interactive prompts disabled; no changes made")
@@ -400,6 +401,7 @@ def wizard(
         try:
             answer = questionary.text(key, default=str(default or "")).ask()
         except Exception:  # pragma: no cover - best effort
+            logger.exception("Prompt failed for %s", key)
             answer = default or ""
         if answer:
             pairs.append(f"{key}={answer}")

@@ -81,12 +81,11 @@ def configure_logging(
 
     root = logging.getLogger()
     # Close existing handlers to avoid ResourceWarning when reconfiguring
-    failures: list[tuple[str, Exception]] = []
     for handler in list(root.handlers):
         try:
             handler.close()
-        except Exception as exc:  # pragma: no cover - best effort cleanup
-            failures.append((repr(handler), exc))
+        except Exception:  # pragma: no cover - best effort cleanup
+            logging.getLogger(__name__).exception("Failed to close handler %r", handler)
     root.handlers.clear()
     root.setLevel(numeric_level)
 
@@ -105,11 +104,6 @@ def configure_logging(
         )
         file_handler.addFilter(redact_filter)
         root.addHandler(file_handler)
-
-    for handler_repr, exc in failures:
-        logging.getLogger(__name__).warning(
-            "Failed to close handler %s", handler_repr, exc_info=exc
-        )
 
     logging.captureWarnings(True)
     pywarn = logging.getLogger("py.warnings")
