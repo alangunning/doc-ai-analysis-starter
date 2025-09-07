@@ -48,8 +48,9 @@ Full documentation lives in the `docs/` folder and is published at [https://alan
    [Configuration guide](https://github.com/alangunning/doc-ai-analysis-starter/blob/main/docs/content/guides/configuration.md)
    for details on workflow toggles and model settings. Set
    `EMBED_DIMENSIONS` to the embedding size expected by your chosen model (for
-   example `1536` for `text-embedding-3-small`). The embedding helpers raise a
-   clear error if the variable is missing or invalid.
+   example `1536` for `text-embedding-3-small`). If this variable is unset the
+   tools default to `1536` and log a warning; invalid values still raise a clear
+   error.
 
 4. **Try it out**
 
