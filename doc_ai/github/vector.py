@@ -7,7 +7,11 @@ import json
 import logging
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import (
+    ProcessPoolExecutor,
+    ThreadPoolExecutor,
+    as_completed,
+)
 from pathlib import Path
 
 import httpx
@@ -42,16 +46,22 @@ def build_vector_store(
     *,
     fail_fast: bool = False,
     workers: int = 1,
+    use_processes: bool = False,
     console: Console | None = None,
 ) -> None:
     """Generate embeddings for Markdown files in ``src_dir``.
+
+    Use threads for network-bound API calls and processes for CPU-heavy
+    embedding generation (e.g., local models).
 
     Args:
         src_dir: Directory containing Markdown files to embed.
         fail_fast: If ``True``, raise an exception when an HTTP request
             repeatedly fails. Otherwise, log the error and continue with the
             next file.
-        workers: Number of threads used for concurrent processing.
+        workers: Number of worker threads or processes.
+        use_processes: If ``True``, run the embedding tasks in separate
+            processes instead of threads.
     """
 
     base_url = (
@@ -63,11 +73,10 @@ def build_vector_store(
     token = os.getenv(api_key_var)
     if not token:
         raise RuntimeError(f"Missing required environment variable: {api_key_var}")
-    client = OpenAI(api_key=token, base_url=base_url)
-
-    md_files = list(src_dir.rglob("*.md"))
+    client_kwargs = {"api_key": token, "base_url": base_url}
 
     def process(md_file: Path) -> None:
+        client = OpenAI(**client_kwargs)
         meta = load_metadata(md_file)
         file_hash = compute_hash(md_file)
         if meta.blake2b == file_hash and is_step_done(meta, "vector"):
@@ -161,9 +170,13 @@ def build_vector_store(
         save_metadata(md_file, meta)
 
     console = console or Console()
+    total = sum(1 for _ in src_dir.rglob("*.md"))
+    md_files = src_dir.rglob("*.md")
+    executor_cls = ProcessPoolExecutor if use_processes else ThreadPoolExecutor
+
     with Progress(transient=True, console=console) as progress:
-        task = progress.add_task("Embedding markdown files", total=len(md_files))
-        with ThreadPoolExecutor(max_workers=workers) as executor:
+        task = progress.add_task("Embedding markdown files", total=total)
+        with executor_cls(max_workers=workers) as executor:
             futures = {executor.submit(process, md): md for md in md_files}
             for fut in as_completed(futures):
                 md_file = futures[fut]
