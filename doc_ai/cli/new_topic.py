@@ -6,6 +6,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import click
 import typer
 
 from .interactive import refresh_after
@@ -66,6 +67,25 @@ def topic(
             target_file.with_suffix(".description.txt").write_text(desc + "\n")
     else:
         typer.echo(f"Created {target_file}")
+
+
+@app.command("edit-topic", help="Edit a topic prompt for a document type.")
+@refresh_after  # type: ignore[misc]
+def edit_topic(
+    ctx: typer.Context,
+    topic: str | None = typer.Argument(None, help="Topic"),
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Open existing topic prompt *topic* for *doc_type* in ``click.edit``."""
+
+    doc_type = select_doc_type(ctx, doc_type)
+    topic = select_topic(ctx, doc_type, topic)
+    target_file = DATA_DIR / doc_type / f"{doc_type}.analysis.{topic}.prompt.yaml"
+    if not target_file.exists():
+        typer.echo(f"Prompt file {target_file} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    click.edit(filename=str(target_file))
 
 
 @app.command("rename-topic", help="Rename a topic prompt for a document type.")

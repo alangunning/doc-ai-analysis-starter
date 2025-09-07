@@ -216,3 +216,35 @@ def test_new_topic_prompts_for_topic():
         assert target_file.is_file()
         desc_file = Path("data/sample/sample.analysis.biology.prompt.description.txt")
         assert desc_file.read_text().strip() == "desc"
+
+
+def test_edit_topic_opens_prompt():
+    runner = CliRunner()
+    repo_root = Path(__file__).resolve().parents[1]
+    analysis_tpl = (
+        repo_root / ".github" / "prompts" / "doc-analysis.analysis.prompt.yaml"
+    )
+    validate_tpl = (
+        repo_root / ".github" / "prompts" / "validate-output.validate.prompt.yaml"
+    )
+    topic_tpl = repo_root / ".github" / "prompts" / "doc-analysis.topic.prompt.yaml"
+
+    with runner.isolated_filesystem():
+        prompts_dir = Path(".github/prompts")
+        prompts_dir.mkdir(parents=True)
+        shutil.copy(analysis_tpl, prompts_dir / "doc-analysis.analysis.prompt.yaml")
+        shutil.copy(validate_tpl, prompts_dir / "validate-output.validate.prompt.yaml")
+        shutil.copy(topic_tpl, prompts_dir / "doc-analysis.topic.prompt.yaml")
+
+        runner.invoke(app, ["new", "doc-type", "sample"])
+        runner.invoke(app, ["new", "topic", "biology", "--doc-type", "sample"])
+
+        target_file = Path("data/sample/sample.analysis.biology.prompt.yaml")
+        with patch("doc_ai.cli.new_topic.click.edit") as edit_mock:
+            edit_mock.return_value = ""
+            res = runner.invoke(
+                app,
+                ["new", "edit-topic", "biology", "--doc-type", "sample"],
+            )
+        assert res.exit_code == 0
+        edit_mock.assert_called_once_with(filename=str(target_file))

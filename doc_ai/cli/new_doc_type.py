@@ -6,6 +6,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import click
 import typer
 
 from .interactive import refresh_after
@@ -68,6 +69,23 @@ def doc_type(
             (target_dir / "description.txt").write_text(desc + "\n")
     else:
         typer.echo(f"Created {target_dir}")
+
+
+@app.command("edit-doc-type", help="Edit the analysis prompt for a document type.")
+@refresh_after  # type: ignore[misc]
+def edit_doc_type(
+    ctx: typer.Context,
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Open the main analysis prompt for *doc_type* in ``click.edit``."""
+
+    doc_type = select_doc_type(ctx, doc_type)
+    target_file = DATA_DIR / doc_type / f"{doc_type}.analysis.prompt.yaml"
+    if not target_file.exists():
+        typer.echo(f"Prompt file {target_file} does not exist", err=True)
+        raise typer.Exit(code=1)
+
+    click.edit(filename=str(target_file))
 
 
 @app.command("rename-doc-type", help="Rename a document type and its prompt files.")
