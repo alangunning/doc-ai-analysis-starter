@@ -127,7 +127,12 @@ def _allow_shell() -> bool:
 
 
 def _dispatch_repl_commands(command: str) -> bool:
-    """Execute system commands prefixed with ``!`` using ``subprocess.run``."""
+    """Execute system commands prefixed with ``!`` using ``subprocess.run``.
+
+    Environment variables are filtered according to the allow/deny list
+    returned by :func:`_parse_allow_deny` so that only explicitly whitelisted
+    names are exposed to the subprocess.
+    """
 
     global LAST_EXIT_CODE
     if command.startswith("!"):
@@ -142,8 +147,18 @@ def _dispatch_repl_commands(command: str) -> bool:
         if not parts:
             LAST_EXIT_CODE = 0
             return True
+        # Build a sanitized environment based on the configured allow/deny lists.
+        allow, deny = _parse_allow_deny(os.getenv(SAFE_ENV_VARS_ENV))
+        names = {name for name in allow if name not in deny}
+        env = {name: os.environ[name] for name in names if name in os.environ}
         try:
-            result = subprocess.run(parts, shell=False, capture_output=True, text=True)
+            result = subprocess.run(
+                parts,
+                shell=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
         except FileNotFoundError:
             click.echo(f"{parts[0]}: command not found", err=True)
             LAST_EXIT_CODE = 127

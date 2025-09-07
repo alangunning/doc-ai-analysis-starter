@@ -81,6 +81,26 @@ def test_bang_preserves_exit_status(capsys, monkeypatch):
     assert interactive.LAST_EXIT_CODE == 3
 
 
+def test_bang_sanitizes_environment(monkeypatch, capsys):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    monkeypatch.delenv("DOC_AI_SAFE_ENV_VARS", raising=False)
+    monkeypatch.setenv("SECRET_VAR", "topsecret")
+    _setup()
+    _parse_command("!env")
+    out = capsys.readouterr().out
+    assert "SECRET_VAR" not in out
+
+
+def test_bang_allows_whitelisted_env(monkeypatch, capsys):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    monkeypatch.setenv("DOC_AI_SAFE_ENV_VARS", "PATH,HOME,SECRET_VAR")
+    monkeypatch.setenv("SECRET_VAR", "revealed")
+    _setup()
+    _parse_command("!env")
+    out = capsys.readouterr().out
+    assert "SECRET_VAR=revealed" in out
+
+
 def test_bang_warns_when_shell_disabled(monkeypatch):
     monkeypatch.delenv("DOC_AI_ALLOW_SHELL", raising=False)
     _setup()

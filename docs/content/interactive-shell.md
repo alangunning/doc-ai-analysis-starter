@@ -43,6 +43,12 @@ Examples::
 Variables not present in the allow list are omitted from completion results so
 accidental disclosure of secrets is avoided.
 
+The same allow list is applied when executing shell escapes. Commands launched
+with ``!`` receive only the whitelisted variables in their environment. Add
+names to :envvar:`DOC_AI_SAFE_ENV_VARS` or use ``doc-ai config safe-env add``
+to expose more variables. When overriding the allow list, remember to include
+``PATH`` if commands rely on it for resolution.
+
 ## Built-in commands
 
 The interactive prompt includes a minimal set of shell-like commands.

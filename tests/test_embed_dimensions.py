@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from doc_ai.cli import app, _parse_embed_dimensions, DEFAULT_EMBED_DIMENSIONS
+from doc_ai.cli import DEFAULT_EMBED_DIMENSIONS, _parse_embed_dimensions, app
 
 
 @pytest.mark.parametrize(
@@ -55,6 +55,7 @@ def test_vector_module_raises_runtime_error(monkeypatch, value, message):
 def test_vector_module_uses_default_dimensions(monkeypatch):
     monkeypatch.delenv("EMBED_DIMENSIONS", raising=False)
     import importlib
+
     import doc_ai.github.vector as vector
 
     vector = importlib.reload(vector)
