@@ -8,17 +8,13 @@ import re
 import shlex
 import stat
 import subprocess
+import types
 import warnings
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, TypeVar, cast
 
 import click
-
-# Replace deprecated MultiCommand with Group before importing click-repl
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", ".*'MultiCommand'.*", DeprecationWarning)
-    click.MultiCommand = click.Group  # type: ignore[attr-defined]
-
+import click_repl._completer as repl_completer
 import click_repl.utils as repl_utils
 import questionary
 import typer
@@ -40,6 +36,21 @@ from typer.main import get_command
 import doc_ai.batch as batch_mod
 from doc_ai import plugins
 from doc_ai.batch import run_batch
+
+# Provide a local shim for click's deprecated MultiCommand without touching the
+# global Click namespace.  Older versions of ``click-repl`` still reference
+# ``click.MultiCommand`` which emits a deprecation warning under Click 8.1+.
+_click_proxy = types.ModuleType("click_proxy")
+_click_proxy.__dict__.update(click.__dict__)
+
+
+class _MultiCommand(click.Group):
+    """Compatibility shim for ``click.MultiCommand``."""
+
+
+_click_proxy.MultiCommand = _MultiCommand
+repl_utils.click = _click_proxy
+repl_completer.click = _click_proxy
 
 SAFE_ENV_VARS_ENV = "DOC_AI_SAFE_ENV_VARS"
 """Config key with comma-separated allow/deny env var names."""
