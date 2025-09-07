@@ -6,9 +6,9 @@ import * as dotenv from 'dotenv';
 dotenv.config({path: '../.env'});
 
 const siteUrl = process.env.DOCS_SITE_URL ?? 'https://alangunning.github.io';
-const baseUrl = process.env.DOCS_BASE_URL ?? '/doc-ai-analysis-starter/';
+const baseUrl = process.env.DOCS_BASE_URL ?? '/doc-ai-analysis/';
 const organizationName = process.env.GITHUB_ORG ?? 'alangunning';
-const projectName = process.env.GITHUB_REPO ?? 'doc-ai-analysis-starter';
+const projectName = process.env.GITHUB_REPO ?? 'doc-ai-analysis';
 
 const config = {
   title: 'Doc AI Starter',
