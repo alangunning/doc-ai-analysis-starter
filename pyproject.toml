@@ -56,12 +56,12 @@ doc-ai = "doc_ai.cli:main"
 
 [project.optional-dependencies]
 dev = [
-    "ruff==0.12.12",
-    "pytest==8.4.2",
-    "bandit==1.8.6",
-    "mypy==1.11.2",
-    "black==24.10.0",
-    "pre-commit==3.8.0",
+    "ruff>=0.12.12,<1",
+    "pytest>=8.4.2,<9",
+    "bandit>=1.8.6,<2",
+    "mypy>=1.11.2,<2",
+    "black>=24.10.0,<25",
+    "pre-commit>=3.8.0,<4",
     "setuptools-scm>=7,<9",
 ]
 
