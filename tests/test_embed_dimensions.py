@@ -6,7 +6,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from doc_ai.cli import app, _parse_embed_dimensions, DEFAULT_EMBED_DIMENSIONS
+from doc_ai.cli import DEFAULT_EMBED_DIMENSIONS, _parse_embed_dimensions, app
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["abc", "0", "-5"],
+)
+def test_cli_warns_and_defaults_interactive(monkeypatch, caplog, value):
+    runner = CliRunner()
+    caplog.set_level(logging.WARNING, logger="doc_ai.cli")
+    monkeypatch.setenv("EMBED_DIMENSIONS", value)
+    result = runner.invoke(app, ["version"])
+    assert result.exit_code == 0
+    assert "defaulting to" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -17,10 +30,12 @@ from doc_ai.cli import app, _parse_embed_dimensions, DEFAULT_EMBED_DIMENSIONS
         ("-5", "EMBED_DIMENSIONS must be a positive integer; got -5"),
     ],
 )
-def test_cli_rejects_invalid_embed_dimensions(monkeypatch, tmp_path, value, message):
+def test_cli_errors_invalid_embed_dimensions_non_interactive(
+    monkeypatch, value, message
+):
     runner = CliRunner()
     monkeypatch.setenv("EMBED_DIMENSIONS", value)
-    result = runner.invoke(app, ["embed", str(tmp_path)])
+    result = runner.invoke(app, ["--no-interactive", "version"])
     assert result.exit_code != 0
     assert message in result.output
 
@@ -55,6 +70,7 @@ def test_vector_module_raises_runtime_error(monkeypatch, value, message):
 def test_vector_module_uses_default_dimensions(monkeypatch):
     monkeypatch.delenv("EMBED_DIMENSIONS", raising=False)
     import importlib
+
     import doc_ai.github.vector as vector
 
     vector = importlib.reload(vector)

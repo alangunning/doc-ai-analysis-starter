@@ -199,11 +199,14 @@ def _main_callback(
         raise typer.Exit()
 
     global_cfg, _env_vals, merged = read_configs()
+    raw_embed = merged.get("EMBED_DIMENSIONS")
+    embed_error: ValueError | None = None
     try:
-        embed_dims = _parse_embed_dimensions(merged.get("EMBED_DIMENSIONS"))
+        embed_dims = _parse_embed_dimensions(raw_embed)
     except ValueError as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(1)
+        embed_error = exc
+        logger.warning("%s; defaulting to %s", exc, DEFAULT_EMBED_DIMENSIONS)
+        embed_dims = DEFAULT_EMBED_DIMENSIONS
     ctx.obj = {
         "config": merged,
         "global_config": global_cfg,
@@ -255,6 +258,9 @@ def _main_callback(
         _print_banner()
     interactive_flag = interactive if interactive is not None else interactive_default
     ctx.obj["interactive"] = interactive_flag
+    if embed_error is not None and not interactive_flag:
+        typer.echo(str(embed_error), err=True)
+        raise typer.Exit(1)
 
 
 ASCII_ART = r"""
