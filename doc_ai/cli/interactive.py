@@ -39,6 +39,8 @@ import doc_ai.batch as batch_mod
 from doc_ai import plugins
 from doc_ai.batch import run_batch
 
+from .utils import prompt_choice
+
 # Provide a local shim for click's deprecated MultiCommand without touching the
 # global Click namespace.  Older versions of ``click-repl`` still reference
 # ``click.MultiCommand`` which emits a deprecation warning under Click 8.1+.
@@ -525,7 +527,7 @@ def _repl_edit_url_list(args: list[str]) -> None:
             click.echo("No document types available.")
             return
         try:
-            doc_type = questionary.select("Document type", choices=doc_types).ask()
+            doc_type = prompt_choice("Document type", doc_types).ask()
         except Exception as exc:
             logger.debug("Failed to prompt for document type: %s", exc)
             doc_type = None
@@ -586,7 +588,7 @@ def _wizard_new_topic() -> None:
     answers = None
     try:
         answers = questionary.form(
-            doc_type=questionary.select("Document type", choices=doc_types),
+            doc_type=prompt_choice("Document type", doc_types),
             topic=questionary.text("Topic"),
             description=questionary.text("Description", default=""),
         ).ask()
@@ -617,7 +619,7 @@ def _wizard_urls() -> None:
     answers = None
     try:
         answers = questionary.form(
-            doc_type=questionary.select("Document type", choices=doc_types),
+            doc_type=prompt_choice("Document type", doc_types),
             urls=questionary.text("Enter URL(s) (one per line)", multiline=True),
         ).ask()
     except Exception as exc:

@@ -8,7 +8,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Mapping, TypeVar
+from typing import TYPE_CHECKING, Callable, Mapping, Sequence, TypeVar
 
 import questionary
 import typer
@@ -29,12 +29,23 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
-from .interactive import discover_doc_types_topics, discover_topics
-
 if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
     from rich.console import Console
 
 logger = logging.getLogger(__name__)
+
+
+def discover_doc_types_topics():
+    from .interactive import discover_doc_types_topics as _discover
+
+    return _discover()
+
+
+def discover_topics(doc_type: str):
+    from .interactive import discover_topics as _discover
+
+    return _discover(doc_type)
+
 
 # ---------------------------------------------------------------------------
 # Logging helpers
@@ -220,6 +231,25 @@ def prompt_if_missing(
     return answer or value
 
 
+def prompt_choice(message: str, choices: Sequence[str]):
+    """Return a questionary prompt for *choices* with fuzzy matching.
+
+    Uses :func:`questionary.autocomplete` when available to provide fuzzy
+    matching of *choices*.  If ``autocomplete`` is not available or fails,
+    fall back to :func:`questionary.select` for a basic list prompt.
+    """
+
+    autocomplete = getattr(questionary, "autocomplete", None)
+    if autocomplete is not None:
+        try:
+            return autocomplete(
+                message, choices=choices, validate=lambda val: val in choices
+            )
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug("Autocomplete unavailable: %s", exc)
+    return questionary.select(message, choices=choices)
+
+
 def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
     """Return a sanitized document type, prompting when necessary."""
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
@@ -228,9 +258,7 @@ def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
+                doc_type = prompt_choice("Select document type", doc_types).ask()
             except QuestionaryError as exc:
                 logger.warning("Failed to select document type: %s", exc)
                 doc_type = None
@@ -248,7 +276,7 @@ def select_topic(ctx: typer.Context, doc_type: str, topic: str | None) -> str:
     if topic is None:
         if topics:
             try:
-                topic = questionary.select("Select topic", choices=topics).ask()
+                topic = prompt_choice("Select topic", topics).ask()
             except QuestionaryError as exc:
                 logger.warning("Failed to select topic: %s", exc)
                 topic = None
