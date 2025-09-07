@@ -169,7 +169,7 @@ def test_delete_topic_prompts_selection(tmp_path, monkeypatch):
             return self.response
 
     monkeypatch.setattr(
-        "doc_ai.cli.utils.questionary.select",
+        "doc_ai.cli.utils.prompt_choice",
         lambda *a, **k: DummyPrompt("old"),
     )
 

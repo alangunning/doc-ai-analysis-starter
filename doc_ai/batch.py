@@ -27,6 +27,10 @@ def _parse_command(command: str) -> list[str] | None:
         parts = split_arg_string(command, posix=False)
         cleaned = []
         for part in parts:
+            if (part.startswith("'") and not part.endswith("'")) or (
+                part.startswith('"') and not part.endswith('"')
+            ):
+                raise CommandLineParserError("No closing quotation")
             if len(part) >= 2 and part[0] == part[-1] and part[0] in {'"', "'"}:
                 cleaned.append(part[1:-1])
             else:
@@ -35,7 +39,7 @@ def _parse_command(command: str) -> list[str] | None:
             plugins.iter_repl_commands()[cleaned[0]](cleaned[1:])
             return None
         return cleaned
-    except ValueError as exc:
+    except (ValueError, EOFError) as exc:
         raise CommandLineParserError(str(exc)) from exc
 
 

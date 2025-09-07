@@ -34,7 +34,7 @@ def test_prompt_if_missing_questionary_error(monkeypatch, caplog):
 def test_select_doc_type_questionary_error(monkeypatch):
     ctx = make_ctx()
     monkeypatch.setattr(utils, "discover_doc_types_topics", lambda: (["reports"], None))
-    monkeypatch.setattr(utils.questionary, "select", lambda *a, **k: RaisingQuestion())
+    monkeypatch.setattr(utils, "prompt_choice", lambda *a, **k: RaisingQuestion())
     monkeypatch.setattr(utils, "prompt_if_missing", lambda c, v, m: "reports")
     result = utils.select_doc_type(ctx, None)
     assert result == "reports"
@@ -43,7 +43,7 @@ def test_select_doc_type_questionary_error(monkeypatch):
 def test_select_topic_questionary_error(monkeypatch):
     ctx = make_ctx()
     monkeypatch.setattr(utils, "discover_topics", lambda d: ["topic1"])
-    monkeypatch.setattr(utils.questionary, "select", lambda *a, **k: RaisingQuestion())
+    monkeypatch.setattr(utils, "prompt_choice", lambda *a, **k: RaisingQuestion())
     monkeypatch.setattr(utils, "prompt_if_missing", lambda c, v, m: "topic1")
     result = utils.select_topic(ctx, "reports", None)
     assert result == "topic1"
