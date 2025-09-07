@@ -115,8 +115,8 @@ def upload_file(
         if logger:
             try:
                 body = json.dumps(response.model_dump(), indent=2)
-            except Exception as exc:  # pragma: no cover - best effort
-                logger.debug("Failed to serialize file upload response: %s", exc)
+            except (TypeError, ValueError):  # pragma: no cover - best effort
+                logger.exception("Failed to serialize file upload response")
                 body = str(response)
             logger.debug("File upload response: %s", body)
     finally:
@@ -244,8 +244,8 @@ def upload_large_file(
     if logger:
         try:
             body = json.dumps(upload.model_dump(), indent=2)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.debug("Failed to serialize upload create response: %s", exc)
+        except (TypeError, ValueError):  # pragma: no cover - best effort
+            logger.exception("Failed to serialize upload create response")
             body = str(upload)
         logger.debug("Upload create response: %s", body)
 
@@ -260,8 +260,8 @@ def upload_large_file(
             if logger:
                 try:
                     part_body = json.dumps(part.model_dump(), indent=2)
-                except Exception as exc:  # pragma: no cover - best effort
-                    logger.debug("Failed to serialize upload part response: %s", exc)
+                except (TypeError, ValueError):  # pragma: no cover - best effort
+                    logger.exception("Failed to serialize upload part response")
                     part_body = str(part)
                 logger.debug("Upload part response: %s", part_body)
             if progress:
@@ -274,8 +274,8 @@ def upload_large_file(
     if logger:
         try:
             comp_body = json.dumps(completed.model_dump(), indent=2)
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.debug("Failed to serialize upload complete response: %s", exc)
+        except (TypeError, ValueError):  # pragma: no cover - best effort
+            logger.exception("Failed to serialize upload complete response")
             comp_body = str(completed)
         logger.debug("Upload complete response: %s", comp_body)
     return completed.file.id

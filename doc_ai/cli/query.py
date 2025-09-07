@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 from pathlib import Path
@@ -17,6 +18,8 @@ from .utils import prompt_if_missing, resolve_bool, resolve_str
 app = typer.Typer(
     invoke_without_command=True, help="Query a vector store for similar documents."
 )
+
+logger = logging.getLogger(__name__)
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
 
@@ -95,7 +98,13 @@ def query(
         try:
             data = json.loads(emb_file.read_text())
             emb = data["embedding"]
-        except Exception:  # pragma: no cover - bad file
+        except (
+            OSError,
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+        ) as exc:  # pragma: no cover - bad file
+            logger.debug("Skipping invalid embedding file %s: %s", emb_file, exc)
             continue
         score = _cosine_similarity(query_vec, emb)
         results.append((score, data.get("file", str(emb_file))))
@@ -107,7 +116,8 @@ def query(
         if ask:
             try:
                 content = Path(fname).read_text(encoding="utf-8")
-            except Exception:  # pragma: no cover - best effort
+            except OSError as exc:  # pragma: no cover - best effort
+                logger.debug("Failed to read %s: %s", fname, exc)
                 content = ""
             top_docs.append((fname, content))
 

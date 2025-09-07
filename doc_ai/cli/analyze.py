@@ -131,5 +131,7 @@ def analyze(
                 force=force,
             )
     except Exception as exc:
-        logger.error("[red]%s[/red]", exc)
+        logger.exception("Analysis failed")
+        logger.error("%s", exc)
+        typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1) from exc

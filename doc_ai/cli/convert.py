@@ -141,8 +141,13 @@ def convert(
                 results.update(_convert_path(source, fmts, force=force))
             else:
                 results.update(_convert_path(Path(source), fmts, force=force))
+        except FileNotFoundError as exc:
+            logger.error("Path does not exist: %s", exc)
+            raise typer.Exit(1)
         except Exception as exc:  # pragma: no cover - error handling
-            logger.error(str(exc))
+            logger.exception("Conversion failed")
+            logger.error("%s", exc)
+            typer.echo(f"Error: {exc}", err=True)
             raise typer.Exit(1)
 
     if not results:

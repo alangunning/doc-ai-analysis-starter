@@ -28,7 +28,7 @@ from rich.progress import (
 
 try:  # Docling’s converter uses Pydantic which may raise ValidationError
     from pydantic import ValidationError
-except Exception:  # pragma: no cover - Pydantic always available in tests
+except ImportError:  # pragma: no cover - Pydantic always available in tests
 
     class ValidationError(Exception):
         pass
@@ -64,8 +64,8 @@ def _ensure_models_downloaded() -> None:
         from docling.utils.model_downloader import download_models
 
         download_models(progress=True)
-    except Exception as exc:  # pragma: no cover - network/availability issues
-        logger.warning("Model pre-download failed: %s", exc)
+    except Exception:  # pragma: no cover - network/availability issues
+        logger.exception("Model pre-download failed")
 
 
 def _get_docling_converter():

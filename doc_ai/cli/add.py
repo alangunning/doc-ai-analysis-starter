@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import questionary
@@ -18,6 +19,7 @@ from .utils import (
     resolve_bool,
 )
 
+logger = logging.getLogger(__name__)
 app = typer.Typer(help="Add documents to the data directory.")
 
 
@@ -52,7 +54,8 @@ def add_url(
                 doc_type = questionary.select(
                     "Select document type", choices=doc_types
                 ).ask()
-            except Exception:
+            except (KeyboardInterrupt, EOFError):
+                logger.exception("Prompt interrupted")
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:
@@ -98,7 +101,8 @@ def add_urls(
                 doc_type = questionary.select(
                     "Select document type", choices=doc_types
                 ).ask()
-            except Exception:
+            except (KeyboardInterrupt, EOFError):
+                logger.exception("Prompt interrupted")
                 doc_type = None
         doc_type = prompt_if_missing(ctx, doc_type, "Document type")
     if doc_type is None:

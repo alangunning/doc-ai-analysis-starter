@@ -83,8 +83,8 @@ def add_urls(
     if not url:
         try:
             raw = questionary.text("Enter URL(s)").ask()
-        except Exception as exc:
-            logger.debug("Failed to read URL input: %s", exc)
+        except (KeyboardInterrupt, EOFError):
+            logger.exception("Failed to read URL input")
             raw = None
         if not raw:
             raise typer.BadParameter("URL required")
@@ -118,8 +118,8 @@ def import_urls(
     if file is None:
         try:
             path_str = questionary.text("Path to file with URLs").ask()
-        except Exception as exc:
-            logger.debug("Failed to read path input: %s", exc)
+        except (KeyboardInterrupt, EOFError):
+            logger.exception("Failed to read path input")
             path_str = None
         if not path_str:
             raise typer.BadParameter("Path to file with URLs required")
@@ -160,8 +160,8 @@ def remove_url(
     if url is None:
         try:
             url = questionary.select("Select URL to remove", choices=urls).ask()
-        except Exception as exc:
-            logger.debug("Failed to select URL to remove: %s", exc)
+        except (KeyboardInterrupt, EOFError):
+            logger.exception("Failed to select URL to remove")
             url = None
         if not url:
             raise typer.BadParameter("URL to remove required")
@@ -193,8 +193,8 @@ def manage_urls(ctx: typer.Context) -> None:
                 "Choose action",
                 choices=["list", "add", "import", "remove", "done"],
             ).ask()
-        except Exception as exc:
-            logger.debug("Failed to prompt for action: %s", exc)
+        except (KeyboardInterrupt, EOFError):
+            logger.exception("Failed to prompt for action")
             action = "done"
         if action in (None, "done"):
             break
@@ -204,8 +204,8 @@ def manage_urls(ctx: typer.Context) -> None:
         if action == "add":
             try:
                 raw = questionary.text("Enter URL(s)").ask()
-            except Exception as exc:
-                logger.debug("Failed to read URL input: %s", exc)
+            except (KeyboardInterrupt, EOFError):
+                logger.exception("Failed to read URL input")
                 raw = None
             if not raw:
                 continue
@@ -227,8 +227,8 @@ def manage_urls(ctx: typer.Context) -> None:
         if action == "import":
             try:
                 import_path = questionary.text("Path to file with URLs").ask()
-            except Exception as exc:
-                logger.debug("Failed to read path input: %s", exc)
+            except (KeyboardInterrupt, EOFError):
+                logger.exception("Failed to read path input")
                 import_path = None
             if not import_path:
                 continue
@@ -260,8 +260,8 @@ def manage_urls(ctx: typer.Context) -> None:
                 to_remove = questionary.select(
                     "Select URL to remove", choices=urls
                 ).ask()
-            except Exception as exc:
-                logger.debug("Failed to select URL to remove: %s", exc)
+            except (KeyboardInterrupt, EOFError):
+                logger.exception("Failed to select URL to remove")
                 to_remove = None
             if not to_remove:
                 continue
