@@ -5,7 +5,7 @@ slug: /
 
 # Introduction
 
-Doc AI Starter is a showcase template for developers exploring GitHub's AI models. It illustrates how to structure `.prompt.yaml` files and apply the models to advanced document analysis. The pipeline demonstrates how to convert documents, validate outputs, run analysis prompts, and review pull requests—all inside the GitHub ecosystem.
+Doc AI is a showcase template for developers exploring GitHub's AI models. It illustrates how to structure `.prompt.yaml` files and apply the models to advanced document analysis. The pipeline demonstrates how to convert documents, validate outputs, run analysis prompts, and review pull requests—all inside the GitHub ecosystem.
 
 > **Note:** Sample files are stored directly in the repository to keep the example self-contained. For production use or large datasets, move documents to Git LFS or an external object store.
 

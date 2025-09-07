@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Pull Request Reviews
 
-Doc AI Starter can provide AI-generated feedback on pull requests using GitHub Models. The workflow reads a prompt definition and comments on the PR with the model's response.
+Doc AI can provide AI-generated feedback on pull requests using GitHub Models. The workflow reads a prompt definition and comments on the PR with the model's response.
 
 ## Enable the Workflow
 
