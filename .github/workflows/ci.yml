@@ -38,7 +38,9 @@ jobs:
           python-version: '3.x'
       - run: pip install poetry bandit
       - run: poetry update --no-interaction --no-ansi
-      - run: bandit -r doc_ai
+      - name: Run Bandit
+        run: python scripts/run_bandit.py
+        continue-on-error: false
 
   build:
     needs: [lint, test]
