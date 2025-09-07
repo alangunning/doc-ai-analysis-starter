@@ -89,6 +89,16 @@ def test_bang_warns_when_shell_disabled(monkeypatch):
     assert interactive.LAST_EXIT_CODE == 1
 
 
+def test_bang_filters_environment(monkeypatch, capsys):
+    monkeypatch.setenv("DOC_AI_ALLOW_SHELL", "true")
+    monkeypatch.setenv("SECRET_VAR", "shh")
+    monkeypatch.setenv("DOC_AI_SAFE_ENV_VARS", "PATH")
+    _setup()
+    _parse_command("!python -c \"import os;print('SECRET_VAR' in os.environ)\"")
+    out = capsys.readouterr().out.strip()
+    assert out == "False"
+
+
 def test_doc_types_and_topics_commands(tmp_path, monkeypatch, capsys):
     data_dir = tmp_path / "data"
     (data_dir / "invoice").mkdir(parents=True)

@@ -22,11 +22,12 @@ When the same setting is defined in multiple places the resolution order is:
 ## Environment Variable Exposure
 
 The interactive shell exposes only a minimal set of environment variables
-(``PATH`` and ``HOME``) for completion. Use ``doc-ai config safe-env`` or set
-``DOC_AI_SAFE_ENV_VARS`` in configuration files to explicitly allow or deny
-additional variables. If ``DOC_AI_SAFE_ENV_VARS`` is unset and many variables
-would otherwise be shown, the CLI warns to encourage deliberate
-configuration.
+(``PATH`` and ``HOME``) for completion and shell escapes. Use
+``doc-ai config safe-env`` or set ``DOC_AI_SAFE_ENV_VARS`` in configuration
+files to explicitly allow or deny additional variables. When shell escapes are
+enabled, only allowlisted variables are forwarded to the command. If
+``DOC_AI_SAFE_ENV_VARS`` is unset and many variables would otherwise be shown,
+the CLI warns to encourage deliberate configuration.
 
 ## API Keys and Endpoints
 

@@ -92,6 +92,27 @@ def _parse_allow_deny(value: str | None = None) -> tuple[set[str], set[str]]:
     return allow, deny
 
 
+def _safe_repl_env(cfg: Mapping[str, object] | None = None) -> dict[str, str]:
+    """Return a sanitized environment based on allow/deny settings."""
+
+    if cfg is None:
+        cfg = {}
+        if _REPL_CTX and isinstance(_REPL_CTX.obj, dict):
+            cfg = _REPL_CTX.obj.get("config", {})
+    if SAFE_ENV_VARS_ENV in cfg:
+        raw: str | None = str(cfg[SAFE_ENV_VARS_ENV])
+    elif SAFE_ENV_VARS_ENV in os.environ:
+        raw = os.environ[SAFE_ENV_VARS_ENV]
+    else:
+        raw = None
+    allow, deny = _parse_allow_deny(raw)
+    return {
+        name: os.environ[name]
+        for name in os.environ
+        if name in allow and name not in deny
+    }
+
+
 PROMPT_KWARGS: dict[str, object] | None = None
 _REPL_CTX: click.Context | None = None
 LAST_EXIT_CODE = 0
@@ -157,7 +178,10 @@ def _dispatch_repl_commands(command: str) -> bool:
             LAST_EXIT_CODE = 0
             return True
         try:
-            result = subprocess.run(parts, shell=False, capture_output=True, text=True)
+            env = _safe_repl_env()
+            result = subprocess.run(
+                parts, shell=False, capture_output=True, text=True, env=env
+            )
         except FileNotFoundError:
             click.echo(f"{parts[0]}: command not found", err=True)
             LAST_EXIT_CODE = 127
@@ -758,15 +782,7 @@ class DocAICompleter(Completer):
             cfg = {}
         if self._ctx.obj and isinstance(self._ctx.obj.get("config"), dict):
             cfg.update(self._ctx.obj["config"])
-        if SAFE_ENV_VARS_ENV in cfg:
-            raw: str | None = str(cfg[SAFE_ENV_VARS_ENV])
-        elif SAFE_ENV_VARS_ENV in os.environ:
-            raw = os.environ[SAFE_ENV_VARS_ENV]
-        else:
-            raw = None
-        allow, deny = _parse_allow_deny(raw)
-        exposed = [name for name in os.environ if name in allow and name not in deny]
-        env_words = [f"${name}" for name in exposed]
+        env_words = [f"${name}" for name in _safe_repl_env(cfg)]
         self._env = WordCompleter(env_words, ignore_case=True)
 
         doc_types, topics = discover_doc_types_topics(Path("data"))
