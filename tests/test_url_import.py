@@ -415,7 +415,7 @@ def test_add_url_prompts_for_doc_type(tmp_path, monkeypatch):
             return self.response
 
     monkeypatch.setattr(
-        "doc_ai.cli.add.questionary.select", lambda *a, **k: DummyPrompt("letters")
+        "doc_ai.cli.utils.prompt_select", lambda *a, **k: DummyPrompt("letters")
     )
 
     runner = CliRunner()

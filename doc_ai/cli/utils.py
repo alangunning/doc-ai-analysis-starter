@@ -29,8 +29,6 @@ from doc_ai.metadata import (
     save_metadata,
 )
 
-from .interactive import discover_doc_types_topics, discover_topics
-
 if TYPE_CHECKING:  # pragma: no cover - used for type checkers only
     from rich.console import Console
 
@@ -122,6 +120,21 @@ def parse_config_formats(cfg: Mapping[str, str]) -> list[OutputFormat] | None:
                 f"Invalid output format '{val}'. Choose from: {valid}"
             ) from exc
     return formats
+
+
+def prompt_select(message: str, choices: list[str]):
+    """Return a questionary prompt with fuzzy matching when available."""
+    if hasattr(questionary, "autocomplete"):
+        try:
+            return questionary.autocomplete(
+                message,
+                choices=choices,
+                validate=lambda val: val in choices,
+                filter=lambda val: val,
+            )
+        except Exception as exc:  # pragma: no cover - fallback if dependency missing
+            logger.debug("Autocomplete unavailable: %s", exc)
+    return questionary.select(message, choices=choices)
 
 
 TRUE_SET = {"1", "true", "yes"}
@@ -225,12 +238,12 @@ def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     doc_type = doc_type or cfg.get("default_doc_type")
     if doc_type is None:
+        from .interactive import discover_doc_types_topics
+
         doc_types, _ = discover_doc_types_topics()
         if doc_types:
             try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
+                doc_type = prompt_select("Select document type", doc_types).ask()
             except QuestionaryError as exc:
                 logger.warning("Failed to select document type: %s", exc)
                 doc_type = None
@@ -242,13 +255,15 @@ def select_doc_type(ctx: typer.Context, doc_type: str | None) -> str:
 
 def select_topic(ctx: typer.Context, doc_type: str, topic: str | None) -> str:
     """Return a sanitized topic for *doc_type*, prompting when necessary."""
+    from .interactive import discover_topics
+
     topics = discover_topics(doc_type)
     cfg = ctx.obj.get("config", {}) if ctx.obj else {}
     topic = topic or cfg.get("default_topic")
     if topic is None:
         if topics:
             try:
-                topic = questionary.select("Select topic", choices=topics).ask()
+                topic = prompt_select("Select topic", topics).ask()
             except QuestionaryError as exc:
                 logger.warning("Failed to select topic: %s", exc)
                 topic = None

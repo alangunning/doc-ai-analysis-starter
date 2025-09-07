@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import questionary
 import typer
 
 from doc_ai.converter import OutputFormat
 
 from .convert import download_and_convert
-from .interactive import discover_doc_types_topics
 from .manage_urls import _valid_url
 from .utils import (
     parse_config_formats as _parse_config_formats,
@@ -16,6 +14,7 @@ from .utils import (
 from .utils import (
     prompt_if_missing,
     resolve_bool,
+    select_doc_type,
 )
 
 app = typer.Typer(help="Add documents to the data directory.")
@@ -44,19 +43,7 @@ def add_url(
     link = prompt_if_missing(ctx, link, "URL to download")
     if link is None:
         raise typer.BadParameter("URL to download required")
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
+    doc_type = select_doc_type(ctx, doc_type)
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     if not _valid_url(link):
@@ -90,19 +77,7 @@ def add_urls(
     if path_val is None:
         raise typer.BadParameter("File containing URLs required")
     path = Path(path_val)
-    doc_type = doc_type or cfg.get("default_doc_type")
-    if doc_type is None:
-        doc_types, _ = discover_doc_types_topics()
-        if doc_types:
-            try:
-                doc_type = questionary.select(
-                    "Select document type", choices=doc_types
-                ).ask()
-            except Exception:
-                doc_type = None
-        doc_type = prompt_if_missing(ctx, doc_type, "Document type")
-    if doc_type is None:
-        raise typer.BadParameter("Document type required")
+    doc_type = select_doc_type(ctx, doc_type)
     fmts = format or _parse_config_formats(cfg) or [OutputFormat.MARKDOWN]
     force = resolve_bool(ctx, "force", force, cfg, "FORCE")
     links: list[str] = []
