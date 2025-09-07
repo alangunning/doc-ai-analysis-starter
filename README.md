@@ -364,7 +364,7 @@ complete example. For security, plugins are ignored unless explicitly
 allowlisted. Trust a plugin by recording its version and hash:
 
 ```
-doc-ai plugins trust example==1.0
+doc-ai plugins trust example>=1.0,<2
 doc-ai plugins trust --hash example=012345...
 ```
 
