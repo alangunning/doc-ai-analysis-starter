@@ -130,15 +130,13 @@ def build_vector_store(
                     exc,
                     exc_info=True,
                 )
-            except Exception as exc:  # pragma: no cover - network error
+            except Exception:  # pragma: no cover - network error
                 wait = 2**attempt
-                _log.error(
-                    "Unexpected error for %s (attempt %s/%s): %s",
+                _log.exception(
+                    "Unexpected error for %s (attempt %s/%s)",
                     md_file,
                     attempt,
                     max_attempts,
-                    exc,
-                    exc_info=True,
                 )
             if attempt == max_attempts:
                 if fail_fast:
@@ -172,6 +170,7 @@ def build_vector_store(
                     fut.result()
                     progress.console.print(f"Embedded {md_file}")
                 except Exception as exc:  # pragma: no cover - unexpected failure
+                    _log.exception("Failed to embed %s", md_file)
                     progress.console.print(f"Failed to embed {md_file}: {exc}")
                     raise
                 finally:

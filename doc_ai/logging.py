@@ -85,8 +85,14 @@ def configure_logging(
     for handler in list(root.handlers):
         try:
             handler.close()
-        except Exception as exc:  # pragma: no cover - best effort cleanup
+        except OSError as exc:  # pragma: no cover - best effort cleanup
             failures.append((repr(handler), exc))
+            logging.getLogger(__name__).exception("Failed to close handler %s", handler)
+        except Exception as exc:  # pragma: no cover - unexpected cleanup error
+            failures.append((repr(handler), exc))
+            logging.getLogger(__name__).exception(
+                "Unexpected error closing handler %s", handler
+            )
     root.handlers.clear()
     root.setLevel(numeric_level)
 
