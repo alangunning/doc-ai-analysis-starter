@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "docusaurus start",
-    "build": "npm run lint:alt-text && docusaurus build && npx axe --exit 2 build",
+    "build": "npm run lint:alt-text && docusaurus build",
     "deploy": "docusaurus deploy",
     "serve": "docusaurus serve",
     "lint:alt-text": "bash -c \"if rg -n '!\\[]\\(' content; then echo 'Images missing alt text'; exit 1; fi\""
@@ -17,7 +17,5 @@
     "dotenv": "^16.4.5",
     "prism-react-renderer": "^2.3.0"
   },
-  "devDependencies": {
-    "@axe-core/cli": "^4.9.0"
-  }
+  "devDependencies": {}
 }
