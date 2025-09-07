@@ -68,6 +68,11 @@ dev = [
 [tool.setuptools.package-data]
 "doc_ai" = ["py.typed"]
 
+[tool.setuptools.data-files]
+"data/sec-form-10q" = ["data/sec-form-10q/*"]
+"data/sec-form-4" = ["data/sec-form-4/*"]
+"data/sec-form-8k" = ["data/sec-form-8k/*"]
+
 [tool.setuptools_scm]
 fallback_version = "0.1.0-alpha.0"
 version_scheme = "post-release"
