@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import re
@@ -23,6 +24,7 @@ from click.exceptions import Exit as ClickExit
 from click_repl import ClickCompleter, repl
 from click_repl import _repl as click_repl_repl
 from platformdirs import PlatformDirs
+from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import (
     CompleteEvent,
     Completer,
@@ -106,6 +108,7 @@ __all__ = [
     "refresh_after",
     "_prompt_name",
     "LAST_EXIT_CODE",
+    "input_block",
 ]
 
 
@@ -178,11 +181,37 @@ click_repl_repl.dispatch_repl_commands = _dispatch_repl_commands
 setattr(batch_mod, "dispatch_repl_commands", _dispatch_repl_commands)
 
 
+def input_block(sentinel: str = "EOF") -> str:
+    """Return multi-line input terminated by *sentinel*.
+
+    A new :class:`~prompt_toolkit.PromptSession` is created using the
+    current ``PROMPT_KWARGS`` (aside from the ``message`` callback) so that
+    history, completions, and other prompt customisations are preserved.
+    """
+
+    kwargs = dict(PROMPT_KWARGS or {})
+    kwargs.pop("message", None)
+    session = PromptSession(**kwargs)
+    lines: list[str] = []
+    while True:
+        line = session.prompt("... ")
+        if line.strip() == sentinel:
+            break
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def _repl_help(args: list[str]) -> None:
     """Display help for CLI commands or the REPL itself."""
 
     if _REPL_CTX is None:
         click.echo("Help is unavailable.")
+        return
+
+    if args and args[0] in plugins.iter_repl_commands():
+        func = plugins.iter_repl_commands()[args[0]]
+        doc = inspect.getdoc(func) or "No help available."
+        click.echo(doc)
         return
 
     ctx = _REPL_CTX
@@ -220,6 +249,19 @@ def _repl_help(args: list[str]) -> None:
     else:
         example = " ".join(path or [cmd.name or ""]) + " --help"
         click.echo(f"\nExample: {example}")
+
+
+def _repl_input(args: list[str]) -> str:
+    """Enter multi-line input terminated by ``EOF``.
+
+    Type your text and finish by entering ``EOF`` on a line by itself. The
+    collected block is returned to the caller.
+    """
+
+    sentinel = args[0] if args else "EOF"
+    block = input_block(sentinel)
+    click.echo(block)
+    return block
 
 
 def _repl_reload(args: list[str]) -> None:
@@ -641,6 +683,7 @@ def _register_repl_commands(ctx: click.Context) -> None:
     plugins.register_repl_command(":history", _repl_history)
     plugins.register_repl_command(":clear-history", _repl_clear_history)
     plugins.register_repl_command(":config", _repl_config)
+    plugins.register_repl_command(":input", _repl_input)
     plugins.register_repl_command(":edit-prompt", _repl_edit_prompt)
     plugins.register_repl_command(":edit-url-list", _repl_edit_url_list)
     plugins.register_repl_command(":urls", _repl_urls)

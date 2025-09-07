@@ -163,3 +163,26 @@ def test_edit_url_list_external_editor(tmp_path, monkeypatch):
     assert captured["text"].strip() == "http://a.com"
     assert urls_file.read_text() == "http://b.com\nhttp://a.com\n"
     assert called
+
+
+def test_input_block_returns_text(monkeypatch):
+    _setup()
+    lines = iter(["first line", "EOF"])
+
+    class DummySession:
+        def __init__(self, **kwargs):
+            pass
+
+        def prompt(self, message: str) -> str:
+            return next(lines)
+
+    monkeypatch.setattr(interactive, "PromptSession", DummySession)
+    interactive.PROMPT_KWARGS = {}
+    assert interactive.input_block() == "first line"
+
+
+def test_help_for_input_command(capsys):
+    _setup()
+    _parse_command(":help :input")
+    out = capsys.readouterr().out
+    assert "multi-line" in out
