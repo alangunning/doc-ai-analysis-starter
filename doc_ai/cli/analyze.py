@@ -131,5 +131,6 @@ def analyze(
                 force=force,
             )
     except Exception as exc:
+        logger.exception("Analysis failed for %s", markdown_doc)
         logger.error("[red]%s[/red]", exc)
         raise typer.Exit(1) from exc

@@ -23,6 +23,7 @@ def test_pipeline_cli_resume_and_skip(tmp_path):
     def recorder(step: str):
         def _inner(*args, **kwargs):
             calls.append(step)
+
         return _inner
 
     with (

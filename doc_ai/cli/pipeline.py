@@ -151,6 +151,7 @@ def pipeline(
                 _convert_path(raw_file, fmts, force=force)
             except Exception as exc:  # pragma: no cover - error handling
                 local_failures.append(("conversion", raw_file, exc))
+                logger.exception("Conversion failed for %s", raw_file)
                 logger.error("[red]Conversion failed for %s: %s[/red]", raw_file, exc)
         md_file = raw_file.with_name(raw_file.name + _suffix(OutputFormat.MARKDOWN))
         if md_file.exists() and should_run(PipelineStep.VALIDATE):
@@ -166,6 +167,7 @@ def pipeline(
                 )
             except Exception as exc:  # pragma: no cover - error handling
                 local_failures.append(("validation", raw_file, exc))
+                logger.exception("Validation failed for %s", raw_file)
                 logger.error("[red]Validation failed for %s: %s[/red]", raw_file, exc)
         if (
             md_file.exists()
@@ -187,6 +189,7 @@ def pipeline(
                     )
                 except Exception as exc:  # pragma: no cover - error handling
                     local_failures.append(("analysis", md_file, exc))
+                    logger.exception("Analysis failed for %s", md_file)
                     logger.error("[red]Analysis failed for %s: %s[/red]", md_file, exc)
         if local_failures:
             if fail_fast:
