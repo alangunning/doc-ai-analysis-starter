@@ -86,11 +86,13 @@ def load_global_config() -> dict[str, str]:
 
 
 def save_global_config(cfg: dict[str, str]) -> None:
-    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    GLOBAL_CONFIG_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
         GLOBAL_CONFIG_PATH.write_text(yaml.safe_dump(cfg))
     else:
         GLOBAL_CONFIG_PATH.write_text(json.dumps(cfg, indent=2))
+    if os.name != "nt":
+        GLOBAL_CONFIG_PATH.chmod(0o600)
 
 
 def read_configs() -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
