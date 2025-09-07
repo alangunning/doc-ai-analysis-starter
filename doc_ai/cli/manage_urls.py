@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
+import click
 import questionary
 import typer
 
@@ -28,7 +29,11 @@ def _load_urls(doc_type: str) -> tuple[Path, list[str]]:
     path = _url_file(doc_type)
     urls: list[str] = []
     if path.exists():
-        urls = [line.strip() for line in path.read_text().splitlines() if line.strip()]
+        urls = [
+            line.strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
     return path, urls
 
 
@@ -46,10 +51,15 @@ def show_urls(doc_type: str) -> tuple[Path, list[str]]:
 
 def save_urls(path: Path, urls: list[str]) -> None:
     """Write *urls* to *path* atomically after removing duplicates."""
-    unique = list(dict.fromkeys(urls))
+    unique: dict[str, str] = {}
+    for url in urls:
+        lower = url.lower()
+        if lower not in unique:
+            unique[lower] = url
+    final = list(unique.values())
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text("\n".join(unique) + ("\n" if unique else ""))
+    tmp.write_text("\n".join(final) + ("\n" if final else ""), encoding="utf-8")
     tmp.replace(path)
 
 
@@ -80,6 +90,7 @@ def add_urls(
     """Add one or more URLs for *doc_type*."""
     doc_type = select_doc_type(ctx, doc_type)
     path, urls = _load_urls(doc_type)
+    lower_urls = {u.lower() for u in urls}
     if not url:
         try:
             raw = questionary.text("Enter URL(s)").ask()
@@ -95,10 +106,12 @@ def add_urls(
         if not _valid_url(entry):
             typer.echo(f"Skipping invalid URL: {entry}")
             continue
-        if entry in urls:
+        key = entry.lower()
+        if key in lower_urls:
             typer.echo(f"Skipping duplicate URL: {entry}")
             continue
         urls.append(entry)
+        lower_urls.add(key)
         new_urls.append(entry)
     if new_urls:
         save_urls(path, urls)
@@ -127,22 +140,67 @@ def import_urls(
     file_path = file.expanduser()
     if not file_path.exists():
         raise typer.BadParameter(f"File not found: {file_path}")
-    raw = file_path.read_text()
+    raw = file_path.read_text(encoding="utf-8")
     path, urls = _load_urls(doc_type)
+    lower_urls = {u.lower() for u in urls}
     new_urls: list[str] = []
     for entry in raw.split():
         entry = entry.strip()
         if not _valid_url(entry):
             typer.echo(f"Skipping invalid URL: {entry}")
             continue
-        if entry in urls:
+        key = entry.lower()
+        if key in lower_urls:
             typer.echo(f"Skipping duplicate URL: {entry}")
             continue
         urls.append(entry)
+        lower_urls.add(key)
         new_urls.append(entry)
     if new_urls:
         save_urls(path, urls)
         refresh_completer()
+
+
+@app.command("edit")
+def edit_urls(
+    ctx: typer.Context,
+    doc_type: str | None = typer.Option(None, "--doc-type", help="Document type"),
+) -> None:
+    """Edit stored URLs for *doc_type* in an external editor."""
+    doc_type = select_doc_type(ctx, doc_type)
+    path, urls = _load_urls(doc_type)
+    initial = "\n".join(urls) + ("\n" if urls else "")
+    try:
+        edited = click.edit(initial_text=initial, extension=".txt")
+    except Exception as exc:
+        logger.debug("Failed to open editor: %s", exc)
+        edited = None
+    if edited is None:
+        typer.echo("No changes made.")
+        return
+    lines: list[str] = []
+    for line in edited.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if not _valid_url(line):
+            typer.echo(f"Skipping invalid URL: {line}")
+            continue
+        lines.append(line)
+    unique: dict[str, str] = {}
+    for u in lines:
+        low = u.lower()
+        if low not in unique:
+            unique[low] = u
+    final = list(unique.values())
+    old_set = {u.lower() for u in urls}
+    new_set = set(unique.keys())
+    added = len(new_set - old_set)
+    removed = len(old_set - new_set)
+    if final != urls:
+        save_urls(path, final)
+        refresh_completer()
+    typer.echo(f"Added {added} URL(s), removed {removed}.")
 
 
 @app.command("remove")
@@ -191,7 +249,7 @@ def manage_urls(ctx: typer.Context) -> None:
         try:
             action = questionary.select(
                 "Choose action",
-                choices=["list", "add", "import", "remove", "done"],
+                choices=["list", "add", "import", "edit", "remove", "done"],
             ).ask()
         except Exception as exc:
             logger.debug("Failed to prompt for action: %s", exc)
@@ -210,15 +268,18 @@ def manage_urls(ctx: typer.Context) -> None:
             if not raw:
                 continue
             new_urls: list[str] = []
+            lower_urls = {u.lower() for u in urls}
             for url in raw.split():
                 url = url.strip()
                 if not _valid_url(url):
                     typer.echo(f"Skipping invalid URL: {url}")
                     continue
-                if url in urls:
+                key = url.lower()
+                if key in lower_urls:
                     typer.echo(f"Skipping duplicate URL: {url}")
                     continue
                 urls.append(url)
+                lower_urls.add(key)
                 new_urls.append(url)
             if new_urls:
                 save_urls(path, urls)
@@ -236,21 +297,28 @@ def manage_urls(ctx: typer.Context) -> None:
             if not file_path.exists():
                 typer.echo(f"File not found: {file_path}")
                 continue
-            raw = file_path.read_text()
+            raw = file_path.read_text(encoding="utf-8")
             new_urls: list[str] = []
+            lower_urls = {u.lower() for u in urls}
             for url in raw.split():
                 url = url.strip()
                 if not _valid_url(url):
                     typer.echo(f"Skipping invalid URL: {url}")
                     continue
-                if url in urls:
+                key = url.lower()
+                if key in lower_urls:
                     typer.echo(f"Skipping duplicate URL: {url}")
                     continue
                 urls.append(url)
+                lower_urls.add(key)
                 new_urls.append(url)
             if new_urls:
                 save_urls(path, urls)
                 refresh_completer()
+            continue
+        if action == "edit":
+            edit_urls(ctx, doc_type)
+            path, urls = _load_urls(doc_type)
             continue
         if action == "remove":
             if not urls:
