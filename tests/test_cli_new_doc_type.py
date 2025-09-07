@@ -161,3 +161,23 @@ def test_duplicate_doc_type(tmp_path):
         assert Path("data/copy/copy.analysis.prompt.yaml").is_file()
         assert Path("data/copy/copy.analysis.biology.prompt.yaml").is_file()
         assert Path("data/copy/validate.prompt.yaml").is_file()
+
+
+def test_edit_doc_type_opens_prompt():
+    runner = CliRunner()
+    analysis_tpl, validate_tpl = _setup_templates()
+
+    with runner.isolated_filesystem():
+        prompts_dir = Path(".github/prompts")
+        prompts_dir.mkdir(parents=True)
+        shutil.copy(analysis_tpl, prompts_dir / "doc-analysis.analysis.prompt.yaml")
+        shutil.copy(validate_tpl, prompts_dir / "validate-output.validate.prompt.yaml")
+
+        runner.invoke(app, ["new", "doc-type", "sample"])
+
+        target_file = Path("data/sample/sample.analysis.prompt.yaml")
+        with patch("doc_ai.cli.new_doc_type.click.edit") as edit_mock:
+            edit_mock.return_value = ""
+            res = runner.invoke(app, ["new", "edit-doc-type", "--doc-type", "sample"])
+        assert res.exit_code == 0
+        edit_mock.assert_called_once_with(filename=str(target_file))
