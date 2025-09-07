@@ -29,9 +29,10 @@ Use `show doc-types` and `show topics` to list document types under the
 ## Safe environment variables
 
 Only a minimal set of environment variables is available for completion inside
-the REPL. When the :envvar:`DOC_AI_SAFE_ENV_VARS` setting is unset, only
-``PATH`` and ``HOME`` are suggested. To expose additional variables, either set
-``DOC_AI_SAFE_ENV_VARS`` to a comma-separated allow/deny list or run
+the REPL and forwarded to shell escapes. When the
+:envvar:`DOC_AI_SAFE_ENV_VARS` setting is unset, only ``PATH`` and ``HOME`` are
+suggested and passed to child processes. To expose additional variables, either
+set ``DOC_AI_SAFE_ENV_VARS`` to a comma-separated allow/deny list or run
 ``doc-ai config safe-env`` subcommands. Items prefixed with ``-`` are denied and
 the ``+`` prefix is optional.
 
@@ -40,8 +41,9 @@ Examples::
     DOC_AI_SAFE_ENV_VARS=MY_API_KEY,-DEBUG_TOKEN
     doc-ai config safe-env add MY_API_KEY
 
-Variables not present in the allow list are omitted from completion results so
-accidental disclosure of secrets is avoided.
+Variables not present in the allow list are omitted from completion results and
+stripped from the environment of shell escapes, reducing the risk of accidental
+secret disclosure.
 
 ## Built-in commands
 
@@ -53,7 +55,8 @@ helpers include ``:delete-doc-type`` and ``:delete-topic`` for removing
 prompt files and ``:set-default DOC_TYPE [TOPIC]`` to persist defaults.
 Shell escapes (``!command``) are disabled by default. Set
 ``DOC_AI_ALLOW_SHELL=true`` to enable them—doing so emits a warning when the
-REPL starts. When disabled, using ``!`` emits a warning.
+REPL starts. Enabled commands only receive allowlisted environment variables;
+others are removed. When disabled, using ``!`` emits a warning.
 
 ```
 doc-ai> cd docs
