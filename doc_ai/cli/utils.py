@@ -245,8 +245,8 @@ def prompt_choice(message: str, choices: Sequence[str]):
             return autocomplete(
                 message, choices=choices, validate=lambda val: val in choices
             )
-        except Exception as exc:  # pragma: no cover - best effort
-            logger.debug("Autocomplete unavailable: %s", exc)
+        except Exception:  # pragma: no cover - best effort
+            logger.exception("Autocomplete prompt failed")
     return questionary.select(message, choices=choices)
 
 

@@ -168,7 +168,9 @@ def create_response(
     if logger and result is not None:
         try:
             body = json.dumps(result.model_dump(), indent=2)
-        except Exception:  # pragma: no cover - best effort
+        except (TypeError, ValueError):  # pragma: no cover - best effort
+            if logger:
+                logger.exception("Failed to serialize Responses API response")
             body = str(result)
         logger.debug("Responses API response: %s", body)
     return result

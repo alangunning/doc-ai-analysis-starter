@@ -75,11 +75,9 @@ def load_global_config() -> dict[str, str]:
             if GLOBAL_CONFIG_PATH.suffix in {".yaml", ".yml"}:
                 return yaml.safe_load(GLOBAL_CONFIG_PATH.read_text()) or {}
             return json.loads(GLOBAL_CONFIG_PATH.read_text())
-        except Exception as exc:
+        except (OSError, json.JSONDecodeError, yaml.YAMLError) as exc:
             logger.warning(
-                "Failed to load global config from %s: %s",
-                GLOBAL_CONFIG_PATH,
-                exc,
+                "Failed to load global config from %s", GLOBAL_CONFIG_PATH, exc_info=exc
             )
             return {}
     return {}
@@ -324,8 +322,8 @@ def cd(ctx: typer.Context, path: Path | None = typer.Argument(None)) -> None:
         from . import config as config_module
 
         setattr(config_module, "ENV_FILE", ENV_FILE)
-    except Exception:
-        pass
+    except Exception:  # pragma: no cover - defensive
+        logger.exception("Failed to update ENV_FILE in config module")
 
 
 @app.command("version")
@@ -686,11 +684,9 @@ def main() -> None:
         try:
             app(prog_name="cli.py", args=args)
         except Exception as exc:  # pragma: no cover - runtime error display
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.exception("Unhandled exception")
-            else:
-                logger.error("[red]%s[/red]", exc)
-            raise SystemExit(1)
+            logger.exception("Unhandled exception during CLI invocation")
+            logger.error("[red]%s[/red]", exc)
+            raise SystemExit(1) from exc
         return
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         app(prog_name="cli.py", args=["--help"])

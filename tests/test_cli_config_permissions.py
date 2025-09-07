@@ -22,4 +22,3 @@ def test_global_config_permissions(monkeypatch):
         file_mode = stat.S_IMODE(cfg_path.stat().st_mode)
         assert dir_mode == 0o700
         assert file_mode == 0o600
-

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 from pathlib import Path
@@ -19,6 +20,8 @@ app = typer.Typer(
 )
 
 EMBED_MODEL = os.getenv("EMBED_MODEL", "openai/text-embedding-3-small")
+
+logger = logging.getLogger(__name__)
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -95,7 +98,8 @@ def query(
         try:
             data = json.loads(emb_file.read_text())
             emb = data["embedding"]
-        except Exception:  # pragma: no cover - bad file
+        except (OSError, json.JSONDecodeError, KeyError):  # pragma: no cover - bad file
+            logger.exception("Invalid embedding file %s", emb_file)
             continue
         score = _cosine_similarity(query_vec, emb)
         results.append((score, data.get("file", str(emb_file))))
@@ -107,7 +111,8 @@ def query(
         if ask:
             try:
                 content = Path(fname).read_text(encoding="utf-8")
-            except Exception:  # pragma: no cover - best effort
+            except OSError as exc:  # pragma: no cover - best effort
+                logger.warning("Failed to read document %s: %s", fname, exc)
                 content = ""
             top_docs.append((fname, content))
 

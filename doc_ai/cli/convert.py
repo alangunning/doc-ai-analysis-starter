@@ -142,8 +142,9 @@ def convert(
             else:
                 results.update(_convert_path(Path(source), fmts, force=force))
         except Exception as exc:  # pragma: no cover - error handling
+            logger.exception("Conversion failed for %s", source)
             logger.error(str(exc))
-            raise typer.Exit(1)
+            raise typer.Exit(1) from exc
 
     if not results:
         logger.warning("No new files to process.")
