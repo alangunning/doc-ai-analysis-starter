@@ -21,4 +21,4 @@ All notable changes to this project will be documented in this file.
 - Support for platform-wide global configuration files.
 - `--log-level` and `--log-file` options for fine-grained logging control.
 - Automated release workflow for testing, building, and publishing tagged releases to PyPI.
-- Initial release of `doc-ai-analysis-starter` with proper package metadata and version export.
+- Initial release of `doc-ai-analysis` with proper package metadata and version export.

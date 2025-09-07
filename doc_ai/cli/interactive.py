@@ -859,12 +859,12 @@ def refresh_after(func: F) -> F:
 def _prompt_name() -> str:
     """Return the current directory name for the REPL prompt.
 
-    The repository root directory name ``doc-ai-analysis-starter`` is shortened
-    to ``doc-ai`` for a cleaner initial prompt.
+    The repository root directory name ``doc-ai-analysis`` is shortened to
+    ``doc-ai`` for a cleaner initial prompt.
     """
 
     name = Path.cwd().name
-    return "doc-ai" if name == "doc-ai-analysis-starter" else name
+    return "doc-ai" if name == "doc-ai-analysis" else name
 
 
 def interactive_shell(app: typer.Typer, init: Path | None = None) -> None:
