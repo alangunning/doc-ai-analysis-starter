@@ -41,11 +41,11 @@ classifiers = [
 keywords = ["document", "analysis", "cli", "ai"]
 
 [project.urls]
-Homepage = "https://github.com/alangunning/doc-ai-analysis"
-Repository = "https://github.com/alangunning/doc-ai-analysis"
-Issues = "https://github.com/alangunning/doc-ai-analysis/issues"
-Documentation = "https://alangunning.github.io/doc-ai-analysis/docs/"
-Changelog = "https://github.com/alangunning/doc-ai-analysis/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/alangunning/doc-ai"
+Repository = "https://github.com/alangunning/doc-ai"
+Issues = "https://github.com/alangunning/doc-ai/issues"
+Documentation = "https://alangunning.github.io/doc-ai/docs/"
+Changelog = "https://github.com/alangunning/doc-ai/blob/main/CHANGELOG.md"
 
 [project.entry-points.console_scripts]
 doc-ai = "doc_ai.cli:main"

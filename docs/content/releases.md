@@ -2,7 +2,7 @@
 title: Releases
 ---
 
-The `doc-ai-analysis` project follows
+The `doc-ai` project follows
 [semantic versioning](https://semver.org/). When you're ready to publish a new
 version:
 

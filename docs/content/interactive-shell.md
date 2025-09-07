@@ -70,7 +70,7 @@ another-project> config show OPENAI_MODEL
 gpt-4o
 ```
 
-See the [cd command](https://github.com/alangunning/doc-ai-analysis#cd-command) in the project README for more details.
+See the [cd command](https://github.com/alangunning/doc-ai#cd-command) in the project README for more details.
 
 The package ships a ``py.typed`` marker so these functions are fully typed when
 used with static type checkers such as ``mypy`` or ``pyright``.
