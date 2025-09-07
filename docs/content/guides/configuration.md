@@ -56,7 +56,7 @@ Set `DISABLE_ALL_WORKFLOWS=true` to skip every workflow regardless of the indivi
 
 ## Model Defaults
 
-You can also override the model used for each module. The `.env.example` file lists the available variables such as `PR_REVIEW_MODEL`, `VALIDATE_MODEL`, `ANALYZE_MODEL`, and `EMBED_MODEL`. Set `EMBED_DIMENSIONS` to the embedding size required by your selected model (for example `1536` for `text-embedding-3-small`). The embedding helpers raise a `RuntimeError` if this variable is missing or invalid.
+You can also override the model used for each module. The `.env.example` file lists the available variables such as `PR_REVIEW_MODEL`, `VALIDATE_MODEL`, `ANALYZE_MODEL`, and `EMBED_MODEL`. Set `EMBED_DIMENSIONS` to the embedding size required by your selected model (for example `1536` for `text-embedding-3-small`). When the variable is unset the embedding helpers default to `1536` and log a warning; invalid values still trigger a `RuntimeError`.
 
 ## Logging
 

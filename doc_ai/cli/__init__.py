@@ -49,6 +49,9 @@ if __package__ in (None, ""):
 
 ENV_FILE = find_dotenv(usecwd=True, raise_error_if_not_found=False) or ".env"
 
+# Default vector size used when ``EMBED_DIMENSIONS`` is unset.
+DEFAULT_EMBED_DIMENSIONS = 1536
+
 console = Console()
 app: Typer = Typer(
     help="Orchestrate conversion, validation, analysis and embedding generation.",
@@ -106,11 +109,18 @@ def _parse_embed_dimensions(val: str | None) -> int:
     Args:
         val: Raw environment variable value.
 
+    Returns:
+        The parsed dimension or :data:`DEFAULT_EMBED_DIMENSIONS` if ``val`` is
+        ``None``.
+
     Raises:
-        ValueError: If the value is missing, non-numeric, or not positive.
+        ValueError: If the value is non-numeric or not positive.
     """
     if val is None:
-        raise ValueError("Missing required environment variable: EMBED_DIMENSIONS")
+        logging.getLogger(__name__).warning(
+            "EMBED_DIMENSIONS not set; defaulting to %s", DEFAULT_EMBED_DIMENSIONS
+        )
+        return DEFAULT_EMBED_DIMENSIONS
     try:
         dim = int(val)
     except ValueError as exc:  # pragma: no cover - defensive

@@ -128,7 +128,7 @@ Generate embeddings for Markdown files and write them next to each source:
 ```bash
 python scripts/build_vector_store.py data --workers 4
 ```
-Override the embedding model with `EMBED_MODEL` and use `--workers` to set the number of concurrent threads. Set `EMBED_DIMENSIONS` to the size expected by the model or the script will exit with a `RuntimeError`.
+Override the embedding model with `EMBED_MODEL` and use `--workers` to set the number of concurrent threads. If `EMBED_DIMENSIONS` is unset the script defaults to `1536` and logs a warning; invalid values still result in a `RuntimeError`.
 
 ```mermaid
 sequenceDiagram
